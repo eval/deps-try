@@ -1,0 +1,5 @@
+{:paths ["." "src"]
+ :deps {org.clojure/tools.deps.alpha
+        {:git/url "https://github.com/clojure/tools.deps.alpha.git"
+         :sha     "d492e97259c013ba401c5238842cd3445839d020"}
+        com.bhauman/rebel-readline {:mvn/version "0.1.3"}}}
