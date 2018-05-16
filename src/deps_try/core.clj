@@ -1,6 +1,9 @@
 (ns deps-try.core
-  (:require [rebel-readline.clojure.main :as rebel-main]
-            [user]))
+  (:require [clojure.tools.deps.alpha.repl :as deps-repl]
+            [rebel-readline.clojure.main :as rebel-main]
+            [rebel-readline.commands :as rebel-readline]))
+
+(def deps [])
 
 ;; taken from lein-try
 ;; https://github.com/rkneufeld/lein-try/blob/master/src/leiningen/try.clj
@@ -38,6 +41,18 @@
       (lazy-convert args))))
 
 
+(defmethod rebel-readline/command-doc :repl/try [_]
+  (str "Load the dependencies to try, ie " (prn-str deps)))
+
+
+(defmethod rebel-readline/command :repl/try [[_ & args]]
+  (alter-var-root #'deps-try.core/deps (partial apply conj (->dep-pairs (map str args))))
+  (doseq [[dep version] deps]
+    (println "Adding lib" dep version)
+    (deps-repl/add-lib (symbol dep) {:mvn/version version}))
+  (println "Done! Deps can now be required, e.g: (require '[some-lib.core :as sl])"))
+
+
 (defn -main [& args]
-  (alter-var-root #'user/args (partial apply conj (->dep-pairs args)))
+  (alter-var-root #'deps-try.core/deps (partial apply conj (->dep-pairs args)))
   (rebel-main/-main))
