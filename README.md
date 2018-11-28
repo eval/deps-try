@@ -6,8 +6,6 @@ It's basically [lein-try](https://github.com/avescodes/lein-try) but for [tools-
 
 ## Quick try
 
-*NOTE1*: use `clojure` not `clj` (needed for rebel-readline)
-*NOTE2*: once the repl is up run `:repl/try` to load the dependencies.
 
 ```bash
 $ clojure -Sdeps '{:deps {deps-try {:git/url "https://gitlab.com/eval/deps-try" :sha "66d32db70bdb913c2c3ac35dafa27f2f978324e0"}}}' -m deps-try.main clj-time
@@ -18,6 +16,9 @@ Done! Deps can now be required, e.g: (require '[some-lib.core :as sl])
 user=> (require '[clj-time :as t])
 ...
 ```
+
+*NOTE1*: use `clojure` not `clj` (needed for rebel-readline)  
+*NOTE2*: once the repl is up run `:repl/try` to load the dependencies.  
 
 Alternatively add as alias to `~/.clojure/deps.edn`:
 
