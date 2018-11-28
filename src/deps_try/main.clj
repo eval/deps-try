@@ -69,5 +69,5 @@ Then in the REPL run `:repl/try` and require the libraries.
   (if (print-usage? args)
     (print-usage)
     (do
-      (alter-var-root #'deps-try.core/deps (partial apply conj (->dep-pairs args)))
+      (alter-var-root #'deps-try.main/deps (partial apply conj (->dep-pairs args)))
       (rebel-main/-main))))
