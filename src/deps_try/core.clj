@@ -45,14 +45,29 @@
   (str "Load the dependencies to try, ie " (prn-str deps)))
 
 
-(defmethod rebel-readline/command :repl/try [[_ & args]]
-  (alter-var-root #'deps-try.core/deps (partial apply conj (->dep-pairs (map str args))))
+(defmethod rebel-readline/command :repl/try [[_ & _args]]
   (doseq [[dep version] deps]
     (println "Adding lib" dep version)
     (deps-repl/add-lib (symbol dep) {:mvn/version version}))
   (println "Done! Deps can now be required, e.g: (require '[some-lib.core :as sl])"))
 
 
+(defn print-usage []
+  (println "Usage:
+  deps-try dep [dep-version] [other-dep ...]
+
+Then in the REPL run `:repl/try` and require the libraries.
+"))
+
+
+(defn print-usage? [args]
+  (or (not (seq args))
+      (contains? #{"-h" "--help"} (first args))))
+
+
 (defn -main [& args]
-  (alter-var-root #'deps-try.core/deps (partial apply conj (->dep-pairs args)))
-  (rebel-main/-main))
+  (if (print-usage? args)
+    (print-usage)
+    (do
+      (alter-var-root #'deps-try.core/deps (partial apply conj (->dep-pairs args)))
+      (rebel-main/-main))))
