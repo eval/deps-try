@@ -1,4 +1,4 @@
-(ns deps-try.core
+(ns deps-try.main
   (:require [clojure.tools.deps.alpha.repl :as deps-repl]
             [rebel-readline.clojure.main :as rebel-main]
             [rebel-readline.commands :as rebel-readline]))
