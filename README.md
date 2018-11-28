@@ -4,6 +4,8 @@ Quickly try out libraries using the [rebel-readline](https://github.com/bhauman/
 
 It's basically [lein-try](https://github.com/avescodes/lein-try) but for [tools-deps](https://clojure.org/guides/getting_started#_clojure_installer_and_cli_tools).
 
+*canonical repository: https://gitlab.com/eval/deps-try*
+
 ## Quick try
 
 
