@@ -1,12 +1,10 @@
 (ns deps-try.main
   (:require [clojure.tools.deps.alpha.repl :as deps-repl]
             [rebel-readline.clojure.main :as rebel-main]
-            [rebel-readline.commands :as rebel-readline]))
+            [rebel-readline.commands :as rebel-readline]
+            [rebel-readline.core :as rebel-core]))
 
-(def deps [])
-
-;; taken from lein-try
-;; https://github.com/rkneufeld/lein-try/blob/master/src/leiningen/try.clj
+;; SOURCE https://github.com/avescodes/lein-try/blob/master/src/leiningen/try.clj
 (defn- version-string?
   "Check if a given String represents a version number."
   [^String s]
@@ -14,8 +12,7 @@
       (Character/isDigit (first s))))
 
 
-;; taken lein-try
-;; https://github.com/rkneufeld/lein-try/blob/master/src/leiningen/try.clj
+;; SOURCE https://github.com/avescodes/lein-try/blob/master/src/leiningen/try.clj
 (def ->dep-pairs
   "From a sequence of command-line args describing dependency-version pairs,
   return a list of vector pairs. If no version is given, 'RELEASE' will be
@@ -41,22 +38,35 @@
       (lazy-convert args))))
 
 
+(defn add-libs [libs]
+  (doseq [[lib version] libs]
+    (println "Loading dependency" lib version)
+    (deps-repl/add-lib (symbol lib) {:mvn/version version}))
+  (println "[deps-try] Dependencies loaded. They can now be required, e.g: (require '[some-lib.core :as sl])"))
+
+
 (defmethod rebel-readline/command-doc :repl/try [_]
-  (str "Load the dependencies to try, ie " (prn-str deps)))
+  (str "Add more dependencies (e.g. `:repl/try clj-time`)"))
 
 
-(defmethod rebel-readline/command :repl/try [[_ & _args]]
-  (doseq [[dep version] deps]
-    (println "Adding lib" dep version)
-    (deps-repl/add-lib (symbol dep) {:mvn/version version}))
-  (println "Done! Deps can now be required, e.g: (require '[some-lib.core :as sl])"))
+(defmethod rebel-readline/command :repl/try [[_ & args]]
+  (if (seq args)
+    (add-libs (->dep-pairs args))
+    (println "Usage: `:repl/try clj-time`")))
 
 
 (defn print-usage []
   (println "Usage:
-  deps-try dep [dep-version] [other-dep ...]
+  clojure -A:deps-try dep-name [dep-version] [dep2-name ...]
 
-Then in the REPL run `:repl/try` and require the libraries.
+Example:
+$ clojure -A:deps-try clj-time
+
+# specific version
+$ clojure -A:deps-try clj-time \"0.14.2\"
+
+# multiple deps
+$ clojure -A:deps-try clj-time org.clojure/core.logic
 "))
 
 
@@ -68,6 +78,7 @@ Then in the REPL run `:repl/try` and require the libraries.
 (defn -main [& args]
   (if (print-usage? args)
     (print-usage)
-    (do
-      (alter-var-root #'deps-try.main/deps (partial apply conj (->dep-pairs args)))
-      (rebel-main/-main))))
+    (rebel-core/ensure-terminal
+      (rebel-main/repl
+        :init (fn []
+                (add-libs (->dep-pairs args)))))))

@@ -12,15 +12,13 @@ It's basically [lein-try](https://github.com/avescodes/lein-try) but for [tools-
 ```bash
 $ clojure -Sdeps '{:deps {deps-try {:git/url "https://gitlab.com/eval/deps-try" :sha "66d32db70bdb913c2c3ac35dafa27f2f978324e0"}}}' -m deps-try.main clj-time
 [Rebel readline] Type :repl/help for online help info
-user=> :repl/try     ;; <=== REQUIRED
-Adding lib clj-time RELEASE
-Done! Deps can now be required, e.g: (require '[some-lib.core :as sl])
+Loading dependency clj-time RELEASE
+[deps-try] Dependencies loaded. They can now be required, e.g: (require '[some-lib.core :as sl])
 user=> (require '[clj-time :as t])
 ...
 ```
 
-*NOTE1*: use `clojure` not `clj` (needed for rebel-readline)  
-*NOTE2*: once the repl is up run `:repl/try` to load the dependencies.  
+*NOTE*: use `clojure` not `clj` (needed for rebel-readline)
 
 Alternatively add as alias to `~/.clojure/deps.edn`:
 
@@ -39,40 +37,30 @@ Alternatively add as alias to `~/.clojure/deps.edn`:
 Use via: `$ clojure -A:deps-try clj-time`
 
 
-## Examples
+## Usage
 
 Show usage:
 
 ```bash
-;; when no args provided or with -h/--help
 $ clojure -A:deps-try
 Usage:
-  deps-try dep [dep-version] [other-dep ...]
+  clojure -A:deps-try dep-name [dep-version] [dep2-name ...]
 
-Then in the REPL run `:repl/try` and require the libraries.
-```
+Example:
+$ clojure -A:deps-try clj-time
 
-Specific versions
-
-```
+# specific version
 $ clojure -A:deps-try clj-time "0.14.2"
-...
-user=> :repl/try
-```
 
-Multiple dependencies:
-
-```
-$ clojure -A:deps-try clj-time com.datomic/datomic-free
-...
-user=> :repl/try
+# multiple deps
+$ clojure -A:deps-try clj-time org.clojure/core.logic
 ```
 
 ## TODO
 
-- ensure `:repl/try` no longer needed
+- [X] ensure `:repl/try` no longer needed
 - use https://github.com/hagmonk/find-deps
- 
+
 ## LICENSE
 
 Copyright (c) 2018 Gert Goet, ThinkCreate
