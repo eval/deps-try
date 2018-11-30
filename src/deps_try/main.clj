@@ -42,7 +42,7 @@
   (doseq [[lib version] libs]
     (println "Loading dependency" lib version)
     (deps-repl/add-lib (symbol lib) {:mvn/version version}))
-  (println "[deps-try] Dependencies loaded. They can now be required, e.g: (require '[some-lib.core :as sl])"))
+  (println "[deps-try] Dependencies loaded. Require via e.g. (require '[some-lib.core :as sl])."))
 
 
 (defmethod rebel-readline/command-doc :repl/try [_]
