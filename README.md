@@ -1,6 +1,6 @@
 # deps-try
 
-Quickly try out dependencies on the [rebel-readline](https://github.com/bhauman/rebel-readline#rebel-readline).
+Quickly try out dependencies on [rebel-readline](https://github.com/bhauman/rebel-readline#rebel-readline).
 
 It's basically [lein-try](https://github.com/avescodes/lein-try) but using [tools-deps](https://clojure.org/guides/getting_started#_clojure_installer_and_cli_tools).
 
