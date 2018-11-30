@@ -1,16 +1,18 @@
 # deps-try
 
-Quickly try out libraries using the [rebel-readline](https://github.com/bhauman/rebel-readline#rebel-readline).
+Quickly try out dependencies on the [rebel-readline](https://github.com/bhauman/rebel-readline#rebel-readline).
 
-It's basically [lein-try](https://github.com/avescodes/lein-try) but for [tools-deps](https://clojure.org/guides/getting_started#_clojure_installer_and_cli_tools).
+It's basically [lein-try](https://github.com/avescodes/lein-try) but using [tools-deps](https://clojure.org/guides/getting_started#_clojure_installer_and_cli_tools).
 
 *canonical repository: https://gitlab.com/eval/deps-try*
+
+[![discuss at Clojurians-Zulip](https://img.shields.io/badge/clojurians%20zulip-deps--try-brightgreen.svg)](https://clojurians.zulipchat.com/#narrow/stream/151168-clojure)
 
 ## Quick try
 
 
 ```bash
-$ clojure -Sdeps '{:deps {deps-try {:git/url "https://gitlab.com/eval/deps-try" :sha "66d32db70bdb913c2c3ac35dafa27f2f978324e0"}}}' -m deps-try.main clj-time
+$ clojure -Sdeps '{:deps {deps-try {:git/url "https://gitlab.com/eval/deps-try" :sha "9c5eb7d54fadbfc8f5c8b312678c7fee3cc69050"}}}' -m deps-try.main clj-time
 [Rebel readline] Type :repl/help for online help info
 Loading dependency clj-time RELEASE
 [deps-try] Dependencies loaded. They can now be required, e.g: (require '[some-lib.core :as sl])
@@ -28,14 +30,11 @@ Alternatively add as alias to `~/.clojure/deps.edn`:
     :deps-try {:extra-deps
                 {deps-try
                     {:git/url "https://gitlab.com/eval/deps-try",
-                     :sha "66d32db70bdb913c2c3ac35dafa27f2f978324e0"}},
+                     :sha "9c5eb7d54fadbfc8f5c8b312678c7fee3cc69050"}},
                     :main-opts ["-m" "deps-try.main"]}
 ...
 }
 ```
-
-Use via: `$ clojure -A:deps-try clj-time`
-
 
 ## Usage
 
