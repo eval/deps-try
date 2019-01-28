@@ -6,7 +6,7 @@ It's basically [lein-try](https://github.com/avescodes/lein-try) but using [tool
 
 *canonical repository: https://gitlab.com/eval/deps-try*
 
-[![discuss at Clojurians-Zulip](https://img.shields.io/badge/clojurians%20zulip-deps--try-brightgreen.svg)](https://clojurians.zulipchat.com/#narrow/stream/151168-clojure)
+[![discuss at Clojurians-Zulip](https://img.shields.io/badge/clojurians%20zulip-clojure-brightgreen.svg)](https://clojurians.zulipchat.com/#narrow/stream/151168-clojure)
 
 ## Quick try
 
