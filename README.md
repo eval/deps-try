@@ -27,42 +27,41 @@ Alternatively add as alias to `~/.clojure/deps.edn`:
 ```
 :aliases {
 ...
-    :deps-try {:extra-deps
-                {deps-try
-                    {:git/url "https://gitlab.com/eval/deps-try",
-                     :sha "9c5eb7d54fadbfc8f5c8b312678c7fee3cc69050"}},
-                    :main-opts ["-m" "deps-try.main"]}
+    :try {:extra-deps
+           {deps-try
+             {:git/url "https://gitlab.com/eval/deps-try"
+              :sha "9c5eb7d54fadbfc8f5c8b312678c7fee3cc69050"}}
+              :main-opts ["-m" "deps-try.main"]}
 ...
 }
 ```
 
 ## Usage
 
-Show usage:
-
 ```bash
-$ clojure -A:deps-try
 Usage:
-  clojure -A:deps-try dep-name [dep-version] [dep2-name ...]
+  clojure -A:try [<dep-name> [<dep-version>]...]
 
 Example:
-$ clojure -A:deps-try clj-time
+$ clojure -A:try clj-time
 
 # specific version
-$ clojure -A:deps-try clj-time "0.14.2"
+$ clojure -A:try clj-time "0.14.2"
 
 # multiple deps
-$ clojure -A:deps-try clj-time org.clojure/core.logic
+$ clojure -A:try clj-time org.clojure/core.logic
+
+# Adding a dep from the repl
+user=> :repl/try clj-time
 ```
 
 ## TODO
 
-- [X] ensure `:repl/try` no longer needed
 - use https://github.com/hagmonk/find-deps
 
 ## LICENSE
 
-Copyright (c) 2018 Gert Goet, ThinkCreate
+Copyright (c) 2020 Gert Goet, ThinkCreate
 Distributed under the MIT license. See LICENSE.
 
 Parts from [lein-try](https://github.com/avescodes/lein-try), Copyright (c) 2013 Ryan Neufeld, distributed under the Eclipse Public License 1.0.

@@ -42,7 +42,8 @@
   (doseq [[lib version] libs]
     (println "Loading dependency" lib version)
     (deps-repl/add-lib (symbol lib) {:mvn/version version}))
-  (println "[deps-try] Dependencies loaded. Require via e.g. (require '[some-lib.core :as sl])."))
+  (when (seq libs)
+    (println "[deps-try] Dependencies loaded. Require via e.g. (require '[some-lib.core :as sl]).")))
 
 
 (defmethod rebel-readline/command-doc :repl/try [_]
@@ -57,16 +58,19 @@
 
 (defn print-usage []
   (println "Usage:
-  clojure -A:deps-try dep-name [dep-version] [dep2-name ...]
+  clojure -A:try dep-name [dep-version] [dep2-name ...]
 
 Example:
-$ clojure -A:deps-try clj-time
+$ clojure -A:try clj-time
 
 # specific version
-$ clojure -A:deps-try clj-time \"0.14.2\"
+$ clojure -A:try clj-time \"0.14.2\"
 
 # multiple deps
-$ clojure -A:deps-try clj-time org.clojure/core.logic
+$ clojure -A:try clj-time org.clojure/core.logic
+
+# from the repl
+user=> :repl/try clj-time
 "))
 
 
