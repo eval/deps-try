@@ -1,5 +1,5 @@
 {:paths ["." "src"]
- :deps {org.clojure/tools.deps.alpha
-        {:git/url "https://github.com/clojure/tools.deps.alpha.git"
-         :sha     "f6c080bd0049211021ea59e516d1785b08302515"}
-        com.bhauman/rebel-readline {:mvn/version "0.1.4"}}}
+ :deps  {org.clojure/tools.deps.alpha
+         {:git/url "https://github.com/clojure/tools.deps.alpha.git"
+          :sha     "19d197ab221d37db750423eb970880cb87a91100"}
+         com.bhauman/rebel-readline {:mvn/version "0.1.4"}}}
