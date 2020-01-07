@@ -27,11 +27,9 @@ Alternatively add as alias to `~/.clojure/deps.edn`:
 ```
 :aliases {
 ...
-    :try {:extra-deps
-           {deps-try
-             {:git/url "https://gitlab.com/eval/deps-try"
-              :sha "371935527d75e6c6e9f7106a850368a80392f50c"
-              :main-opts ["-m" "deps-try.main"]}
+  :try {:extra-deps {deps-try {:git/url "https://gitlab.com/eval/deps-try"
+                               :sha "371935527d75e6c6e9f7106a850368a80392f50c"}}
+        :main-opts ["-m" "deps-try.main"]}
 ...
 }
 ```
