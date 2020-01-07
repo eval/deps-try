@@ -71,8 +71,7 @@ $ clojure -A:deps-try clj-time org.clojure/core.logic
 
 
 (defn print-usage? [args]
-  (or (not (seq args))
-      (contains? #{"-h" "--help"} (first args))))
+  (contains? #{"-h" "--help"} (first args)))
 
 
 (defn -main [& args]
