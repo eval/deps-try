@@ -24,7 +24,7 @@ user=> (require '[clj-time :as t])
 
 Alternatively add as alias to `~/.clojure/deps.edn`:
 
-```
+```clojure
 :aliases {
 ...
   :try {:extra-deps {deps-try {:git/url "https://gitlab.com/eval/deps-try"
