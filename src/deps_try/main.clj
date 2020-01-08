@@ -1,5 +1,6 @@
 (ns deps-try.main
   (:require [clojure.tools.deps.alpha.repl :as deps-repl]
+            [deps-try.repl :refer (syntax-highlight-pprint)]
             [rebel-readline.clojure.main :as rebel-main]
             [rebel-readline.commands :as rebel-readline]
             [rebel-readline.core :as rebel-core]))
@@ -82,6 +83,7 @@ user=> :repl/try clj-time
   (if (print-usage? args)
     (print-usage)
     (rebel-core/ensure-terminal
-      (rebel-main/repl
+     (rebel-main/repl
+        :print syntax-highlight-pprint
         :init (fn []
                 (add-libs (->dep-pairs args)))))))
