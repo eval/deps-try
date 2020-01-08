@@ -12,7 +12,7 @@ It's basically [lein-try](https://github.com/avescodes/lein-try) but using [tool
 
 
 ```bash
-$ clojure -Sdeps '{:deps {deps-try {:git/url "https://gitlab.com/eval/deps-try" :sha "371935527d75e6c6e9f7106a850368a80392f50c"}}}' -m deps-try.main clj-time
+$ clojure -Sdeps '{:deps {deps-try {:git/url "https://gitlab.com/eval/deps-try" :sha "9ccf64be248d5d9aa641df9e94feaea913bc0687"}}}' -m deps-try.main clj-time
 [Rebel readline] Type :repl/help for online help info
 Loading dependency clj-time RELEASE
 [deps-try] Dependencies loaded. They can now be required, e.g: (require '[some-lib.core :as sl])
@@ -28,7 +28,7 @@ Alternatively add as alias to `~/.clojure/deps.edn`:
 :aliases {
 ...
   :try {:extra-deps {deps-try {:git/url "https://gitlab.com/eval/deps-try"
-                               :sha "371935527d75e6c6e9f7106a850368a80392f50c"}}
+                               :sha "9ccf64be248d5d9aa641df9e94feaea913bc0687"}}
         :main-opts ["-m" "deps-try.main"]}
 ...
 }
