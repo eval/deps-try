@@ -8,6 +8,10 @@ It's basically [lein-try](https://github.com/avescodes/lein-try) but using [tool
 
 [![discuss at Clojurians-Zulip](https://img.shields.io/badge/clojurians%20zulip-clojure-brightgreen.svg)](https://clojurians.zulipchat.com/#narrow/stream/151168-clojure)
 
+## Requirements
+
+Install the [Clojure command line tools](https://clojure.org/guides/getting_started#_clojure_installer_and_cli_tools).
+
 ## Quick try
 
 
