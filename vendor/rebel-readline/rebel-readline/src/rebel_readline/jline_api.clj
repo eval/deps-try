@@ -106,7 +106,8 @@ If you are using `lein` you may need to use `lein trampoline`."
 
 (defn key-map->clj [key-map]
   (mapv (juxt key val)
-        (.getBoundKeys key-map)))
+        (filter (comp #(= % org.jline.reader.Reference) type val)
+                (.getBoundKeys key-map))))
 
 (defn key-map->display-data [key-map]
   (->> (key-map->clj key-map)
