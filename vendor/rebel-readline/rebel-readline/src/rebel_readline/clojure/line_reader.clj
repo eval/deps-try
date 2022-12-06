@@ -580,6 +580,30 @@
      (display-less source {:header arglist-line}))
    true))
 
+
+;; -------------------------------------
+;; Examples widget
+;; -------------------------------------
+;; TODO move to local or util
+(defn safe-resolve [s]
+  (some-> s
+          symbol
+          (-> resolve (try (catch Throwable e nil)))))
+
+(defn examples-at-point []
+  (when-let [[wrd] (word-at-cursor)]
+    (when-let [var-name (some-> (safe-resolve wrd) str (subs 2))]
+      (when-let [{:keys [examples] :as doc} ((requiring-resolve 'orchard.clojuredocs/get-doc) var-name)]
+        {:examples     (highlight-clj-str (string/trim (string/join "\n" examples)))
+         :arglist-line (name-arglist-display doc)}))))
+
+(def examples-at-point-widget
+  (create-widget
+   (when-let [{:keys [arglist-line examples]} (examples-at-point)]
+     (display-less examples {:header arglist-line}))
+   true))
+
+
 ;; -------------------------------------
 ;; Apropos widget
 ;; -------------------------------------
@@ -774,6 +798,7 @@
 
     (register-widget "clojure-doc-at-point"       document-at-point-widget)
     (register-widget "clojure-source-at-point"    source-at-point-widget)
+    (register-widget "clojure-examples-at-point"  examples-at-point-widget)
     (register-widget "clojure-apropos-at-point"   apropos-at-point-widget)
     (register-widget "clojure-eval-at-point"      eval-at-point-widget)
 
@@ -792,6 +817,7 @@
   (doto km-name
     (key-binding (str (KeyMap/ctrl \X) (KeyMap/ctrl \D)) "clojure-doc-at-point")
     (key-binding (str (KeyMap/ctrl \X) (KeyMap/ctrl \S)) "clojure-source-at-point")
+    (key-binding (str (KeyMap/ctrl \X) (KeyMap/ctrl \X)) "clojure-examples-at-point")
     (key-binding (str (KeyMap/ctrl \X) (KeyMap/ctrl \A)) "clojure-apropos-at-point")
     (key-binding (str (KeyMap/ctrl \X) (KeyMap/ctrl \E)) "clojure-eval-at-point")
     (key-binding (str (KeyMap/ctrl \X) (KeyMap/ctrl \M)) "clojure-force-accept-line")))
