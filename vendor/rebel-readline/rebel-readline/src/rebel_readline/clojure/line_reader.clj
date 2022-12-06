@@ -7,8 +7,6 @@
    [rebel-readline.clojure.sexp :as sexp]
    [rebel-readline.tools :as tools :refer [color service-dispatch]]
    [rebel-readline.utils :as utils :refer [log]]
-   ;; lazy-load
-   #_[cljfmt.core :refer [reformat-string]]
    [clojure.string :as string]
    [clojure.java.io :as io]
    [clojure.main])
@@ -442,7 +440,7 @@
     0
     (if-let [prx (indent-proxy-str s cursor)]
       ;; lazy-load for faster start up
-      (let [reformat-string (utils/require-resolve-var 'cljfmt.core/reformat-string)]
+      (let [reformat-string (requiring-resolve 'cljfmt.core/reformat-string)]
         (try (->>
               (reformat-string prx {:remove-trailing-whitespace? false
                                     :insert-missing-whitespace? false
