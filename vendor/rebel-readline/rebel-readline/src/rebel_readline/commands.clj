@@ -183,19 +183,18 @@ Without any arguments displays all the current key bindings")
   ;; request exit
   (throw (EndOfFileException.)))
 
+(defn all-commands []
+  (set (filter namespace (keys (.getMethodTable command)))))
+
 (defn handle-command [command-str]
   (let [cmd?
         (try (read-string (str "[" command-str "]"))
              (catch Throwable e
-               []))]
-    (if (and (keyword? (first cmd?))
-             (= "repl" (namespace (first cmd?))))
+               []))
+        known-command? (all-commands)]
+    (if (->> cmd? first known-command?)
       (do (command cmd?) true)
       false)))
-
-(defn all-commands []
-  (filter #(= (namespace %) "repl")
-   (keys (.getMethodTable command))))
 
 (defmethod command-doc :repl/help [_]
   "Prints the documentation for all available commands.")
