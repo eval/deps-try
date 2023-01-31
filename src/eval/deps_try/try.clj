@@ -1,11 +1,12 @@
 (ns eval.deps-try.try
   (:require #_[clojure.tools.deps.alpha.repl :as deps-repl]
+            [clojure.main]
             [clojure.pprint :as pp]
             [clojure.repl :as clj-repl]
             [eval.deps-try.deps :as try-deps]
+            [eval.deps-try.rr-service :as rebel-service]
             [rebel-readline.clojure.line-reader :as clj-line-reader]
             [rebel-readline.clojure.main :as rebel-main]
-            [rebel-readline.clojure.service.local :as rebel-service]
             [rebel-readline.commands :as rebel-readline]
             [rebel-readline.core :as rebel-core]
             [rebel-readline.jline-api :as api]
@@ -79,8 +80,7 @@
   (rebel-core/with-line-reader
     (let [history-file (fs/path data-path "history")]
       (doto (clj-line-reader/create
-             (rebel-service/create
-              (when api/*line-reader* @api/*line-reader*)))
+             (rebel-service/create {:data-path data-path}))
         (.setVariable LineReader/SECONDARY_PROMPT_PATTERN "%P ")
         (.setVariable LineReader/HISTORY_FILE (str history-file))))
     ;; repl time:
@@ -106,10 +106,12 @@
   #_(binding [*debug-log* true])
   (let [data-path (fs/path (fs/xdg-data-home) "deps-try")]
     (ensure-path-exists! data-path)
-    (rebel-core/ensure-terminal (repl {:deps-try/data-path data-path
-                                       :init               (fn []
-                                                             (apply require clojure.main/repl-requires)
-                                                             (set! clojure.core/*print-namespace-maps* false))
-                                       :eval               (fn [form]
-                                                             (eval `(do ~(handle-sigint-form) ~form)))
-                                       :print              syntax-highlight-pprint}))))
+    (rebel-core/ensure-terminal
+     (repl
+      {:deps-try/data-path data-path
+       :init               (fn []
+                           (apply require clojure.main/repl-requires)
+                           (set! clojure.core/*print-namespace-maps* false))
+       :eval               (fn [form]
+                             (eval `(do ~(handle-sigint-form) ~form)))
+       :print              syntax-highlight-pprint}))))

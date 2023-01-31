@@ -9,7 +9,8 @@
    [rebel-readline.utils :as utils :refer [log]]
    [clojure.string :as string]
    [clojure.java.io :as io]
-   [clojure.main])
+   [clojure.main]
+   [clojure.string :as str])
   (:import
    [java.nio CharBuffer]
    [org.jline.keymap KeyMap]
@@ -318,6 +319,19 @@
 (defn evaluate-str [form-str]
   (-eval-str @*line-reader* form-str))
 
+
+;; Examples
+;; ----------------------------------------------
+(defmulti -examples
+  "Given a string that represents a var, returns a map with
+  a collection :examples, and a collection :see-alsos (optional) or nil if no examples are found."
+  service-dispatch)
+
+(defmethod -examples :default [_service _word])
+
+(defn examples [word]
+  (-examples @*line-reader* word))
+
 ;; ----------------------------------------------------
 ;; ----------------------------------------------------
 ;; Widgets
@@ -341,21 +355,26 @@
     (count (split-into-wrapped-lines hdr columns))
     0))
 
+(defn lines->headline-positions [at-str-lines headline-fn]
+  (when headline-fn
+    (keep-indexed (fn [ix line] (and (headline-fn line) ix)) at-str-lines)))
+
 (defn display-less
   ([at-str]
    (display-less at-str {}))
   ([at-str options]
-   (let [{:keys [header footer]}
+   (let [{:keys [header footer headline-fn]}
          (merge {:header #(astring/astr [(apply str (repeat (:cols (terminal-size)) \-))
                                          (.faint AttributedStyle/DEFAULT)])
-                 :footer (astring/astr ["-- SCROLL WITH ARROW KEYS --"
+                 :footer (astring/astr ["-- SCROLL WITH ARROW KEYS AND C-n / C-p --"
                                         (color :widget/half-contrast-inverse)])}
                 options)
-         columns     (:cols (terminal-size))
-         at-str-lines (split-into-wrapped-lines at-str columns)
-         rows-needed (count at-str-lines)
-         menu-keys   (get (.getKeyMaps *line-reader*)
-                          LineReader/MENU)]
+         columns            (:cols (terminal-size))
+         at-str-lines       (split-into-wrapped-lines at-str columns)
+         headline-positions (lines->headline-positions at-str-lines headline-fn)
+         rows-needed        (count at-str-lines)
+         menu-keys          (get (.getKeyMaps *line-reader*)
+                           LineReader/MENU)]
      (if (< (+ rows-needed
                (lines-needed (:header options) columns)
                (lines-needed (:footer options) columns))
@@ -369,14 +388,20 @@
                                 (when-let [footer (:footer options)]
                                   (if (fn? footer) (footer) header))])))
        (loop [pos 0]
-         (let [columns             (:cols (terminal-size))
+         (let [prev-pos            (fn prev-pos [pos]
+                                     (or (some->> headline-positions reverse (filter #(< % pos)) first)
+                                         (- pos 10)))
+               next-pos            (fn next-pos [pos]
+                                     (or (some->> headline-positions (filter #(> % pos)) first)
+                                         (+ pos 10)))
+               columns             (:cols (terminal-size))
                at-str-lines        (split-into-wrapped-lines at-str columns)
                rows-needed         (count at-str-lines)
                header              (if (fn? header) (header) header)
                footer              (if (fn? footer) (footer) footer)
                header-lines-needed (lines-needed header columns)
                footer-lines-needed (lines-needed footer columns)
-               window-rows (- (rows-available-for-post-display) header-lines-needed footer-lines-needed 3)]
+               window-rows         (- (rows-available-for-post-display) header-lines-needed footer-lines-needed 3)]
            (if (< 2 window-rows)
              (do
                (display-message (astring/join
@@ -386,20 +411,25 @@
                                    (window-lines at-str-lines pos window-rows)
                                    footer])))
                (redisplay)
-               (let [o (.readBinding *line-reader* (.getKeys ^LineReader *line-reader*) menu-keys)
+               (let [keys         (.getKeys ^LineReader *line-reader*)
+                     o            (.readBinding *line-reader* keys  menu-keys)
                      binding-name (.name ^org.jline.reader.Reference o)]
+                 #_(prn :binding-name binding-name)
                  (condp contains? binding-name
-                   #{LineReader/UP_LINE_OR_HISTORY
-                     LineReader/UP_LINE_OR_SEARCH
+                   #{LineReader/UP_LINE_OR_SEARCH
                      LineReader/UP_LINE}
                    (recur (max 0 (dec pos)))
-                   #{LineReader/DOWN_LINE_OR_HISTORY
-                     LineReader/DOWN_LINE_OR_SEARCH
+                   #{LineReader/UP_LINE_OR_HISTORY}
+                   (recur (max 0 (prev-pos pos)))
+
+                   #{LineReader/DOWN_LINE_OR_SEARCH
                      LineReader/DOWN_LINE
                      LineReader/ACCEPT_LINE}
                    (recur (min (- rows-needed
                                   window-rows) (inc pos)))
-                   ;; otherwise pushback the binding and
+                   #{LineReader/DOWN_LINE_OR_HISTORY}
+                   (recur (min (- rows-needed
+                                  window-rows) (next-pos pos)))
                    (do
                      ;; clear the post display
                      (display-message "  ")
@@ -584,25 +614,37 @@
 ;; -------------------------------------
 ;; Examples widget
 ;; -------------------------------------
-;; TODO move to local or util
-(defn safe-resolve [s]
-  (some-> s
-          symbol
-          (-> resolve (try (catch Throwable e nil)))))
 
 (defn examples-at-point []
-  (when-let [[wrd] (word-at-cursor)]
-    (when-let [var-name (some-> (safe-resolve wrd) str (subs 2))]
-      (when-let [{:keys [examples] :as doc} ((requiring-resolve 'orchard.clojuredocs/get-doc) var-name)]
-        {:examples     (highlight-clj-str (string/trim (string/join "\n" examples)))
+  (when-let [[word] (word-at-cursor)]
+    (when-let [{:keys [examples see-alsos] :as doc} (examples word)]
+      (let [alsos-rendered  (some->> see-alsos
+                                     not-empty
+                                     (map (juxt namespace name))
+                                     (map #(zipmap [:ns :name] %))
+                                     (map name-arglist-display)
+                                     (astring/join ", "))
+            alsos-line      (some->> alsos-rendered
+                                     (list (AttributedString. (str "See also:")
+                                                              (.faint AttributedStyle/DEFAULT)))
+                                     (astring/join " "))
+            joined-examples (->> examples
+                                 (map-indexed
+                                  (fn [ix ex] [(str ";; ---------- Example #" (inc ix) " ----------")
+                                               (string/trim ex)]))
+                                 (map #(string/join "\n" %))
+                                 (string/join "\n\n")
+                                 (str "\n"))]
+        {:examples     (highlight-clj-str joined-examples)
+         :alsos-line   alsos-line
          :arglist-line (name-arglist-display doc)}))))
 
 (def examples-at-point-widget
   (create-widget
-   (when-let [{:keys [arglist-line examples]} (examples-at-point)]
-     (display-less examples {:header arglist-line}))
+   (when-let [{:keys [_arglist-line alsos-line examples]} (examples-at-point)]
+     (display-less examples {:header      alsos-line
+                             :headline-fn #(re-find #"Example #" %)}))
    true))
-
 
 ;; -------------------------------------
 ;; Apropos widget

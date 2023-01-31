@@ -65,12 +65,12 @@ user=> :deps/try dev.weavejester/medley
     (print-usage)
     (fs/with-temp-dir [tmp {}]
       (let [verbose-output (with-out-str (deps/clojure {:dir (str tmp)} "-Sverbose" "-Spath"))
-            cp-file (parse-cp-file verbose-output)
-            basis-file (str/replace cp-file #".cp$" ".basis")
+            cp-file        (parse-cp-file verbose-output)
+            basis-file     (str/replace cp-file #".cp$" ".basis")
             requested-deps (try-deps/parse-dep-args args)
-            default-cp (deps->cp tmp '{org.clojure/clojure {:mvn/version "RELEASE"}})
-            requested-cp (deps->cp tmp requested-deps)
-            classpath (str default-cp fs/path-separator init-cp fs/path-separator requested-cp)]
+            default-cp     (deps->cp tmp '{org.clojure/clojure {:mvn/version "RELEASE"}})
+            requested-cp   (deps->cp tmp requested-deps)
+            classpath      (str default-cp fs/path-separator init-cp fs/path-separator requested-cp)]
         (p/exec "java" "-classpath" classpath
                 (str "-Dclojure.basis=" basis-file)
                 "clojure.main" "-m" "eval.deps-try.try")))))
