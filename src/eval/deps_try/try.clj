@@ -1,7 +1,6 @@
 (ns eval.deps-try.try
   (:require #_[clojure.tools.deps.alpha.repl :as deps-repl]
-            [clojure.java.io :as jio]
-            [clojure.main]
+            [babashka.fs :as fs]
             [clojure.pprint :as pp]
             [clojure.repl :as clj-repl]
             [eval.deps-try.deps :as try-deps]
@@ -25,6 +24,7 @@
      (try-deps/parse-dep-args (map str args)))
     (println "Usage: `:deps/try tick/tick 0.5.0 https://github.com/user/project`")))
 
+
 (defmethod rebel-readline/command-doc :clojure/toggle-print-meta [_]
   (str "Toggle clojure.core/*print-meta* on and off ("
        (if clojure.core/*print-meta* "on" "off") ")"))
@@ -46,7 +46,7 @@
 
 
 ;; SOURCE https://github.com/bhauman/rebel-readline/issues/151#issuecomment-457631846
-(defn ^{:author "Dominic Monroe (SevereOverfl0w)"}
+(defn- ^{:author "Dominic Monroe (SevereOverfl0w)"}
   syntax-highlight-pprint
   "Print a syntax highlighted clojure value.
 
@@ -71,14 +71,17 @@
      (clj-repl/set-break-handler! (fn [_signal#] (.stop thread#)))))
 
 
-(defn repl [opts]
+;; terminel
+;;  line-reader
+;;    service
+
+(defn repl [{:deps-try/keys [data-path] :as opts}]
   (rebel-core/with-line-reader
-    ;; TODO respect $XDG_HOME
-    (let [history-file (str (jio/file (System/getProperty "user.home") ".deps-try" "history"))]
+    (let [history-file (fs/path data-path "history")]
       (doto (clj-line-reader/create
              (rebel-service/create
               (when api/*line-reader* @api/*line-reader*)))
-        (.setVariable LineReader/HISTORY_FILE history-file)))
+        (.setVariable LineReader/HISTORY_FILE (str history-file))))
     ;; repl time:
     (binding [*out* (api/safe-terminal-writer api/*line-reader*)]
       (when-let [prompt-fn (:prompt opts)]
@@ -87,20 +90,25 @@
       (apply
        clojure.main/repl
        (-> {:print rebel-main/syntax-highlight-prn
-            :read (rebel-main/create-repl-read)}
+            :read  (rebel-main/create-repl-read)}
            (merge opts {:prompt (fn [])})
            seq
            flatten)))))
 
-;; terminel
-;;  line-reader
-;;   service
+
+(defn- ensure-path-exists! [path]
+  (fs/create-dirs path))
+
 
 (defn -main []
-  ;; via flag?
+  ;; via --debug flag?
   #_(binding [*debug-log* true])
-  (rebel-core/ensure-terminal (repl {:init (fn []
-                                             (apply require clojure.main/repl-requires))
-                                     :eval (fn [form]
-                                             (eval `(do ~(handle-sigint-form) ~form)))
-                                     :print syntax-highlight-pprint})))
+  (let [data-path (fs/path (fs/xdg-data-home) "deps-try")]
+    (ensure-path-exists! data-path)
+    (rebel-core/ensure-terminal (repl {:deps-try/data-path data-path
+                                       :init               (fn []
+                                                             (apply require clojure.main/repl-requires)
+                                                             (set! clojure.core/*print-namespace-maps* false))
+                                       :eval               (fn [form]
+                                                             (eval `(do ~(handle-sigint-form) ~form)))
+                                       :print              syntax-highlight-pprint}))))
