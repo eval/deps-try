@@ -4,4 +4,4 @@
          org.slf4j/slf4j-nop          {:mvn/version "2.0.5"} ;; suppress logging
          com.bhauman/rebel-readline   {:local/root "./vendor/rebel-readline/rebel-readline"}
          babashka/fs                  {:mvn/version "0.2.15"}
-         org.babashka/http-client     {:mvn/version "0.0.2"}}}
+         org.babashka/http-client     {:mvn/version "0.0.3"}}}

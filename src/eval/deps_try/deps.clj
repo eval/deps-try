@@ -49,8 +49,7 @@
   "Yields MapEntry e.g. [tick/tick {:mvn/version \"RELEASE\"}]"
   [[dep-arg version]]
   (let [url-found?                   (fn [url]
-                                       (= 200 (:status (http/get url {:throw        false
-                                                                      :interceptors '()}))))
+                                       (= 200 (:status (http/head url {:throw false}))))
         fallback-for-failing-dep-url (fn [dep-arg dep-type]
                                        (if-not (= dep-type :dep-url)
                                          dep-type

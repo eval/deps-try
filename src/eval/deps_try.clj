@@ -10,7 +10,8 @@
 
 (deps/add-deps '{:deps {org.clojure/tools.gitlibs {:mvn/version "2.4.181"}}})
 
-(require '[eval.deps-try.deps :as try-deps])
+(require '[eval.deps-try.deps :as try-deps]
+         '[babashka.http-client] :reload) ;; reload so we use the dep, not the built-in
 
 
 (defn -main [& args]
