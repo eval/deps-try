@@ -1,5 +1,7 @@
-{:paths ["." "src"]
- :deps  {org.clojure/tools.deps.alpha
-         {:git/url "https://github.com/clojure/tools.deps.alpha.git"
-          :sha     "19d197ab221d37db750423eb970880cb87a91100"}
-         com.bhauman/rebel-readline {:mvn/version "0.1.4"}}}
+{:paths ["src"]
+ :deps  {org.clojure/tools.deps.alpha {:git/url "https://github.com/clojure/tools.deps.alpha.git"
+                                       :git/sha "8f8fc2571e721301b6d52e191129248355cb8c5a"}
+         org.slf4j/slf4j-nop          {:mvn/version "2.0.5"} ;; suppress logging
+         com.bhauman/rebel-readline   {:local/root "./vendor/rebel-readline/rebel-readline"}
+         babashka/fs                  {:mvn/version "0.2.15"}
+         org.babashka/http-client     {:mvn/version "0.0.3"}}}

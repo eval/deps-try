@@ -1,69 +1,79 @@
 # deps-try
 
-Quickly try out dependencies on [rebel-readline](https://github.com/bhauman/rebel-readline#rebel-readline).
-
-It's basically [lein-try](https://github.com/avescodes/lein-try) but using [tools-deps](https://clojure.org/guides/getting_started#_clojure_installer_and_cli_tools).
-
-*canonical repository: https://gitlab.com/eval/deps-try*
+Quickly try out Clojure dependencies on [rebel-readline](https://github.com/bhauman/rebel-readline#rebel-readline).
 
 [![discuss at Clojurians-Zulip](https://img.shields.io/badge/clojurians%20zulip-clojure-brightgreen.svg)](https://clojurians.zulipchat.com/#narrow/stream/151168-clojure)
 
-## Requirements
+## Features
 
-Install the [Clojure command line tools](https://clojure.org/guides/getting_started#_clojure_installer_and_cli_tools).
+- always get the latest (possibly alpha) release of Clojure
+- add dependencies on start or during the REPL session
+- add dependencies from maven, clojars or various git-hostings.
+- ignores deps.edn (global, user or in current folder)
+- fanciness of rebel-readline:
+  - syntax highlighting and indentation
+  - code completion
+  - see doc and source of a function
+- added fanciness for rebel-readline:
+  - pprint results with syntax highlighting
+  - kill operations without quiting REPL
+- easily toggle clojure settings
+  - clojure.core/*print-meta*
+  - clojure.core/*print-namespace-maps* (default off)
 
-## Quick try
+## Installation
 
+### Prerequisites
 
-```bash
-$ clojure -Sdeps '{:deps {deps-try {:git/url "https://gitlab.com/eval/deps-try" :sha "9ccf64be248d5d9aa641df9e94feaea913bc0687"}}}' -m deps-try.main clj-time
-[Rebel readline] Type :repl/help for online help info
-Loading dependency clj-time RELEASE
-[deps-try] Dependencies loaded. They can now be required, e.g: (require '[some-lib.core :as sl])
-user=> (require '[clj-time :as t])
-...
+- [Clojure](https://clojure.org/guides/install_clojure)
+- [bbin](https://github.com/babashka/bbin#installation)
+
+Verify that the following commands work:
+
+``` bash
+$ clojure --version
+# => e.g. 'Clojure CLI version 1.11.1.1208'
+$ bbin --version
+# => e.g. 'bbin 0.1.8'
 ```
 
-*NOTE*: use `clojure` not `clj` (needed for rebel-readline)
+### Install deps-try
 
-Alternatively add as alias to `~/.clojure/deps.edn`:
-
-```clojure
-:aliases {
-...
-  :try {:extra-deps {deps-try {:git/url "https://gitlab.com/eval/deps-try"
-                               :sha "9ccf64be248d5d9aa641df9e94feaea913bc0687"}}
-        :main-opts ["-m" "deps-try.main"]}
-...
-}
+``` bash
+$ bbin install io.github.eval/deps-try
 ```
+
+This will use the latest tag in the repository, i.e. rerun this command to upgrade.
+
 
 ## Usage
 
-```bash
-Usage:
-  clojure -A:try [<dep-name> [<dep-version>]...]
+``` bash
+# A REPL using the latest Clojure version
+$ deps-try
 
-Example:
-$ clojure -A:try clj-time
+# A REPL with specific dependencies (latest version implied)
+$ deps-try metosin/malli criterium/criterium
 
-# specific version
-$ clojure -A:try clj-time "0.14.2"
+# ...specific version
+$ deps-try metosin/malli 0.9.2
 
-# multiple deps
-$ clojure -A:try clj-time org.clojure/core.logic
-
-# Adding a dep from the repl
-user=> :repl/try clj-time
+# Dependency from github
+$ deps-try com.github.metosin/malli
+$ deps-try https://github.com/metosin/malli some-branch-sha-or-tag
 ```
 
-## TODO
+During a REPL-session:
 
-- use https://github.com/hagmonk/find-deps
+``` clojure
+# see help
+user=> :repl/help
+
+# add dependencies
+user=> :deps/try metosin/malli
+```
 
 ## LICENSE
 
-Copyright (c) 2020 Gert Goet, ThinkCreate
+Copyright (c) 2023 Gert Goet, ThinkCreate
 Distributed under the MIT license. See LICENSE.
-
-Parts from [lein-try](https://github.com/avescodes/lein-try), Copyright (c) 2013 Ryan Neufeld, distributed under the Eclipse Public License 1.0.
