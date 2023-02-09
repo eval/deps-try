@@ -1,6 +1,7 @@
 (ns eval.deps-try.deps
-  (:require [babashka.http-client :as http]
-            [clojure.tools.gitlibs :as gitlib]))
+  (:require [clojure.tools.gitlibs :as gitlib]))
+
+(require '[babashka.http-client :as http] :reload)
 
 (defn- requested-dep? [rd]
   (some #{\/} (str rd)))

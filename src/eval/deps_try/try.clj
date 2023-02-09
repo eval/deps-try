@@ -1,6 +1,5 @@
 (ns eval.deps-try.try
   (:require #_[clojure.tools.deps.alpha.repl :as deps-repl]
-            [babashka.fs :as fs]
             [clojure.pprint :as pp]
             [clojure.repl :as clj-repl]
             [eval.deps-try.deps :as try-deps]
@@ -13,6 +12,7 @@
             [rebel-readline.utils :refer [*debug-log*]])
   (:import [org.jline.reader LineReader]))
 
+(require '[babashka.fs :as fs] :reload)
 
 (defmethod rebel-readline/command-doc :deps/try [_]
   (str "Add dependencies (e.g. `:deps/try tick/tick`)"))
