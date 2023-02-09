@@ -1,50 +1,89 @@
 # deps-try
 
-Quickly try out Clojure dependencies on [rebel-readline](https://github.com/bhauman/rebel-readline#rebel-readline).
+Quickly try out Clojure dependencies on [rebel-readline](https://github.com/bhauman/rebel-readline#rebel-readline):
+
+<img width="535" alt="Screenshot 2023-02-09 at 13 37 09" src="https://user-images.githubusercontent.com/290596/217814688-c72a6fa1-3378-47bf-ba3f-5e87eec22c8b.png">
+
+> This README is aimed at people starting their Clojure journey as well as Clojure experts. If anything is not clear, or you learned something that might help other starters, please open an issue or start a new discussion 🌸
 
 [![discuss at Clojurians-Zulip](https://img.shields.io/badge/clojurians%20zulip-clojure-brightgreen.svg)](https://clojurians.zulipchat.com/#narrow/stream/151168-clojure)
 
 ## Features
 
-- always get the latest (possibly alpha) release of Clojure
-- add dependencies on start or during the REPL session
-- add dependencies from maven, clojars or various git-hostings.
-- ignores deps.edn (global, user or in current folder)
+- always use the latest (possibly alpha) release of Clojure.
+- conveniently use dependencies from maven/clojars and various git-hostings.
+- add dependencies without restarting the REPL.
+- run dependencies in isolation (as much as possible)
+  - ...ignoring deps.edn (global, user or in current folder).
 - fanciness of rebel-readline:
   - syntax highlighting and indentation
   - code completion
   - see doc and source of a function
-- added fanciness for rebel-readline:
+- deps-try added fanciness for rebel-readline:
   - pprint results with syntax highlighting
-  - kill operations without quiting REPL
-- easily toggle clojure settings
-  - clojure.core/*print-meta*
-  - clojure.core/*print-namespace-maps* (default off)
+  - kill operations without quiting the REPL
+- toggle Clojure settings
+  - `clojure.core/*print-meta*`
+  - `clojure.core/*print-namespace-maps*` (default off)
 
 ## Installation
 
 ### Prerequisites
 
 - [Clojure](https://clojure.org/guides/install_clojure)
+- [babashka](https://github.com/babashka/babashka#installation)
 - [bbin](https://github.com/babashka/bbin#installation)
+
+<details><summary>What's all this...?</summary><p>
+
+Yes, I'm aware this list might be a bit intimidating for newcomers. But bear with me!  
+Let's go over the items and see why we need them, and why it's worth to install these tools (even if you stop `deps-try`-ing):
+
+### Clojure
+
+Well, there's no way around this: we'll be running the official Clojure REPL on the JVM.
+
+It's not super convenient to start a regular Clojure REPL with dependencies loaded (nor does it allow for adding dependencies during a REPL session).  
+`deps-try` tries to solve this, and it does this with the help of...
+
+### Babashka
+
+[Babashka](https://babashka.org/) ("the fast native Clojure scripting runtime") is _the way_ to write scripts in Clojure: it's fast (something that JVM Clojure is not particularly known for...), self-contained (no JVM needed) and comes with batteries included for typical scripts.
+
+Basbashka's main role in `deps-try` is to turn the dependencies you pass it into the right format and start the JVM Clojure REPL.
+
+### bbin
+
+`bbin` allows for easy installation of Basbashka scripts (from existing places like Git, Maven, filesystem etc.).
+
+This is how `deps-try` gets on your `$PATH`.
+
+Hope that clears things up!
+
+---
+</p></details>
 
 Verify that the following commands work:
 
 ``` bash
 $ clojure --version
-# => e.g. 'Clojure CLI version 1.11.1.1208'
+# => prints e.g. 'Clojure CLI version 1.11.1.1208'
 $ bbin --version
-# => e.g. 'bbin 0.1.8'
+# => prints e.g. 'bbin 0.1.9'
 ```
 
 ### Install deps-try
 
+To install the most recent tag:
+
 ``` bash
 $ bbin install io.github.eval/deps-try
+
+# (For future reference) see what bbin scripts are installed
+$ bbin ls
 ```
 
-This will use the latest tag in the repository, i.e. rerun this command to upgrade.
-
+To upgrade: rerun the install command.
 
 ## Usage
 
@@ -58,19 +97,25 @@ $ deps-try metosin/malli criterium/criterium
 # ...specific version
 $ deps-try metosin/malli 0.9.2
 
-# Dependency from github
-$ deps-try com.github.metosin/malli
+# Dependency from GitHub/GitLab/SourceHut (gets you the latest SHA from the default branch)
+$ deps-try https://github.com/metosin/malli
+
+# ...a specific branch/SHA
 $ deps-try https://github.com/metosin/malli some-branch-sha-or-tag
+
+# ...using the 'infer' notation, e.g.
+# com.github.<user>/<project>, com.gitlab.<user>/<project>, ht.sr.<user>/<project>
+$ deps-try com.github.metosin/malli
 ```
 
 During a REPL-session:
 
 ``` clojure
-# see help
+# see help for all options
 user=> :repl/help
 
 # add dependencies
-user=> :deps/try metosin/malli
+user=> :deps/try dev.weavejester/medley
 ```
 
 ## LICENSE
