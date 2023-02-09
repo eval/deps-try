@@ -1,7 +1,6 @@
 (ns eval.deps-try
   (:require [babashka.classpath :refer [get-classpath]]
             [babashka.deps :as deps]
-            [babashka.fs :as fs]
             [babashka.process :as p :refer [sh]]
             [clojure.string :as str]))
 
@@ -10,8 +9,9 @@
 
 (deps/add-deps '{:deps {org.clojure/tools.gitlibs {:mvn/version "2.4.181"}}})
 
-(require '[eval.deps-try.deps :as try-deps]
-         '[babashka.http-client] :reload) ;; reload so we use the dep, not the built-in
+(require '[eval.deps-try.deps :as try-deps])
+(require '[babashka.fs :as fs] :reload)
+(require '[babashka.http-client] :reload) ;; reload so we use the dep, not the built-in
 
 
 (defn -main [& args]
