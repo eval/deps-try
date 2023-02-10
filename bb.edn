@@ -1,2 +1,2 @@
-{:deps     {local/deps {:local/root "."}}
+{:deps     {io.github.eval/deps-try {:local/root "."}}
  :bbin/bin {deps-try {:main-opts ["-m" "eval.deps-try"]}}}
