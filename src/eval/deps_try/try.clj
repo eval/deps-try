@@ -103,15 +103,15 @@
 
 (defn -main []
   ;; via --debug flag?
-  #_(binding [*debug-log* true])
-  (let [data-path (fs/path (fs/xdg-data-home) "deps-try")]
-    (ensure-path-exists! data-path)
-    (rebel-core/ensure-terminal
-     (repl
-      {:deps-try/data-path data-path
-       :init               (fn []
-                           (apply require clojure.main/repl-requires)
-                           (set! clojure.core/*print-namespace-maps* false))
-       :eval               (fn [form]
-                             (eval `(do ~(handle-sigint-form) ~form)))
-       :print              syntax-highlight-pprint}))))
+  (binding [*debug-log* false]
+    (let [data-path (fs/path (fs/xdg-data-home) "deps-try")]
+      (ensure-path-exists! data-path)
+      (rebel-core/ensure-terminal
+       (repl
+        {:deps-try/data-path data-path
+         :init               (fn []
+                               (apply require clojure.main/repl-requires)
+                               (set! clojure.core/*print-namespace-maps* false))
+         :eval               (fn [form]
+                               (eval `(do ~(handle-sigint-form) ~form)))
+         :print              syntax-highlight-pprint})))))

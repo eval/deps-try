@@ -1,7 +1,8 @@
 (ns rebel-readline.clojure.tokenizer
   (:require
+   [clojure.repl]
    [clojure.string :as string]
-   [clojure.repl])
+   [rebel-readline.utils :as utils :refer [log]])
   (:import
    [java.util.regex Pattern]))
 
@@ -75,7 +76,7 @@
 (def string-literal-capture-quotes-body #"(?<!\\)((\")([^\"\\]*(?:\\.[^\"\\]*)*)(\"))")
 (def unterm-string-literal-capture-quote-body #"(?<!\\)((\")([^\"\\]*(?:\\.[^\"\\]*)*))$")
 
-(def delimiter-exps (map str #{#"\s" #"\{" #"\}" #"\(" #"\)" #"\[" #"\]"
+(def delimiter-exps (map str #{#"\s" #"'\(" #"#\{" #"\{" #"\}" #"\(" #"\)" #"\[" #"\]"
                                #"," #"\"" #"\^" #"\'" #"\#" #"\@"}))
 
 (defn delims [f]
@@ -89,7 +90,7 @@
 (def delimiter-exp-minus-quote    (str "["  (delims (partial remove #{"\\\""})) "]"))
 (def delimiter-exp-minus-meta     (str "["  (delims (partial remove #{"\\^"}))  "]"))
 
-(def delimiter-include-fslash-exp (str "["  (delims (partial cons #"\/")) "]"))
+#_(def delimiter-include-fslash-exp (str "["  (delims (partial cons #"\/")) "]"))
 (def not-delimiter-or-fslash-exp  (str "[^" (delims (partial cons #"\/")) "]"))
 (def not-delimiter-or-period-exp  (str "[^" (delims (partial cons #"\.")) "]"))
 
@@ -178,9 +179,14 @@
        not-delimiter-or-period-exp "+)"))
 
 (def character-exp
-  (str #_preceeded-by-delimiter
-       #"(\\[^\s]|\\\w+|\\o\d+|\\u\d+)"
+  (str preceeded-by-delimiter
+       #"(\\\w+|\\[^\s])" #_#"(\\[^\s]|\\\w+|\\o\d+|\\u\d+)"
        followed-by-delimiter))
+
+(comment
+  (re-find (re-pattern character-exp) "\\u03A9")
+  (re-find #"\\[^\s]" "\\newline")
+  #_:end)
 
 (def dynamic-var-exp
   (str preceeded-by-delimiter
@@ -209,7 +215,7 @@
                     protocol-def-name-exp "|"
                     dynamic-var-exp)))
 
-(defn tag-syntax [syntax-str]
+#_(defn tag-syntax [syntax-str]
   (tag-matches syntax-str
                syntax-token-tagging-rexp
                :string-literal
@@ -272,7 +278,7 @@
                :font-lock/variable-name ;; :dynamic-var
                ))
 
-(def non-interp-regexp
+#_(def non-interp-regexp
   (Pattern/compile
    (str
     end-line-comment-regexp "|"
@@ -280,7 +286,7 @@
     "(" unterm-string-literal ")|"
     character-exp )))
 
-(defn tag-non-interp [code-str]
+#_(defn tag-non-interp [code-str]
   (tag-matches code-str
                non-interp-regexp
                :end-line-comment
@@ -289,21 +295,26 @@
                :character))
 
 (def sexp-traversal-rexp
+  ;; TODO syntax quote?
   (Pattern/compile
    (str
     end-line-comment-regexp "|"
     string-literal-capture-quotes-body "|"
     unterm-string-literal-capture-quote-body "|"
     character-exp "|"
-    #"(\()" "|" ; open paren
-    #"(\))" "|" ; close paren
-    #"(\{)" "|" ; open brace
-    #"(\})" "|" ; close brace
-    #"(\[)" "|" ; open bracket
-    #"(\])"     ; close bracket
+    #"(@\()" "|" ; open deref
+    #"('\()" "|" ; open literal-list
+    #"(\()" "|"  ; open paren
+    #"(\))" "|"  ; close paren
+    #"(#\{)" "|" ; open literal set
+    #"(\{)" "|"  ; open brace
+    #"(\})" "|"  ; close brace
+    #"(\[)" "|"  ; open bracket
+    #"(\])"      ; close bracket
     )))
 
 (defn tag-sexp-traversal [code-str]
+  (log ::tag-sexp-traversal :code-str code-str)
   (tag-matches code-str
                sexp-traversal-rexp
                :end-line-comment
@@ -315,21 +326,25 @@
                :open-quote
                :unterm-string-literal-body
                :character
+               :open-deref
+               :open-literal-list
                :open-paren
-               :close-paren
+               [:close-paren :close-literal-list :close-deref]
+               :open-literal-set
                :open-brace
-               :close-brace
+               [:close-brace :close-literal-set]
                :open-bracket
                :close-bracket))
 
 (def non-interp-word-rexp
   (Pattern/compile
-      (str
-       end-line-comment-regexp "|"
-       string-literal-without-quotes "|"
-       unterm-string-literal-without-quotes "|"
-       character-exp "|"
-       "(" not-delimiter-exp "+)")))
+   (str
+    end-line-comment-regexp "|"
+    string-literal-without-quotes "|"
+    unterm-string-literal-without-quotes "|"
+    character-exp "|"
+    "(['#@]*" not-delimiter-exp "+)")))
+
 
 (defn tag-words
   "This tokenizes a given string into
@@ -343,6 +358,7 @@
   This allows us to opertate on words that are outside of
 strings, comments and characters. "
   [line]
+  (log ::tag-words :line (pr-str line) :matches (re-find (re-pattern character-exp) line))
   (tag-matches line
                non-interp-word-rexp
                :end-line-comment

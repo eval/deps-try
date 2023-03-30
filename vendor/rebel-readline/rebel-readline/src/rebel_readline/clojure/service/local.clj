@@ -1,10 +1,10 @@
 (ns rebel-readline.clojure.service.local
   (:require
+   [clojure.repl]
    [rebel-readline.clojure.line-reader :as clj-reader]
    [rebel-readline.clojure.utils :as clj-utils]
    [rebel-readline.tools :as tools]
-   [rebel-readline.utils :as utils]
-   [clojure.repl]))
+   [rebel-readline.utils :as utils :refer [log]]))
 
 ;; taken from replicant
 ;; https://github.com/puredanger/replicant/blobcl/master/src/replicant/util.clj
@@ -101,6 +101,7 @@
     res))
 
 (defmethod clj-reader/-read-string ::service [self form-str]
+  (log ::read-string :form-str form-str)
   (when (string? form-str)
     (try
       {:form (with-in-str form-str

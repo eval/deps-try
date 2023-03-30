@@ -112,7 +112,7 @@
         (= "vicmd" (.getKeyMap *line-reader*)))
    (let [cursor (min (count line-str) cursor)
          x (subs line-str 0 cursor)
-         tokens (tokenize/tag-sexp-traversal x)]
+         tokens (sexp/resolve-alias-delim-keys (tokenize/tag-sexp-traversal x))]
      (not (sexp/find-open-sexp-start tokens cursor)))))
 
 (defmethod -accept-line :default [_ line-str cursor]
@@ -294,6 +294,7 @@
   (tools/not-implemented! service "-eval"))
 
 (defn evaluate [form]
+  (log ::evaluate :form form)
   (-eval @*line-reader* form))
 
 ;; EvalString
@@ -307,6 +308,7 @@
   service-dispatch)
 
 (defmethod -eval-str :default [service form-str]
+  (log ::-eval-str :form-str form-str)
   (try
     (let [res (-read-string service form-str)]
       (if (contains? res :form)
@@ -317,6 +319,7 @@
       {:exception (Throwable->map e)})))
 
 (defn evaluate-str [form-str]
+  (log ::evaluate-str :form-str form-str)
   (-eval-str @*line-reader* form-str))
 
 
@@ -374,7 +377,7 @@
          headline-positions (lines->headline-positions at-str-lines headline-fn)
          rows-needed        (count at-str-lines)
          menu-keys          (get (.getKeyMaps *line-reader*)
-                           LineReader/MENU)]
+                                 LineReader/MENU)]
      (if (< (+ rows-needed
                (lines-needed (:header options) columns)
                (lines-needed (:footer options) columns))
@@ -407,14 +410,13 @@
                (display-message (astring/join
                                  "\n"
                                  (keep identity
-                                  [header
-                                   (window-lines at-str-lines pos window-rows)
-                                   footer])))
+                                       [header
+                                        (window-lines at-str-lines pos window-rows)
+                                        footer])))
                (redisplay)
                (let [keys         (.getKeys ^LineReader *line-reader*)
                      o            (.readBinding *line-reader* keys  menu-keys)
                      binding-name (.name ^org.jline.reader.Reference o)]
-                 #_(prn :binding-name binding-name)
                  (condp contains? binding-name
                    #{LineReader/UP_LINE_OR_SEARCH
                      LineReader/UP_LINE}
@@ -455,54 +457,78 @@
 ;; -----------------------------------------
 
 (defn indent-proxy-str [s cursor]
-  (let [tagged-parses (tokenize/tag-sexp-traversal s)]
+  (let [tagged-parses (sexp/resolve-alias-delim-keys (tokenize/tag-sexp-traversal s))]
+    (log ::indent-proxy-str :tagged-parses tagged-parses)
     ;; never indent in quotes
     ;; this is an optimization, the code should work fine without this
     (when-not (sexp/in-quote? tagged-parses cursor)
-      (when-let [[delim sexp-start] (sexp/find-open-sexp-start tagged-parses cursor)]
-        (let [line-start (sexp/search-for-line-start s sexp-start)]
+      (when-let [[_delim sexp-start _ delim-key] (sexp/find-open-sexp-start tagged-parses cursor)]
+        (let [delim-key->flipped-char (comp sexp/delim-key->delim sexp/flip-it)
+              line-start (sexp/search-for-line-start s sexp-start)]
           (str (apply str (repeat (- sexp-start line-start) \space))
                (subs s sexp-start cursor)
-               "\n1" (sexp/flip-delimiter-char (first delim))))))))
+               "\n1" (delim-key->flipped-char delim-key)))))))
+
+(comment
+  (sexp/resolve-alias-delim-keys
+   (tokenize/tag-sexp-traversal "(clojure.walk/macroexpand-all '(deflet \n  (def a 1)\n  (def b (inc a))\n  (* b 3)))"))
+  (def tags *1)
+
+  (indent-proxy-str "(clojure.walk/macroexpand-all '(deflet \n  (def a 1)\n  (def b (inc a))\n  (* b 3)))" 40)
+  (sexp/delim-key->delim (sexp/flip-it (last (sexp/find-open-sexp-start tags 40))))
+  (def foo '(["(" 0 1 :open-paren]
+             ["[" 5 6 :open-bracket]
+             ["#{" 8 9 :open-set]
+             ["}" 9 10 :close-brace]
+             ["]" 10 11 :close-bracket]
+             [")" 11 12 :close-paren]))
+
+  (sexp/find-open-sexp-start foo #_(tokenize/tag-sexp-traversal "(let [a #{\\c} b '(1 2)])") 11)
+
+  #_:end)
+
 
 (defn indent-amount [s cursor]
+  (log ::indent-amount :s (pr-str s) :cursor cursor)
   (if (zero? cursor)
     0
     (if-let [prx (indent-proxy-str s cursor)]
       ;; lazy-load for faster start up
-      (let [reformat-string (requiring-resolve 'cljfmt.core/reformat-string)]
+      (let [_               (log ::indent-amount :prx (pr-str prx))
+            reformat-string (requiring-resolve 'cljfmt.core/reformat-string)]
         (try (->>
-              (reformat-string prx {:remove-trailing-whitespace? false
-                                    :insert-missing-whitespace? false
-                                    :remove-surrounding-whitespace? false
-                                    :remove-consecutive-blank-lines? false})
-              string/split-lines
-              last
-              sexp/count-leading-white-space)
-             (catch clojure.lang.ExceptionInfo e
-               (if (-> e ex-data :type (= :reader-exception))
-                 (+ 2 (sexp/count-leading-white-space prx))
-                 (throw e)))))
+                 (reformat-string prx {:remove-trailing-whitespace?     false
+                                       :insert-missing-whitespace?      false
+                                       :remove-surrounding-whitespace?  false
+                                       :remove-consecutive-blank-lines? false})
+                 string/split-lines
+                 last
+                 sexp/count-leading-white-space)
+                (catch clojure.lang.ExceptionInfo e
+                  (if (-> e ex-data :type (= :reader-exception))
+                    (+ 2 (sexp/count-leading-white-space prx))
+                    (throw e)))))
       0)))
 
 (def indent-line-widget
   (create-widget
    (when (:indent @*line-reader*)
-       (let [curs (cursor)
-             s (buffer-as-string) ;; up-to-cursor better here?
-             begin-of-line-pos   (sexp/search-for-line-start s (dec curs))
-             leading-white-space (sexp/count-leading-white-space (subs s begin-of-line-pos))
-         indent-amount       (indent-amount s begin-of-line-pos)
-         cursor-in-leading-white-space? (< curs
-                                           (+ leading-white-space begin-of-line-pos))]
+     (let [curs                (cursor)
+           s                   (buffer-as-string) ;; up-to-cursor better here?
+           begin-of-line-pos   (sexp/search-for-line-start s (dec curs))
+           leading-white-space (sexp/count-leading-white-space (subs s begin-of-line-pos))
+           _ (log ::indent-line-widget :s s :begin-of-line-pos begin-of-line-pos :leading-white-space leading-white-space)
+           indent-amount                  (indent-amount s begin-of-line-pos)
+           cursor-in-leading-white-space? (< curs
+                                             (+ leading-white-space begin-of-line-pos))]
 
-     (cursor begin-of-line-pos)
-     (delete leading-white-space)
-     (write  (apply str (repeat indent-amount \space)))
+       (cursor begin-of-line-pos)
+       (delete leading-white-space)
+       (write  (apply str (repeat indent-amount \space)))
 
      ;; rectify cursor
-     (when-not cursor-in-leading-white-space?
-       (cursor (+ indent-amount (- curs leading-white-space))))))
+       (when-not cursor-in-leading-white-space?
+         (cursor (+ indent-amount (- curs leading-white-space))))))
    ;; return true to re-render
    true))
 
@@ -527,7 +553,7 @@
 (defn one-space-after-funcall-word? []
   (let [s (buffer-as-string)
         curs (cursor)
-        tagged-parses (tokenize/tag-sexp-traversal s)
+        tagged-parses (sexp/resolve-alias-delim-keys (tokenize/tag-sexp-traversal s))
         [_ start _ _] (sexp/find-open-sexp-start tagged-parses curs)]
     (when start
       (when-let [[word word-start word-end _]
@@ -761,12 +787,14 @@
 ;; In place eval widget
 ;; ------------------------------------------
 
+
 (defn in-place-eval []
   (let [s (buffer-as-string)]
     (when (not (string/blank? s))
       (let [pos (cursor)
             fnw-pos (sexp/first-non-whitespace-char-backwards-from s (dec pos))
             [form-str start end typ] (sexp/sexp-or-word-ending-at-position s fnw-pos)]
+        (log ::in-place-eval :pos pos :fnw-pos fnw-pos :form-str form-str :start start :end end :typ typ)
         (evaluate-str form-str)))))
 
 (defn inline-result-marker [^AttributedString at-str]
@@ -1107,13 +1135,14 @@
          (map? service)]}
   (doto (create-line-reader terminal "Clojure Readline" service)
     (.setCompleter (or completer (clojure-completer)))
-    (.setHighlighter (or highlighter (clojure-highlighter )))
+    (.setHighlighter (or highlighter (clojure-highlighter)))
     (.setParser (or parser (make-parser)))
     ;; make sure that we don't have to double escape things
     (.setOpt LineReader$Option/DISABLE_EVENT_EXPANSION)
+
         ;; never insert tabs
     (.unsetOpt LineReader$Option/INSERT_TAB)
-    (.setVariable LineReader/SECONDARY_PROMPT_PATTERN "%P #_=> ")
+    (.setVariable LineReader/SECONDARY_PROMPT_PATTERN "%P ")
     ;; history
     (.setVariable LineReader/HISTORY_FILE (str (io/file ".rebel_readline_history")))
     (.setOpt LineReader$Option/HISTORY_REDUCE_BLANKS)

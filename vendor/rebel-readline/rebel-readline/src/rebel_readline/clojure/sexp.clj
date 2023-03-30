@@ -1,29 +1,31 @@
 (ns rebel-readline.clojure.sexp
   (:require
+   [borkdude.deflet :refer [deflet]]
    [clojure.string :as string]
-   [rebel-readline.clojure.tokenizer :as tokenize])
+   [rebel-readline.clojure.tokenizer :as tokenize]
+   [rebel-readline.utils :as utils :refer [log]])
   (:import
    [java.util.regex Pattern]))
 
-(defn position-in-range? [s pos]
+#_(defn position-in-range? [s pos]
   (<= 0 pos (dec (count s))))
 
-(defn blank-at-position? [s pos]
+#_(defn blank-at-position? [s pos]
   (or (not (position-in-range? s pos))
       (Character/isWhitespace (.charAt s pos))))
 
-(defn non-interp-bounds [code-str]
+#_(defn non-interp-bounds [code-str]
   (map rest
        (tokenize/tag-non-interp code-str)))
 
-(defn in-non-interp-bounds? [code-str pos] ;; position of insertion not before
+#_(defn in-non-interp-bounds? [code-str pos] ;; position of insertion not before
   (or (some #(and (< (first %) pos (second %)) %)
             (non-interp-bounds code-str))
       (and (<= 0 pos (dec (count code-str)))
            (= (.charAt code-str pos) \\)
            [pos (inc pos) :character])))
 
-(def delims #{:bracket :brace :paren :quote})
+(def delims #{:deref :literal-list :literal-set :bracket :brace :paren :quote})
 (def openers (set (map #(->> % name (str "open-") keyword) delims)))
 (def closers (set (map #(->> % name (str "close-") keyword) delims)))
 
@@ -32,7 +34,7 @@
        (map
         (juxt identity #(as-> % x
                           (name x)
-                          (string/split x #"-")
+                          (string/split x #"-" 2)
                           (str "close-" (second x))
                           (keyword x))))
        ((juxt identity (partial map (comp vec reverse))))
@@ -40,7 +42,13 @@
        (into {})))
 
 (def delim-key->delim
-  {:open-paren \(
+  {:open-literal-set "#{"
+   :close-literal-set \}
+   :open-deref "@("
+   :close-deref \)
+   :open-literal-list "'("
+   :close-literal-list \)
+   :open-paren \(
    :close-paren \)
    :open-brace \{
    :close-brace \}
@@ -48,9 +56,6 @@
    :close-bracket \]
    :open-quote  \"
    :close-quote \"})
-
-(def flip-delimiter-char
-  (into {} (map (partial mapv delim-key->delim)) flip-it))
 
 (defn scan-builder [open-test close-test]
   (fn [specific-test stack x]
@@ -123,7 +128,7 @@
                    (<= start pos end))))
        first))
 
-(defn in-line-comment? [tokens pos]
+#_(defn in-line-comment? [tokens pos]
   (->> tokens
        (filter #(#{:end-line-comment} (last %)))
        (filter (fn [[_ start end _]]
@@ -146,8 +151,82 @@
        (concat (find-open-sexp-ends tokens pos)
                (repeat nil))))
 
+(defn resolve-alias-delim-keys [tokens]
+  (deflet
+    (def close-delim? #(->> % name (re-find #"^close")))
+    (def open-delim? #(->> % name (re-find #"^open")))
+
+    (:result (reduce (fn [{:keys [result opens]} [_ _ _ delim-keys :as token]]
+                       (let [opens     (cond-> opens
+                                         (and (keyword? delim-keys) (open-delim? delim-keys)) (conj delim-keys))
+                             delim-key (if (keyword? delim-keys)
+                                         delim-keys
+                                         (get (set delim-keys) (flip-it (peek opens)) (first delim-keys)))
+                             token     (update token 3 (constantly delim-key))
+                             open      (if (close-delim? delim-key) (some-> opens not-empty pop) opens)]
+                         {:open open :result (conj result token)}))
+                     {:result [] :opens '()} tokens))))
+
+(comment
+  (find-open-sexp-starts '(["(" 0 1 :open-paren]
+                       ["[" 5 6 :open-bracket]
+                       ["#{" 8 10 :open-literal-set]
+                       ["\\c" 10 12 :character]
+                       ["}" 12 13 :close-literal-set #_#{:close-set :close-brace}]
+                       ["}" 12 13 :close-brace #_#{:close-set :close-brace}]
+                       ["]" 13 14 :close-bracket]
+                       [")" 14 15 :close-paren #_#{:close-paren :close-literal-list}]
+                       #_[")" 14 15 :close-literal-list #_#{:close-paren :close-literal-list}]) 12)
+
+  (find-open-sexp-starts '(["(" 0 1 :open-paren]
+                           ["[" 5 6 :open-bracket]
+                           ["#{" 8 10 :open-literal-set]
+                           ["\\c" 10 12 :character]
+                           ["}" 12 13 :close-literal-set]
+                           ["}" 12 13 :close-brace]
+                           ["'(" 16 18 :open-literal-list]
+                           [")" 21 22 :close-literal-list]
+                           [")" 21 22 :close-deref]
+                           [")" 21 22 :close-paren]
+                           ["]" 22 23 :close-bracket]
+                           [")" 23 24 :close-literal-list]
+                           [")" 23 24 :close-deref]
+                           [")" 23 24 :close-paren]) 12)
+
+(delims-outward-from-pos '(["(" 0 1 :open-paren]
+                          ["[" 5 6 :open-bracket]
+                          ["{" 8 10 :open-brace]
+                          ["\\c" 10 12 :character]
+                          ["}" 12 13 :close-brace #_#{:close-set :close-brace}]
+                          ["]" 13 14 :close-bracket]
+                           [")" 14 15 :close-paren #_#{:close-paren :close-literal-list}]) 12)
+#_(delims-outward-from-pos
+ (bar '(["(" 0 1 :open-paren]
+        ["[" 5 6 :open-bracket]
+        ["#{" 8 10 :open-literal-set]
+        ["\\c" 10 12 :character]
+        ["}" 12 13 #{:close-brace :close-literal-set}]
+        ["'(" 16 18 :open-literal-list]
+        [")" 21 22 #{:close-paren :close-deref :close-literal-list}]
+        ["]" 22 23 :close-bracket]
+        [")" 23 24 #{:close-paren :close-deref :close-literal-list}])
+      ) 11)
+
+  (resolve-alias-delim-keys
+   ;; sample result of sexp/tag-sexp-traversal
+   '(["(" 0 1 :open-paren]
+     ["[" 5 6 :open-bracket]
+     ["#{" 8 10 :open-literal-set]
+     ["\\c" 10 12 :character]
+     ["}" 12 13 #{:close-brace :close-literal-set}]
+     ["'(" 16 18 :open-literal-list]
+     [")" 21 22 #{:close-paren :close-deref :close-literal-list}]
+     ["]" 22 23 :close-bracket]
+     [")" 23 24 #{:close-paren :close-deref :close-literal-list}]))
+  #_:end)
+
 (defn valid-sexp-from-point [s pos]
-  (let [tokens (tokenize/tag-sexp-traversal s)
+  (let [tokens (resolve-alias-delim-keys (tokenize/tag-sexp-traversal s))
         delims (take-while
                 (fn [[a b]]
                   (or (= (last a) (flip-it (last b)))
@@ -180,11 +259,13 @@
 
 (defn sexp-ending-at-position [s pos]
   (let [c (try (.charAt s pos) (catch Exception e nil))]
-    (when (#{ \" \) \} \] } c)
-      (let [sexp-tokens (tokenize/tag-sexp-traversal s)]
+    (when (#{\" \) \} \]} c)
+      (let [sexp-tokens (resolve-alias-delim-keys (tokenize/tag-sexp-traversal s))]
+        (log ::sexp-ending-at-position :sexp-tokens sexp-tokens)
         (when-let [[_ start] (find-open-sexp-start sexp-tokens pos)]
           [(subs s start (inc pos)) start (inc pos) :sexp])))))
 
+;; TODO support characters
 (defn sexp-or-word-ending-at-position [s pos]
   (or (sexp-ending-at-position s pos)
       (word-at-position s (inc pos))))
@@ -194,6 +275,7 @@
   points to an open paren, return the first token that is the function
   call word"
   [code-str open-paren-pos]
+  (log ::funcall-word :code-str code-str :open-paren-pos open-paren-pos)
   (some->>
    (tokenize/tag-matches (subs code-str open-paren-pos)
                          ;; matches first word after paren
