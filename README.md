@@ -20,8 +20,11 @@ Quickly try out Clojure dependencies on [rebel-readline](https://github.com/bhau
   - code completion
   - see doc and source of a function
 - deps-try added fanciness for rebel-readline:
+  - see examples of a function from clojuredocs.org
   - pprint results with syntax highlighting
-  - kill operations without quiting the REPL
+  - interrupt operations without quiting the REPL
+  - easier copy/paste of multiline code
+  - improved support for eval-at-point (e.g. set and list literals, var quote, deref)
 - toggle Clojure settings
   - `clojure.core/*print-meta*`
   - `clojure.core/*print-namespace-maps*` (default off)
@@ -67,9 +70,9 @@ Verify that the following commands work:
 
 ``` bash
 $ clojure --version
-# => prints e.g. 'Clojure CLI version 1.11.1.1208'
+# => prints e.g. 'Clojure CLI version 1.11.1.1267'
 $ bbin --version
-# => prints e.g. 'bbin 0.1.9'
+# => prints e.g. 'bbin 0.1.12'
 ```
 
 ### Install deps-try
@@ -122,3 +125,5 @@ user=> :deps/try dev.weavejester/medley
 
 Copyright (c) 2023 Gert Goet, ThinkCreate
 Distributed under the MIT license. See LICENSE.
+
+Code in vendor/rebel-readline has been adapted from [rebel-readline](https://github.com/bhauman/rebel-readline) which is covered by the Eclipse Public License either version 1.0 or (at your option) any later version.
