@@ -381,7 +381,7 @@
      (if (< (+ rows-needed
                (lines-needed (:header options) columns)
                (lines-needed (:footer options) columns))
-            (- (rows-available-for-post-display) 3))
+            (rows-available-for-post-display))
        (display-message (astring/join
                          "\n"
                          (keep identity
@@ -404,7 +404,9 @@
                footer              (if (fn? footer) (footer) footer)
                header-lines-needed (lines-needed header columns)
                footer-lines-needed (lines-needed footer columns)
-               window-rows         (- (rows-available-for-post-display) header-lines-needed footer-lines-needed 3)]
+               window-rows         (- (rows-available-for-post-display)
+                                      header-lines-needed
+                                      footer-lines-needed)]
            (if (< 2 window-rows)
              (do
                (display-message (astring/join

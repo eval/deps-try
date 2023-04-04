@@ -2,6 +2,7 @@
 
 ## v0.3.6 (Unreleased)
 
+- Prevent gap between footer and bottom of window with display-less.
 - Upgrade babashka/fs, org.babashka/http-client.
 - Introduce examples-at-point (C-x C-x for word at point).
 - Don't prepend multi-lines with '#_ => '. This makes code better copyable.
