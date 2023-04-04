@@ -163,8 +163,8 @@
                                          delim-keys
                                          (get (set delim-keys) (flip-it (peek opens)) (first delim-keys)))
                              token     (update token 3 (constantly delim-key))
-                             open      (if (close-delim? delim-key) (some-> opens not-empty pop) opens)]
-                         {:open open :result (conj result token)}))
+                             opens     (if (close-delim? delim-key) (some-> opens not-empty pop) opens)]
+                         {:opens opens :result (conj result token)}))
                      {:result [] :opens '()} tokens))))
 
 (comment
