@@ -1,8 +1,10 @@
 # Changelog
 
-## v0.3.7 (Unreleased)
+## v0.3.7 (2023-04-08)
 
-- Add version-flag
+- Releases via Github Actions.
+- Add installation via homebrew.
+- Add version-flag.
 
 ## v0.3.6 (2023-04-04)
 
