@@ -34,8 +34,8 @@ jobs:
           path: deps-try.jar
       - name: Release
         uses: softprops/action-gh-release@v1
-        # if: startsWith(github.ref, 'refs/tags/')
         with:
+          body: '**Ignore the tag of this release - this release exists for having a stable download link**'
           prerelease: true
           name: nightly
           target_commitish: ${{ github.sha }}
