@@ -50,7 +50,6 @@ jobs:
         run: |
           echo "version=$(git describe --tags)" >> $GITHUB_OUTPUT
           echo "release-name=unstable" >> $GITHUB_OUTPUT
-          # take sha of first commit
           echo "release-sha=${{ github.sha }}" >> $GITHUB_OUTPUT
           echo "pre-release=true" >> $GITHUB_OUTPUT
   Build:
@@ -88,7 +87,7 @@ jobs:
           tag_name: stable
           files: deps-try.jar
       - name: Release unstable
-        if: "${{ !needs.Config.outputs.stable }}"
+        if: ${{ always() }}
         uses: softprops/action-gh-release@v1
         with:
           body: |
