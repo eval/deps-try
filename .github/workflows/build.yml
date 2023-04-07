@@ -50,7 +50,7 @@ jobs:
           echo "release-name=unstable" >> $GITHUB_OUTPUT
           # take sha of first commit
           echo "release-sha=55863dbc940e0741b9d9b3a1b11fdbadd08e8bb5" >> $GITHUB_OUTPUT
-          echo "pre-release=${{ false }}" >> $GITHUB_OUTPUT
+          echo "pre-release=${{ true }}" >> $GITHUB_OUTPUT
   Build:
     needs: [Config]
     runs-on: ubuntu-latest
@@ -79,7 +79,7 @@ jobs:
           body: |
             - version: ${{ needs.Config.outputs.version }}
             - SHA: ${{ needs.Config.outputs.release-sha }}
-          prerelease: ${{ needs.Config.outputs.pre-relase }}
+          prerelease: ${{ needs.Config.outputs.pre-release }}
           name: ${{ needs.Config.outputs.release-name }}
           target_commitish: ${{ needs.Config.outputs.release-sha }}
           tag_name: ${{ needs.Config.outputs.release-name }}
