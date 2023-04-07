@@ -85,7 +85,7 @@ jobs:
           tag_name: ${{ needs.Config.outputs.release-name }}
           files: deps-try.jar
       - name: Release stable
-        # if: "${{ needs.Config.outputs.stable }}"
+        if: "${{ needs.Config.outputs.stable }}"
         uses: softprops/action-gh-release@v1
         with:
           body: |
