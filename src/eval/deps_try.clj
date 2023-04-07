@@ -55,7 +55,7 @@ user=> :deps/try dev.weavejester/medley
 "))
 
 (defn print-version []
-  (println (str/trim (slurp (io/resource "VERSION")))))
+  (println (str "deps-try " (str/trim (slurp (io/resource "VERSION"))))))
 
 (defn- print-usage? [args]
   (contains? #{"-h" "--help" "help"} (first args)))
