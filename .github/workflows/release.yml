@@ -19,7 +19,7 @@ jobs:
       version: ${{ steps.provided.outputs.version || steps.derived.outputs.version }}
       release-name: ${{ steps.provided.outputs.release-name || steps.derived.outputs.release-name }}
       release-sha: ${{ steps.provided.outputs.release-sha || steps.derived.outputs.release-sha }}
-      unstable: ${{ steps.derived.outputs.release-name == 'unstable' }}
+      stable: ${{ ! steps.provided.outputs.pre-release }}
       pre-release: ${{ steps.provided.outputs.pre-release || steps.derived.outputs.pre-release }}
     steps:
       - name: Check out repository code
@@ -73,7 +73,7 @@ jobs:
         with:
           name: deps-try-latest.jar
           path: deps-try.jar
-      - name: Release
+      - name: Release tag or unstable
         uses: softprops/action-gh-release@v1
         with:
           body: |
@@ -81,6 +81,17 @@ jobs:
             - SHA: ${{ needs.Config.outputs.release-sha }}
           prerelease: ${{ needs.Config.outputs.pre-release }}
           name: ${{ needs.Config.outputs.release-name }}
-          target_commitish: ${{ needs.Config.outputs.release-sha }}
+          target_commitish: 55863dbc940e0741b9d9b3a1b11fdbadd08e8bb5 # first commit
           tag_name: ${{ needs.Config.outputs.release-name }}
+          files: deps-try.jar
+      - name: Release stable
+        # if: "${{ needs.Config.outputs.stable }}"
+        uses: softprops/action-gh-release@v1
+        with:
+          body: |
+            - version: ${{ needs.Config.outputs.version }}
+            - SHA: ${{ needs.Config.outputs.release-sha }}
+          name: stable
+          target_commitish: 55863dbc940e0741b9d9b3a1b11fdbadd08e8bb5 # first commit
+          tag_name: stable
           files: deps-try.jar

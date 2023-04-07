@@ -2,6 +2,8 @@
 
 ## v0.3.7 (Unreleased)
 
+- Add version-flag
+
 ## v0.3.6 (2023-04-04)
 
 - Prevent gap between footer and bottom of window with display-less.
