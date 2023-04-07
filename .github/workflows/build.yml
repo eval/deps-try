@@ -12,23 +12,33 @@ on:
       - build-jar
 
 jobs:
+  Config:
+    # version (v1.2.3, v1.2.3-9-adfh), release-name (unstable, stable, v1.2.3)
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      release-name: "unstable"
+    steps:
+      - name: Version
+        id: version
+        run: echo "version=$(git describe --tags)" >> $GITHUB_OUTPUT
   Build:
+    needs: [Config]
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Set current version
-        id: version
-        run: echo "git_version=$(git describe --tags)" >> $GITHUB_OUTPUT
+      #- name: Set current version
+      #  id: version
+      #  run: echo "git_version=$(git describe --tags)" >> $GITHUB_OUTPUT
       - name: Install clojure tools
         uses: DeLaGuardo/setup-clojure@9.4
         with:
           bb: latest
       - name: Update VERSION
         # run: git describe --tags > VERSION
-        run: echo "${{ steps.version.outputs.git_version }}" > VERSION
+        run: echo "${{ needs.Config.outputs.version }}" > VERSION
       - name: Build uberjar
         run: bb uberjar deps-try.jar -m eval.deps-try
       - name: Testrun uberjar
@@ -41,11 +51,10 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           body: >
-            **This release exists only to have a stable download link**
-
-            SHA: ${{ steps.version.outputs.git_version }}
+            version: ${{ needs.Config.outputs.version }}
+            SHA: ${{ github.sha }}
           prerelease: true
-          name: unstable
+          name: ${{ needs.Config.outputs.release-name }}
           target_commitish: 55863dbc940e0741b9d9b3a1b11fdbadd08e8bb5 # first commit
-          tag_name: unstable
+          tag_name: ${{ needs.Config.outputs.release-name }}
           files: deps-try.jar
