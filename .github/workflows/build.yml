@@ -1,0 +1,27 @@
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g. v1.2.3, v1.2.3-beta.1)'
+        type: string
+        required: true
+  push:
+    branches:
+      - master
+      - build-jar
+
+jobs:
+  Build:
+    runs-on: self-hosted
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: Install clojure tools
+        uses: DeLaGuardo/setup-clojure@9.4
+        with:
+          bb: latest
+      - run: bb uberjar deps-try.jar -m eval.deps-try
+      - uses: actions/upload-artifact@v1
+        with:
+          name: deps-try-latest.jar
+          path: deps-try.jar
