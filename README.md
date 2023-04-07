@@ -31,62 +31,73 @@ Quickly try out Clojure dependencies on [rebel-readline](https://github.com/bhau
 
 ## Installation
 
-### Prerequisites
+### Homebrew (Linux and macOS)
 
-- [Clojure](https://clojure.org/guides/install_clojure)
-- [babashka](https://github.com/babashka/babashka#installation)
-- [bbin](https://github.com/babashka/bbin#installation)
+#### Prerequisites
 
-<details><summary>What's all this...?</summary><p>
-
-Yes, I'm aware this list might be a bit intimidating for newcomers. But bear with me!  
-Let's go over the items and see why we need them, and why it's worth to install these tools (even if you stop `deps-try`-ing):
-
-### Clojure
-
-Well, there's no way around this: we'll be running the official Clojure REPL on the JVM.
-
-It's not super convenient to start a regular Clojure REPL with dependencies loaded (nor does it allow for adding dependencies during a REPL session).  
-`deps-try` tries to solve this, and it does this with the help of...
-
-### Babashka
-
-[Babashka](https://babashka.org/) ("the fast native Clojure scripting runtime") is _the way_ to write scripts in Clojure: it's fast (something that JVM Clojure is not particularly known for...), self-contained (no JVM needed) and comes with batteries included for typical scripts.
-
-Basbashka's main role in `deps-try` is to turn the dependencies you pass it into the right format and start the JVM Clojure REPL.
-
-### bbin
-
-`bbin` allows for easy installation of Basbashka scripts (from existing places like Git, Maven, filesystem etc.).
-
-This is how `deps-try` gets on your `$PATH`.
-
-Hope that clears things up!
-
----
-</p></details>
+Ensure you have a [Clojure compatible Java version](https://clojure.org/guides/install_clojure#java).
 
 Verify that the following commands work:
 
 ``` bash
-$ clojure --version
-# => prints e.g. 'Clojure CLI version 1.11.1.1267'
-$ bbin --version
-# => prints e.g. 'bbin 0.1.12'
+$ java -version
+# example output
+openjdk version "17.0.2" 2022-01-18
+OpenJDK Runtime Environment Temurin-17.0.2+8 (build 17.0.2+8)
+OpenJDK 64-Bit Server VM Temurin-17.0.2+8 (build 17.0.2+8, mixed mode)
 ```
 
-### Install deps-try
-
-To install the most recent tag:
+#### Install
 
 ``` bash
-$ bbin install io.github.eval/deps-try
-
-# (For future reference) see what bbin scripts are installed
-$ bbin ls
+$ brew install eval/brew/deps-try
+# For future upgrades do:
+$ brew upgrade deps-try
 ```
 
-To upgrade: rerun the install command.
+There's also the unstable releases (the latest master):
+``` bash
+$ brew install --head eval/brew/deps-try
+# For future upgrades do:
+$ brew reinstall deps-try
+```
+
+### bbin (Windows, Linux and macOS)
+
+[bbin](https://github.com/babashka/bbin) allows for easy installation of Babashka scripts (such as deps-try).
+
+It's currently the only way to install deps-try on Windows.
+
+#### Prerequisites
+
+Ensure you have a [Clojure compatible Java version](https://clojure.org/guides/install_clojure#java).
+
+Also: [install bbin](https://github.com/babashka/bbin#installation) (make sure to adjust $PATH).
+
+Verify that the following commands work:
+
+``` bash
+$ java -version
+# example output
+openjdk version "17.0.2" 2022-01-18
+OpenJDK Runtime Environment Temurin-17.0.2+8 (build 17.0.2+8)
+OpenJDK 64-Bit Server VM Temurin-17.0.2+8 (build 17.0.2+8, mixed mode)
+$ bbin --version
+# example output
+bbin 0.1.12
+```
+
+#### Installation
+
+``` bash
+$ bbin install https://github.com/eval/deps-try/releases/download/stable/deps-try.jar
+
+# Check version
+$ deps-try -v
+
+# For future upgrades re-run the install:
+$ bbin install https://github.com/eval/deps-try/releases/download/stable/deps-try.jar
+```
 
 ## Usage
 
