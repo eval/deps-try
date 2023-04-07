@@ -20,6 +20,8 @@ jobs:
         uses: DeLaGuardo/setup-clojure@9.4
         with:
           bb: latest
+      - name: Update VERSION
+        run: git describe --tags > VERSION
       - name: Build uberjar
         run: bb uberjar deps-try.jar -m eval.deps-try
       - name: Testrun uberjar
@@ -28,3 +30,11 @@ jobs:
         with:
           name: deps-try-latest.jar
           path: deps-try.jar
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        # if: startsWith(github.ref, 'refs/tags/')
+        with:
+          prerelease: true
+          name: nightly
+          tag_name: nightly
+          files: deps-try.jar
