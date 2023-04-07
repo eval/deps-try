@@ -69,9 +69,8 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           body: >
-            version: ${{ needs.Config.outputs.version }}
-
-            SHA: ${{ needs.Config.outputs.release-sha }}
+            - version: ${{ needs.Config.outputs.version }}
+            - SHA: ${{ needs.Config.outputs.release-sha }}
           prerelease: true
           name: ${{ needs.Config.outputs.release-name }}
           target_commitish: ${{ needs.Config.outputs.release-sha }}
