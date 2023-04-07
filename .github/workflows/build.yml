@@ -38,5 +38,6 @@ jobs:
         with:
           prerelease: true
           name: nightly
+          target_commitish: ${{ github.sha }}
           tag_name: nightly
           files: deps-try.jar
