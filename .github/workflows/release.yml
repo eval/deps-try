@@ -30,11 +30,11 @@ jobs:
         if: "${{ inputs.version != '' }}"
         id: provided
         run: |
-          if ! echo "${{ inputs.version }}" | grep -qE '^v[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+(-pre\.[[:digit:]]+)?$'
+          if ! echo "${{ inputs.version }}" | grep -qE '^v[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+(-pre\.[[:digit:]]+)?$'; then
             echo "::error::The supplied version (${{ inputs.version }}) is not a valid version string."
             exit 1
           fi
-          if echo "${{ inputs.version }}" | grep -qE '^v[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+-pre\.[[:digit:]]+$'
+          if echo "${{ inputs.version }}" | grep -qE '^v[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+-pre\.[[:digit:]]+$'; then
             echo "pre-release=${{ true }}" >> $GITHUB_OUTPUT
           else
             echo "pre-release=${{ false }}" >> $GITHUB_OUTPUT
