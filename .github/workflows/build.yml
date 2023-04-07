@@ -19,6 +19,10 @@ jobs:
       version: ${{ steps.version.outputs.version }}
       release-name: "unstable"
     steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - name: Version
         id: version
         run: echo "version=$(git describe --tags)" >> $GITHUB_OUTPUT
