@@ -20,7 +20,7 @@ jobs:
       tagged-release: ${{ steps.provided.outputs.version && true }}
       version: ${{ steps.provided.outputs.version || steps.derived.outputs.version }}
       release-name: ${{ steps.provided.outputs.release-name || steps.derived.outputs.release-name }}
-      stable: ${{ steps.provided.outputs.version && steps.provided.outputs.pre-release == 'false' }}
+      stable: ${{ steps.provided.outputs.stable }}
       pre-release: ${{ steps.provided.outputs.pre-release || steps.derived.outputs.pre-release }}
     steps:
       - name: Check out repository code
@@ -39,6 +39,7 @@ jobs:
             echo "pre-release=true" >> $GITHUB_OUTPUT
           else
             echo "pre-release=false" >> $GITHUB_OUTPUT
+            echo "stable=true" >> $GITHUB_OUTPUT
           fi
           echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
           echo "release-name=${{ inputs.version }}" >> $GITHUB_OUTPUT
