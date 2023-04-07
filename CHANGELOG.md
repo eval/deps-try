@@ -1,6 +1,8 @@
 # Changelog
 
-## v0.3.6 (Unreleased)
+## v0.3.7 (Unreleased)
+
+## v0.3.6 (2023-04-04)
 
 - Prevent gap between footer and bottom of window with display-less.
 - Upgrade babashka/fs, org.babashka/http-client.

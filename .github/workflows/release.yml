@@ -1,0 +1,86 @@
+name: Release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g. v1.2.3, v1.2.3-pre.1)'
+        type: string
+        required: true
+  push:
+    branches:
+      - master
+      - build-jar
+
+jobs:
+  Config:
+    runs-on: ubuntu-latest
+    # version (v1.2.3, v1.2.3-9-adfh), release-name (unstable, stable, v1.2.3)
+    outputs:
+      version: ${{ steps.provided.outputs.version || steps.derived.outputs.version }}
+      release-name: ${{ steps.provided.outputs.release-name || steps.derived.outputs.release-name }}
+      release-sha: ${{ steps.provided.outputs.release-sha || steps.derived.outputs.release-sha }}
+      unstable: ${{ steps.derived.outputs.release-name == 'unstable' }}
+      pre-release: ${{ steps.provided.outputs.pre-release || steps.derived.outputs.pre-release }}
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Validate provided version
+        if: "${{ inputs.version != '' }}"
+        id: provided
+        run: |
+          if ! echo "${{ inputs.version }}" | grep -qE '^v[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+(-pre\.[[:digit:]]+)?$'
+            echo "::error::The supplied version (${{ inputs.version }}) is not a valid version string."
+            exit 1
+          fi
+          if echo "${{ inputs.version }}" | grep -qE '^v[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+-pre\.[[:digit:]]+$'
+            echo "pre-release=${{ true }}" >> $GITHUB_OUTPUT
+          else
+            echo "pre-release=${{ false }}" >> $GITHUB_OUTPUT
+          fi
+          echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
+          echo "release-name=${{ inputs.version }}" >> $GITHUB_OUTPUT
+          echo "release-sha=${{ github.sha }}" >> $GITHUB_OUTPUT
+      - name: Derive version
+        if: "${{ inputs.version == '' }}"
+        id: derived
+        run: |
+          echo "version=$(git describe --tags)" >> $GITHUB_OUTPUT
+          echo "release-name=unstable" >> $GITHUB_OUTPUT
+          # take sha of first commit
+          echo "release-sha=${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "pre-release=${{ true }}" >> $GITHUB_OUTPUT
+  Build:
+    needs: [Config]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Install clojure tools
+        uses: DeLaGuardo/setup-clojure@9.4
+        with:
+          bb: latest
+      - name: Update VERSION
+        run: echo "${{ needs.Config.outputs.version }}" > VERSION
+      - name: Build uberjar
+        run: bb uberjar deps-try.jar -m eval.deps-try
+      - name: Testrun uberjar
+        run: bb deps-try.jar -h
+      - uses: actions/upload-artifact@v3
+        with:
+          name: deps-try-latest.jar
+          path: deps-try.jar
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body: |
+            - version: ${{ needs.Config.outputs.version }}
+            - SHA: ${{ needs.Config.outputs.release-sha }}
+          prerelease: ${{ needs.Config.outputs.pre-release }}
+          name: ${{ needs.Config.outputs.release-name }}
+          target_commitish: ${{ needs.Config.outputs.release-sha }}
+          tag_name: ${{ needs.Config.outputs.release-name }}
+          files: deps-try.jar

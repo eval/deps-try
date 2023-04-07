@@ -4,7 +4,8 @@
    [babashka.classpath :as cp :refer [get-classpath]]
    [babashka.deps :as deps]
    [babashka.process :as p]
-   [clojure.string :as str]))
+   [clojure.string :as str]
+   [clojure.java.io :as io]))
 
 (def init-cp (get-classpath))
 
@@ -53,24 +54,32 @@ user=> :repl/help
 user=> :deps/try dev.weavejester/medley
 "))
 
+(defn print-version []
+  (println (str/trim (slurp (io/resource "VERSION")))))
+
 (defn- print-usage? [args]
   (contains? #{"-h" "--help" "help"} (first args)))
+
+(defn- print-version? [args]
+  (contains? #{"-v" "--version" "version"} (first args)))
 
 (defn- invalid-args? [args]
   (when-let [[some-dep] (not-empty args)]
     (not (re-seq #"/" some-dep))))
 
 (defn -main [& args]
-  (if (or (print-usage? args) (invalid-args? args))
-    (print-usage)
-    (fs/with-temp-dir [tmp {}]
-      (let [verbose-output (with-out-str (deps/clojure {:dir (str tmp)} "-Sverbose" "-Spath"))
-            cp-file        (parse-cp-file verbose-output)
-            basis-file     (str/replace cp-file #".cp$" ".basis")
-            requested-deps (try-deps/parse-dep-args args)
-            default-cp     (deps->cp tmp '{org.clojure/clojure {:mvn/version "RELEASE"}})
-            requested-cp   (deps->cp tmp requested-deps)
-            classpath      (str default-cp fs/path-separator init-cp fs/path-separator requested-cp)]
-        (p/exec "java" "-classpath" classpath
-                (str "-Dclojure.basis=" basis-file)
-                "clojure.main" "-m" "eval.deps-try.try")))))
+  (if (print-version? args)
+    (print-version)
+    (if (or (print-usage? args) (invalid-args? args))
+      (print-usage)
+      (fs/with-temp-dir [tmp {}]
+        (let [verbose-output (with-out-str (deps/clojure {:dir (str tmp)} "-Sverbose" "-Spath"))
+              cp-file        (parse-cp-file verbose-output)
+              basis-file     (str/replace cp-file #".cp$" ".basis")
+              requested-deps (try-deps/parse-dep-args args)
+              default-cp     (deps->cp tmp '{org.clojure/clojure {:mvn/version "RELEASE"}})
+              requested-cp   (deps->cp tmp requested-deps)
+              classpath      (str default-cp fs/path-separator init-cp fs/path-separator requested-cp)]
+          (p/exec "java" "-classpath" classpath
+                  (str "-Dclojure.basis=" basis-file)
+                  "clojure.main" "-m" "eval.deps-try.try"))))))
