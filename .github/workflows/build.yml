@@ -49,7 +49,7 @@ jobs:
           echo "version=$(git describe --tags)" >> $GITHUB_OUTPUT
           echo "release-name=unstable" >> $GITHUB_OUTPUT
           # take sha of first commit
-          echo "release-sha=55863dbc940e0741b9d9b3a1b11fdbadd08e8bb5" >> $GITHUB_OUTPUT
+          echo "release-sha=${{ github.sha }}" >> $GITHUB_OUTPUT
           echo "pre-release=${{ true }}" >> $GITHUB_OUTPUT
   Build:
     needs: [Config]
