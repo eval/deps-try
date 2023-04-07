@@ -19,12 +19,16 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+      - name: Set current version
+        id: version
+        run: echo "git_version=$(git describe --tags)" >> $GITHUB_OUTPUT
       - name: Install clojure tools
         uses: DeLaGuardo/setup-clojure@9.4
         with:
           bb: latest
       - name: Update VERSION
-        run: git describe --tags > VERSION
+        # run: git describe --tags > VERSION
+        run: echo "${{ steps.version.outputs.git_version }}" > VERSION
       - name: Build uberjar
         run: bb uberjar deps-try.jar -m eval.deps-try
       - name: Testrun uberjar
@@ -36,10 +40,12 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          body: '**This release exists only to have a stable download link**'
+          body: >
+            **This release exists only to have a stable download link**
+
+            SHA: ${{ steps.version.outputs.git_version }}
           prerelease: true
-          name: nightly
-          target_commitish: ${{ github.sha }}
-          #tag_name: nightly
+          name: unstable
+          target_commitish: 55863dbc940e0741b9d9b3a1b11fdbadd08e8bb5 # first commit
+          tag_name: unstable
           files: deps-try.jar
-          draft: true
