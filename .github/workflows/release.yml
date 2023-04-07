@@ -20,7 +20,7 @@ jobs:
       tagged-release: ${{ steps.provided.outputs.version && true }}
       version: ${{ steps.provided.outputs.version || steps.derived.outputs.version }}
       release-name: ${{ steps.provided.outputs.release-name || steps.derived.outputs.release-name }}
-      stable: ${{ steps.provided.outputs.version && ! steps.provided.outputs.pre-release }}
+      stable: ${{ steps.provided.outputs.version && !steps.provided.outputs.pre-release }}
       pre-release: ${{ steps.provided.outputs.pre-release || steps.derived.outputs.pre-release }}
     steps:
       - name: Check out repository code
@@ -87,7 +87,7 @@ jobs:
           tag_name: stable
           files: deps-try.jar
       - name: Release unstable
-        if: "${{ ! needs.Config.outputs.stable }}"
+        if: "${{ !needs.Config.outputs.stable }}"
         uses: softprops/action-gh-release@v1
         with:
           body: |
