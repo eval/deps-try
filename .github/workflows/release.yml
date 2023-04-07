@@ -19,7 +19,7 @@ jobs:
       version: ${{ steps.provided.outputs.version || steps.derived.outputs.version }}
       release-name: ${{ steps.provided.outputs.release-name || steps.derived.outputs.release-name }}
       release-sha: ${{ steps.provided.outputs.release-sha || steps.derived.outputs.release-sha }}
-      stable: ${{ ! steps.provided.outputs.pre-release }}
+      stable: ${{ steps.provided.outputs.version && ! steps.provided.outputs.pre-release }}
       pre-release: ${{ steps.provided.outputs.pre-release || steps.derived.outputs.pre-release }}
     steps:
       - name: Check out repository code
