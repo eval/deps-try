@@ -20,7 +20,7 @@ jobs:
       release-name: ${{ steps.provided.outputs.release-name || steps.derived.outputs.release-name }}
       release-sha: ${{ steps.provided.outputs.release-sha || steps.derived.outputs.release-sha }}
       unstable: ${{ steps.derived.outputs.release-name == 'unstable' }}
-      pre-release: ${{ fromJSON(steps.provided.outputs.pre-release) || fromJSON(steps.derived.outputs.pre-release) }}
+      pre-release: ${{ steps.provided.outputs.pre-release || steps.derived.outputs.pre-release }}
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
@@ -35,9 +35,9 @@ jobs:
             exit 1
           fi
           if echo "${{ inputs.version }}" | grep -qE '^v[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+-pre\.[[:digit:]]+$'
-            echo "pre-release=${{ toJSON(true) }}" >> $GITHUB_OUTPUT
+            echo "pre-release=${{ true }}" >> $GITHUB_OUTPUT
           else
-            echo "pre-release=${{ toJSON(false) }}" >> $GITHUB_OUTPUT
+            echo "pre-release=${{ false }}" >> $GITHUB_OUTPUT
           fi
           echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
           echo "release-name=${{ inputs.version }}" >> $GITHUB_OUTPUT
@@ -50,7 +50,7 @@ jobs:
           echo "release-name=unstable" >> $GITHUB_OUTPUT
           # take sha of first commit
           echo "release-sha=55863dbc940e0741b9d9b3a1b11fdbadd08e8bb5" >> $GITHUB_OUTPUT
-          echo "pre-release=${{ 'true' }}" >> $GITHUB_OUTPUT
+          echo "pre-release=${{ false }}" >> $GITHUB_OUTPUT
   Build:
     needs: [Config]
     runs-on: ubuntu-latest
