@@ -19,6 +19,8 @@ jobs:
       version: ${{ steps.provided.outputs.version || steps.derived.outputs.version }}
       release-name: ${{ steps.provided.outputs.release-name || steps.derived.outputs.release-name }}
       release-sha: ${{ steps.provided.outputs.release-sha || steps.derived.outputs.release-sha }}
+      unstable: ${{ steps.derived.outputs.release-name == "unstable" }}
+      pre-release: ${{ steps.provided.outputs.pre-release == 'true' || steps.derived.outputs.pre-relase == 'true' }}
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
@@ -32,6 +34,9 @@ jobs:
             echo "::error::The supplied version (${{ inputs.version }}) is not a valid version string."
             exit 1
           fi
+          if echo "${{ inputs.version }}" | grep -qE '^v[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+-pre\.[[:digit:]]+$'
+            echo "pre-release=true" >> $GITHUB_OUTPUT
+          fi
           echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
           echo "release-name=${{ inputs.version }}" >> $GITHUB_OUTPUT
           echo "release-sha=${{ github.sha }}" >> $GITHUB_OUTPUT
@@ -43,6 +48,7 @@ jobs:
           echo "release-name=unstable" >> $GITHUB_OUTPUT
           # take sha of first commit
           echo "release-sha=55863dbc940e0741b9d9b3a1b11fdbadd08e8bb5" >> $GITHUB_OUTPUT
+          echo "pre-release=true" >> $GITHUB_OUTPUT
   Build:
     needs: [Config]
     runs-on: ubuntu-latest
@@ -71,7 +77,7 @@ jobs:
           body: >
             - version: ${{ needs.Config.outputs.version }}
             - SHA: ${{ needs.Config.outputs.release-sha }}
-          prerelease: true
+          prerelease: ${{ needs.Config.outputs.pre-relase }}
           name: ${{ needs.Config.outputs.release-name }}
           target_commitish: ${{ needs.Config.outputs.release-sha }}
           tag_name: ${{ needs.Config.outputs.release-name }}
