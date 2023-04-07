@@ -20,8 +20,11 @@ jobs:
         uses: DeLaGuardo/setup-clojure@9.4
         with:
           bb: latest
-      - run: bb uberjar deps-try.jar -m eval.deps-try
-      - uses: actions/upload-artifact@v1
+      - name: Build uberjar
+        run: bb uberjar deps-try.jar -m eval.deps-try
+      - name: Testrun uberjar
+        run: bb deps-try.jar -h
+      - uses: actions/upload-artifact@v3
         with:
           name: deps-try-latest.jar
           path: deps-try.jar
