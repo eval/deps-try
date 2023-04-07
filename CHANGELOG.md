@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.4.7 (Unreleased)
+## v0.3.7 (Unreleased)
 
 ## v0.3.6 (2023-04-04)
 

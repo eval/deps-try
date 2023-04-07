@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to release (e.g. v1.2.3, v1.2.3-beta.1)'
+        description: 'Version to release (e.g. v1.2.3, v1.2.3-pre.1)'
         type: string
         required: true
   push:
@@ -16,16 +16,33 @@ jobs:
     runs-on: ubuntu-latest
     # version (v1.2.3, v1.2.3-9-adfh), release-name (unstable, stable, v1.2.3)
     outputs:
-      version: ${{ steps.version.outputs.version }}
-      release-name: "unstable"
+      version: ${{ steps.provided.outputs.version || steps.derived.outputs.version }}
+      release-name: ${{ steps.provided.outputs.release-name || steps.derived.outputs.release-name }}
+      release-sha: ${{ steps.provided.outputs.release-sha || steps.derived.outputs.release-sha }}
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Version
-        id: version
-        run: echo "version=$(git describe --tags)" >> $GITHUB_OUTPUT
+      - name: Validate provided version
+        if: "${{ inputs.version != '' }}"
+        id: provided
+        run: |
+          if ! echo "${{ inputs.version }}" | grep -qE '^v[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+(-pre\.[[:digit:]]+)?$'
+            echo "::error::The supplied version (${{ inputs.version }}) is not a valid version string."
+            exit 1
+          fi
+          echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
+          echo "release-name=${{ inputs.version }}" >> $GITHUB_OUTPUT
+          echo "release-sha=${{ github.sha }}" >> $GITHUB_OUTPUT
+      - name: Derive version
+        if: "${{ inputs.version == '' }}"
+        id: derived
+        run: |
+          echo "version=$(git describe --tags)" >> $GITHUB_OUTPUT
+          echo "release-name=unstable" >> $GITHUB_OUTPUT
+          # take sha of first commit
+          echo "release-sha=55863dbc940e0741b9d9b3a1b11fdbadd08e8bb5" >> $GITHUB_OUTPUT
   Build:
     needs: [Config]
     runs-on: ubuntu-latest
@@ -34,15 +51,11 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      #- name: Set current version
-      #  id: version
-      #  run: echo "git_version=$(git describe --tags)" >> $GITHUB_OUTPUT
       - name: Install clojure tools
         uses: DeLaGuardo/setup-clojure@9.4
         with:
           bb: latest
       - name: Update VERSION
-        # run: git describe --tags > VERSION
         run: echo "${{ needs.Config.outputs.version }}" > VERSION
       - name: Build uberjar
         run: bb uberjar deps-try.jar -m eval.deps-try
@@ -57,9 +70,10 @@ jobs:
         with:
           body: >
             version: ${{ needs.Config.outputs.version }}
-            SHA: ${{ github.sha }}
+
+            SHA: ${{ needs.Config.outputs.release-sha }}
           prerelease: true
           name: ${{ needs.Config.outputs.release-name }}
-          target_commitish: 55863dbc940e0741b9d9b3a1b11fdbadd08e8bb5 # first commit
+          target_commitish: ${{ needs.Config.outputs.release-sha }}
           tag_name: ${{ needs.Config.outputs.release-name }}
           files: deps-try.jar
