@@ -20,7 +20,7 @@ jobs:
       tagged-release: ${{ steps.provided.outputs.version && true }}
       version: ${{ steps.provided.outputs.version || steps.derived.outputs.version }}
       release-name: ${{ steps.provided.outputs.release-name || steps.derived.outputs.release-name }}
-      stable: ${{ steps.provided.outputs.version && !steps.provided.outputs.pre-release }}
+      stable: ${{ steps.provided.outputs.version && steps.provided.outputs.pre-release == false }}
       pre-release: ${{ steps.provided.outputs.pre-release || steps.derived.outputs.pre-release }}
     steps:
       - name: Check out repository code
