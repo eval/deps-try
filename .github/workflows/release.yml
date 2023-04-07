@@ -35,7 +35,7 @@ jobs:
             exit 1
           fi
           if echo "${{ inputs.version }}" | grep -qE '^v[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+-pre\.[[:digit:]]+$'; then
-            echo "pre-release=${{ false }}" >> $GITHUB_OUTPUT
+            echo "pre-release=${{ true }}" >> $GITHUB_OUTPUT
           else
             echo "pre-release=${{ false }}" >> $GITHUB_OUTPUT
           fi
