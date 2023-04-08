@@ -67,13 +67,9 @@ jobs:
       - name: Update VERSION
         run: echo "${{ needs.Config.outputs.version }}" > VERSION
       - name: Build uberjar
-        run: bb uberjar deps-try.jar -m eval.deps-try
+        run: bb uberjar deps-try-bb.jar -m eval.deps-try
       - name: Testrun uberjar
-        run: bb deps-try.jar -h
-      - uses: actions/upload-artifact@v3
-        with:
-          name: deps-try-latest.jar
-          path: deps-try.jar
+        run: bb deps-try-bb.jar -h
       - name: Release stable
         if: "${{ needs.Config.outputs.stable }}"
         uses: softprops/action-gh-release@v1
@@ -81,11 +77,12 @@ jobs:
           body: |
             - version: ${{ needs.Config.outputs.version }}
             - SHA: ${{ github.sha }}
+            - Run with babashka: `bb deps-try-bb.jar`
           prerelease: false
           name: stable
           target_commitish: 55863dbc940e0741b9d9b3a1b11fdbadd08e8bb5 # first commit
           tag_name: stable
-          files: deps-try.jar
+          files: deps-try-bb.jar
       - name: Release unstable
         if: ${{ always() }}
         uses: softprops/action-gh-release@v1
@@ -93,11 +90,12 @@ jobs:
           body: |
             - version: ${{ needs.Config.outputs.version }}
             - SHA: ${{ github.sha }}
+            - Run with babashka: `bb deps-try-bb.jar`
           prerelease: true
           name: unstable
           target_commitish: 55863dbc940e0741b9d9b3a1b11fdbadd08e8bb5 # first commit
           tag_name: unstable
-          files: deps-try.jar
+          files: deps-try-bb.jar
       - name: Tagged release
         if: "${{ needs.Config.outputs.tagged-release }}"
         uses: softprops/action-gh-release@v1
@@ -105,8 +103,9 @@ jobs:
           body: |
             - version: ${{ needs.Config.outputs.version }}
             - SHA: ${{ github.sha }}
+            - Run with babashka: `bb deps-try-bb.jar`
           prerelease: ${{ needs.Config.outputs.pre-release }}
           name: ${{ needs.Config.outputs.release-name }}
           target_commitish: ${{ github.sha }}
           tag_name: ${{ needs.Config.outputs.release-name }}
-          files: deps-try.jar
+          files: deps-try-bb.jar
