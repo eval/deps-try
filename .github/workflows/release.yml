@@ -66,6 +66,8 @@ jobs:
           bb: latest
       - name: Update VERSION
         run: echo "${{ needs.Config.outputs.version }}" > VERSION
+      - name: Zip it
+        run: zip -r deps-try.zip . -x ".git/*"
       - name: Build uberjar
         run: bb uberjar deps-try-bb.jar -m eval.deps-try
       - name: Testrun uberjar
@@ -82,7 +84,9 @@ jobs:
           name: stable
           target_commitish: 55863dbc940e0741b9d9b3a1b11fdbadd08e8bb5 # first commit
           tag_name: stable
-          files: deps-try-bb.jar
+          files:
+            - deps-try-bb.jar
+            - deps-try.zip
       - name: Release unstable
         if: ${{ always() }}
         uses: softprops/action-gh-release@v1
@@ -95,7 +99,9 @@ jobs:
           name: unstable
           target_commitish: 55863dbc940e0741b9d9b3a1b11fdbadd08e8bb5 # first commit
           tag_name: unstable
-          files: deps-try-bb.jar
+          files:
+            - deps-try-bb.jar
+            - deps-try.zip
       - name: Tagged release
         if: "${{ needs.Config.outputs.tagged-release }}"
         uses: softprops/action-gh-release@v1
@@ -108,4 +114,6 @@ jobs:
           name: ${{ needs.Config.outputs.release-name }}
           target_commitish: ${{ github.sha }}
           tag_name: ${{ needs.Config.outputs.release-name }}
-          files: deps-try-bb.jar
+          files:
+            - deps-try-bb.jar
+            - deps-try.zip
