@@ -54,8 +54,16 @@ user=> :repl/help
 user=> :deps/try dev.weavejester/medley
 "))
 
+
+
 (defn print-version []
-  (println (str "deps-try " (str/trim (slurp (io/resource "VERSION"))))))
+  (let [dev?    (nil? (io/resource "VERSION"))
+        bin     (if dev? "deps-try-dev" "deps-try")
+        version (str/trim
+                 (if dev?
+                   (:out (p/sh {} "git" "describe" "--tags"))
+                   (slurp (io/resource "VERSION"))))]
+    (println (str bin " " version))))
 
 (defn- print-usage? [args]
   (contains? #{"-h" "--help" "help"} (first args)))
