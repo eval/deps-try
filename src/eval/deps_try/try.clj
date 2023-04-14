@@ -1,6 +1,5 @@
 (ns eval.deps-try.try
-  (:require #_[clojure.tools.deps.alpha.repl :as deps-repl]
-            [clojure.main]
+  (:require [clojure.main]
             [clojure.pprint :as pp]
             [clojure.repl :as clj-repl]
             [eval.deps-try.deps :as try-deps]
@@ -21,8 +20,7 @@
 
 (defmethod rebel-readline/command :deps/try [[_ & args]]
   (if (seq args)
-    ((requiring-resolve 'clojure.tools.deps.alpha.repl/add-libs)
-     (try-deps/parse-dep-args (map str args)))
+    ((requiring-resolve 'clojure.repl.deps/add-libs) (try-deps/parse-dep-args (map str args)))
     (println "Usage: `:deps/try tick/tick 0.5.0 https://github.com/user/project`")))
 
 
@@ -40,10 +38,6 @@
 
 (defmethod rebel-readline/command :clojure/toggle-print-namespace-maps [[_]]
   (set! clojure.core/*print-namespace-maps* (not clojure.core/*print-namespace-maps*)))
-
-
-(comment
-  ((requiring-resolve 'clojure.tools.deps.alpha.repl/add-libs) (try-deps/parse-dep-args '("tick/tick"))))
 
 
 ;; SOURCE https://github.com/bhauman/rebel-readline/issues/151#issuecomment-457631846

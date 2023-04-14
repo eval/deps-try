@@ -9,8 +9,6 @@
 
 (def init-cp (get-classpath))
 
-(deps/add-deps '{:deps {org.clojure/tools.gitlibs {:mvn/version "2.4.181"}}})
-
 (require '[eval.deps-try.deps :as try-deps]
          '[babashka.fs :as fs] :reload
          '[babashka.http-client] :reload) ;; reload so we use the dep, not the built-in
@@ -85,7 +83,7 @@ user=> :deps/try dev.weavejester/medley
               cp-file        (parse-cp-file verbose-output)
               basis-file     (str/replace cp-file #".cp$" ".basis")
               requested-deps (try-deps/parse-dep-args args)
-              default-cp     (deps->cp tmp '{org.clojure/clojure {:mvn/version "RELEASE"}})
+              default-cp     (deps->cp tmp '{org.clojure/clojure {:mvn/version "1.12.0-alpha2"}})
               requested-cp   (deps->cp tmp requested-deps)
               classpath      (str default-cp fs/path-separator init-cp fs/path-separator requested-cp)]
           (p/exec "java" "-classpath" classpath
