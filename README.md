@@ -52,14 +52,14 @@ OpenJDK 64-Bit Server VM Temurin-17.0.2+8 (build 17.0.2+8, mixed mode)
 ``` bash
 $ brew install eval/brew/deps-try
 # For future upgrades do:
-$ brew upgrade deps-try
+$ brew update && brew upgrade deps-try
 ```
 
 There's also the unstable releases (the latest master):
 ``` bash
 $ brew install --head eval/brew/deps-try
 # For future upgrades do:
-$ brew reinstall deps-try
+$ brew update && brew reinstall deps-try
 ```
 
 ### bbin (Windows, Linux and macOS)
@@ -95,8 +95,7 @@ $ bbin install https://github.com/eval/deps-try/releases/download/stable/deps-tr
 # Check version
 $ deps-try -v
 
-# For future upgrades re-run the install:
-$ bbin install https://github.com/eval/deps-try/releases/download/stable/deps-try.jar
+# Re-run the install command to upgrade
 ```
 
 ## Usage
