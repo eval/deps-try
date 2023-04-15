@@ -52,8 +52,6 @@ user=> :repl/help
 user=> :deps/try dev.weavejester/medley
 "))
 
-
-
 (defn print-version []
   (let [dev?    (nil? (io/resource "VERSION"))
         bin     (if dev? "deps-try-dev" "deps-try")
@@ -73,7 +71,35 @@ user=> :deps/try dev.weavejester/medley
   (when-let [[some-dep] (not-empty args)]
     (not (re-seq #"/" some-dep))))
 
+(def ^:private clojure-cli-version-re #"^(\d+)\.(\d+)\.(\d+)\.(\d+)$")
+
+(defn- clojure-cli-version []
+  (peek (str/split (str/trimr (:out (p/sh "clojure" "--version"))) #"\s+")))
+
+(defn- parse-clojure-cli-version [s]
+  (map parse-long (rest (re-find clojure-cli-version-re s))))
+
+(defn- at-least-version? [version-or-above version]
+  (let [[major1 minor1 patch1 build1] (parse-clojure-cli-version version-or-above)
+        [major2 minor2 patch2 build2] (parse-clojure-cli-version version)]
+    (or (< major1 major2)
+        (and (= major1 major2) (< minor1 minor2))
+        (and (= major1 major2) (= minor1 minor2) (< patch1 patch2))
+        (and (= major1 major2) (= minor1 minor2) (= patch1 patch2) (or (= build1 build2)
+                                                                       (< build1 build2))))))
+(defn- warn [m]
+  (let [no-color?        (or (System/getenv "NO_COLOR") (= "dumb" (System/getenv "TERM")))
+        maybe-color-wrap #(if-not no-color?
+                            (str "\033[1m" "\033[33m" % "\033[0m")
+                            (str "WARNING " %))]
+    (println (maybe-color-wrap m))))
+
+(defn- warn-unless-minimum-clojure-cli-version [minimum version]
+  (when-not (at-least-version? minimum version)
+    (warn (str "Adding libraries to this REPL-session via ':deps/try some/lib' won't work as it requires Clojure CLI version >= " minimum " (current: " version ")."))))
+
 (defn -main [& args]
+  (warn-unless-minimum-clojure-cli-version "1.11.1.1273" (clojure-cli-version))
   (if (print-version? args)
     (print-version)
     (if (or (print-usage? args) (invalid-args? args))
