@@ -90,9 +90,9 @@ user=> :deps/try dev.weavejester/medley
                                                                        (< build1 build2))))))
 (defn- warn [m]
   (let [no-color?        (or (System/getenv "NO_COLOR") (= "dumb" (System/getenv "TERM")))
-        maybe-color-wrap #(if-not no-color?
-                            (str "\033[1m" "\033[33m" % "\033[0m")
-                            (str "WARNING " %))]
+        maybe-color-wrap #(if no-color?
+                            (str "WARNING " %)
+                            (str "\033[1m" "\033[33m" % "\033[0m"))]
     (println (maybe-color-wrap m))))
 
 (defn- warn-unless-minimum-clojure-cli-version [minimum version]
