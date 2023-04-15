@@ -100,7 +100,6 @@ user=> :deps/try dev.weavejester/medley
     (warn (str "Adding libraries to this REPL-session via ':deps/try some/lib' won't work as it requires Clojure CLI version >= " minimum " (current: " version ")."))))
 
 (defn -main [& args]
-  (warn-unless-minimum-clojure-cli-version "1.11.1.1273" (clojure-cli-version))
   (if (print-version? args)
     (print-version)
     (if (or (print-usage? args) (invalid-args? args))
@@ -113,6 +112,7 @@ user=> :deps/try dev.weavejester/medley
               default-cp     (deps->cp tmp '{org.clojure/clojure {:mvn/version "1.12.0-alpha2"}})
               requested-cp   (deps->cp tmp requested-deps)
               classpath      (str default-cp fs/path-separator init-cp fs/path-separator requested-cp)]
+          (warn-unless-minimum-clojure-cli-version "1.11.1.1273" (clojure-cli-version))
           (p/exec "java" "-classpath" classpath
                   (str "-Dclojure.basis=" basis-file)
                   "clojure.main" "-m" "eval.deps-try.try"))))))
