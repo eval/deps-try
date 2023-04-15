@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.4.0 (2023-04-15)
+
+- Use Clojure v1.12.0-alpha2.
+- Drop tools-deps dependency and use clojure.repl.deps/add-libs.  
+  This shrunk the uberjar from 13.5MB to 2.2MB.  
+  **NOTE** adding libraries in the REPL-session (i.e. via the :deps/try command) now requires Clojure CLI version >= 1.11.1.1273.
+- Show warning for older versions of Clojure CLI.
+- Require cljfmt.core and compliment.core in background when starting REPL instead of at first use.
+
 ## v0.3.9 (2023-04-08)
 
 - Updated artifacts for homebrew.
