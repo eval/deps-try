@@ -4,8 +4,8 @@
    [babashka.classpath :as cp :refer [get-classpath]]
    [babashka.deps :as deps]
    [babashka.process :as p]
-   [clojure.string :as str]
-   [clojure.java.io :as io]))
+   [clojure.java.io :as io]
+   [clojure.string :as str]))
 
 (def init-cp (get-classpath))
 
@@ -57,7 +57,8 @@ user=> :deps/try dev.weavejester/medley
         bin     (if dev? "deps-try-dev" "deps-try")
         version (str/trim
                  (if dev?
-                   (:out (p/sh {} "git" "describe" "--tags"))
+                   (let [git-dir (fs/file (io/resource ".git"))]
+                     (:out (p/sh {} "git" "--git-dir" (str git-dir) "describe" "--tags")))
                    (slurp (io/resource "VERSION"))))]
     (println (str bin " " version))))
 
