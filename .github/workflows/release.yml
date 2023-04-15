@@ -65,7 +65,7 @@ jobs:
         with:
           bb: latest
       - name: Update VERSION
-        run: echo "${{ needs.Config.outputs.version }}" > VERSION
+        run: echo "${{ needs.Config.outputs.version }}" > resources/VERSION
       - name: Zip it
         run: zip -r deps-try.zip . -x ".git/*"
       - name: Build uberjar

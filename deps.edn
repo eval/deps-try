@@ -1,4 +1,4 @@
-{:paths ["src" "."]
+{:paths ["src"]
  :deps  {org.slf4j/slf4j-nop        {:mvn/version "2.0.5"} ;; suppress logging
          com.bhauman/rebel-readline {:local/root "./vendor/rebel-readline/rebel-readline"}
          org.clojure/tools.gitlibs  {:mvn/version "2.5.190"}
