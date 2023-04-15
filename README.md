@@ -145,9 +145,14 @@ user=> :deps/try dev.weavejester/medley
 | <kbd>Esc</kbd> + <kbd>Return</kbd> | Insert newline (where <kbd>Return</kbd> would otherwise submit line). | ![deps-try-insert-newline](https://user-images.githubusercontent.com/290596/229849928-c9532a81-4eda-4334-bbde-ca6acbf7a4ab.gif)|
 | <kbd>Code</kbd> + <kbd>↑</kbd> | Searches history for lines starting with <kbd>Code</kbd> (e.g. find all requires, defs etc). | ![deps-try-arrow-up](https://user-images.githubusercontent.com/290596/229852412-12539ee4-0d17-4de9-937d-19060306908d.gif) |
 
+## Credits
+
+Big thanks to [Bruce Hauman](https://github.com/bhauman) and contributors for creating [rebel-readline](https://github.com/bhauman/rebel-readline) 🌸.  
+Despite including all git history when vendoring rebel-readline, the [GitHub contributors page](https://github.com/eval/deps-try/graphs/contributors) now only shows a meager 1 commit from [Bruce Hauman](https://github.com/bhauman). This couldn't be farther from the truth obviously.
+
 ## LICENSE
 
 Copyright (c) 2023 Gert Goet, ThinkCreate
 Distributed under the MIT license. See LICENSE.
 
-Code in vendor/rebel-readline has been adapted from [rebel-readline](https://github.com/bhauman/rebel-readline) which is covered by the Eclipse Public License either version 1.0 or (at your option) any later version.
+Code in vendor/rebel-readline originates from [rebel-readline](https://github.com/bhauman/rebel-readline) which is covered by the Eclipse Public License either version 1.0 or (at your option) any later version.
