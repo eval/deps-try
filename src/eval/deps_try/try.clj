@@ -95,6 +95,15 @@
   (fs/create-dirs path))
 
 
+(defn- load-slow-deps! []
+  (doto
+   (Thread. #(do
+               (require 'cljfmt.core)
+               (require 'compliment.core)))
+    (.setDaemon true)
+    (.start)))
+
+
 (defn -main []
   ;; via --debug flag?
   (binding [*debug-log* false]
@@ -104,6 +113,7 @@
        (repl
         {:deps-try/data-path data-path
          :init               (fn []
+                               (load-slow-deps!)
                                (apply require clojure.main/repl-requires)
                                (set! clojure.core/*print-namespace-maps* false))
          :eval               (fn [form]
