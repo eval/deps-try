@@ -72,7 +72,7 @@ user=> :deps/try dev.weavejester/medley
   (when-let [[some-dep] (not-empty args)]
     (not (re-seq #"/" some-dep))))
 
-(def ^:private clojure-cli-version-re #"^(\d+)\.(\d+)\.(\d+)\.(\d+)$")
+(def ^:private clojure-cli-version-re #"^(\d+)\.(\d+)\.(\d+)\.(\d+)")
 
 (defn- clojure-cli-version []
   (peek (str/split (str/trimr (:out (p/sh "clojure" "--version"))) #"\s+")))
