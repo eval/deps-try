@@ -1,6 +1,6 @@
 # deps-try
 
-Quickly try out Clojure dependencies on [rebel-readline](https://github.com/bhauman/rebel-readline#rebel-readline):
+Quickly try out Clojure and libraries on [rebel-readline](https://github.com/bhauman/rebel-readline#rebel-readline):
 
 <img width="535" alt="Screenshot 2023-02-09 at 13 37 09" src="https://user-images.githubusercontent.com/290596/217814688-c72a6fa1-3378-47bf-ba3f-5e87eec22c8b.png">
 
@@ -8,18 +8,32 @@ Quickly try out Clojure dependencies on [rebel-readline](https://github.com/bhau
 
 [![discuss at Clojurians-Zulip](https://img.shields.io/badge/clojurians%20zulip-clojure-brightgreen.svg)](https://clojurians.zulipchat.com/#narrow/stream/151168-clojure)
 
+## Rationale
+
+This tools targets both Clojure newcomers as well as Clojure experts.
+
+Trying out Clojure is easier when you have code completion, syntax highlighting and function documentation and examples nearby. `deps-try` provides a REPL with exactly these IDE functionalities (and some more).   
+This means there's no need to install or configure any Clojure plugins/extensions for your editor. Also you don't need to setup a project this way, so instead of diving in the nitty gritty details of a `deps.edn` configuration file, you can start writing Clojure.  
+
+Quickly trying out one or more libraries is also easy with `deps-try`:
+```
+$ deps-try some-maven/library com.github.user/a-git-project
+```
+Again, no need to setup or adjust a project, or type out the full configuration at the command line.
+
+
 ## Features
 
-- always use the latest (possibly alpha) release of Clojure.
+- always use the latest release of Clojure.
 - conveniently use dependencies from maven/clojars and various git-hostings.
-- add dependencies without restarting the REPL.
-- run dependencies in isolation (as much as possible)
-  - ...ignoring deps.edn (global, user or in current folder).
-- fanciness of rebel-readline:
+- add dependencies _without_ restarting the REPL.
+- dependencies are resolved in isolation (as much as possible)
+  - ...ignoring global, project or project deps.edn.
+- rebel-readline provides:
   - syntax highlighting and indentation
   - code completion
-  - see doc and source of a function
-- deps-try added fanciness for rebel-readline:
+  - see the docstring and source of a function
+- deps-try extends rebel-readline with:
   - see examples of a function from clojuredocs.org
   - pprint results with syntax highlighting
   - interrupt operations without quiting the REPL
@@ -89,6 +103,7 @@ bbin 0.1.12
 
 #### Installation
 
+
 ``` bash
 $ bbin install https://github.com/eval/deps-try/releases/download/stable/deps-try.jar
 
@@ -96,6 +111,32 @@ $ bbin install https://github.com/eval/deps-try/releases/download/stable/deps-tr
 $ deps-try -v
 
 # Re-run the install command to upgrade
+```
+
+### manual (Windows, Linux and macOS)
+
+#### Prerequisites
+
+* Install [Clojure](https://clojure.org/guides/install_clojure)
+* Install [babashka](https://github.com/babashka/babashka#installation)
+
+Verify that the following commands work:
+
+``` bash
+$ clj
+# REPL starts successfully, ergo Clojure and Java are correctly configured.
+$ bb --version
+babashka v1.3.176
+```
+
+#### Installation
+
+* Download [the latest stable bb-jar](https://github.com/eval/deps-try/releases/tag/stable).
+* Put an executable wrapper-script on $PATH. For example (for Linux and macOS):
+```bash
+#!/usr/bin/env sh
+
+exec bb /absolute/path/to/deps-try-bb.jar "$@"
 ```
 
 ## Usage
@@ -146,10 +187,11 @@ user=> :deps/try dev.weavejester/medley
 | <kbd>Code</kbd> + <kbd>↑</kbd> | Searches history for lines starting with <kbd>Code</kbd> (e.g. find all requires, defs etc). | ![deps-try-arrow-up](https://user-images.githubusercontent.com/290596/229852412-12539ee4-0d17-4de9-937d-19060306908d.gif) |
 | <kbd>Alt</kbd> + <kbd>p</kbd> / <kbd>Alt</kbd> + <kbd>n</kbd> | Step back-/forward through history _without_ stepping through every line of a history item (as <kbd>↑</kbd>/<kbd>↓</kbd> do).| |
 
+
 ## Credits
 
 Big thanks to [Bruce Hauman](https://github.com/bhauman) and contributors for creating [rebel-readline](https://github.com/bhauman/rebel-readline) 🌸.  
-Despite including all git history when vendoring rebel-readline, the [GitHub contributors page](https://github.com/eval/deps-try/graphs/contributors) now only shows a meager 1 commit from [Bruce Hauman](https://github.com/bhauman). This couldn't be farther from the truth obviously.
+While the [GitHub contributors page](https://github.com/eval/deps-try/graphs/contributors) now only shows a meager 1 commit from [Bruce Hauman](https://github.com/bhauman), this couldn't be farther from the truth obviously.
 
 ## LICENSE
 
