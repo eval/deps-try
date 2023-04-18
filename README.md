@@ -187,6 +187,17 @@ user=> :deps/try dev.weavejester/medley
 | <kbd>Code</kbd> + <kbd>↑</kbd> | Searches history for lines starting with <kbd>Code</kbd> (e.g. find all requires, defs etc). | ![deps-try-arrow-up](https://user-images.githubusercontent.com/290596/229852412-12539ee4-0d17-4de9-937d-19060306908d.gif) |
 | <kbd>Alt</kbd> + <kbd>p</kbd> / <kbd>Alt</kbd> + <kbd>n</kbd> | Step back-/forward through history _without_ stepping through every line of a history item (as <kbd>↑</kbd>/<kbd>↓</kbd> do).| |
 
+## FAQ
+
+<a name="use_rebel_readline"></a>
+### How to use the vendored rebel-readline in isolation?
+
+I got you:  
+
+```bash
+$ clojure -Sdeps '{:deps {com.github.eval/deps-try {:deps/root "vendor/rebel-readline/rebel-readline" :git/sha "3781e67c3afae3b51f414db1b12abe5ff33d480b"}}}' -m rebel-readline.main
+```
+
 
 ## Credits
 
