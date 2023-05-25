@@ -15,13 +15,16 @@
 (require '[babashka.fs :as fs] :reload)
 
 (defmethod rebel-readline/command-doc :deps/try [_]
-  (str "Add dependencies (e.g. `:deps/try tick/tick`)"))
+  (str "Add dependencies (e.g. `:deps/try metosin/malli`)"))
 
 
 (defmethod rebel-readline/command :deps/try [[_ & args]]
   (if (seq args)
-    ((requiring-resolve 'clojure.repl.deps/add-libs) (try-deps/parse-dep-args (map str args)))
-    (println "Usage: `:deps/try tick/tick 0.5.0 https://github.com/user/project`")))
+    (let [{:keys [deps error]} (try-deps/parse-dep-args (map str args))]
+      (if-not error
+        ((requiring-resolve 'clojure.repl.deps/add-libs) deps)
+        (println error)))
+    (println "Usage: `:deps/try metosin/malli \"0.9.2\" https://github.com/user/project`")))
 
 
 (defmethod rebel-readline/command-doc :clojure/toggle-print-meta [_]

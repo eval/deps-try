@@ -1,7 +1,15 @@
-{:paths ["src"]
- :deps  {org.slf4j/slf4j-nop        {:mvn/version "2.0.5"} ;; suppress logging
-         com.bhauman/rebel-readline {:local/root "./vendor/rebel-readline/rebel-readline"}
-         org.clojure/tools.gitlibs  {:mvn/version "2.5.190"}
-         babashka/fs                {:mvn/version "0.3.17"}
-         cider/orchard              {:mvn/version "0.11.0"}
-         org.babashka/http-client   {:mvn/version "0.1.8"}}}
+{:paths   ["src" "resources" "."]
+ :deps    {org.slf4j/slf4j-nop        {:mvn/version "2.0.5"} ;; suppress logging
+           com.bhauman/rebel-readline {:local/root "./vendor/rebel-readline/rebel-readline"}
+           org.clojure/tools.gitlibs  {:mvn/version "2.5.190"}
+           babashka/fs                {:mvn/version "0.3.17"}
+           cider/orchard              {:mvn/version "0.11.0"}
+           org.babashka/http-client   {:mvn/version "0.2.9"}
+           babashka/process           {:mvn/version "0.5.21"}
+           ;; TODO move to test?
+           org.clojure/data.xml       {:mvn/version "0.2.0-alpha8"}}
+ :aliases {:test {:extra-paths ["test"]
+                  :extra-deps  {nl.zeekat/data.sub {:mvn/version "0.1.4"}
+                                io.github.cognitect-labs/test-runner
+                                {:git/sha "7284cda41fb9edc0f3bc6b6185cfb7138fc8a023"}}
+                  :exec-fn     cognitect.test-runner.api/test}}}
