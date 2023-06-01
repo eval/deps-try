@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.5.0 (2023-?-?)
+
+- Support local projects as dependency.  
+  e.g. `deps-try . ~/some/project ../some/other/project`
+- Better parsing of deps.  
+  - check existance of deps and versions beforehand (online or offline).  
+    This fixes ambiguity between `com.github.user/project` being a maven or github dependency. Both are now considered.
+  - print helpful error message otherwise.
+
 ## v0.4.0 (2023-04-15)
 
 - Use Clojure v1.12.0-alpha2.
