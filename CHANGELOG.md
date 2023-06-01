@@ -6,9 +6,10 @@
   e.g. `deps-try . ~/some/project ../some/other/project`
 - Better parsing of deps.  
   - check existance of deps and versions beforehand (online or offline).  
-    This fixes ambiguity between `com.github.user/project` being a maven or github dependency. Both are now considered.
+    This fixes ambiguity between `com.github.user/project` being a mvn, git or even local dependency. All are now considered.
   - print helpful error message otherwise.
 - Use Clojure v.1.12.0-alpha3.
+- Add FAQ and rationale to README.
 
 ## v0.4.0 (2023-04-15)
 
