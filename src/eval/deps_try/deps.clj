@@ -43,18 +43,20 @@
     @result))
 
 (def ^:private git-services
-  [[:github    {:dep-url-re  #"^(?:io|com)\.github\.([^/]+)\/(.+)"
-                :dep-url-tpl ["io.github." 'org "/" 'project]
-                :git-url-re  #"^https://github\.com\/([^/]+)\/(.+?(?=.git)?)(?:.git)?$"
-                :git-url-tpl ["https://github.com/" 'org "/" 'project]}]
+  [[:github    {:dep-url-re    #"^(?:io|com)\.github\.([^/]+)\/(.+)"
+                :dep-url-tpl   ["io.github." 'org "/" 'project]
+                :git-url-re    #"^https://github\.com\/([^/]+)\/(.+?(?=.git)?)(?:.git)?$"
+                :git-url-tpl   ["https://github.com/" 'org "/" 'project]
+                :caret-ref-tpl ["refs/pull/" 'id "/head"]}]
    [:sourcehut {:dep-url-re  #"^ht\.sr\.([^/]+)\/(.+)"
                 :dep-url-tpl ["ht.sr." 'org "/" 'project]
                 :git-url-re  #"^https://git\.sr\.ht/~([^/]+)\/(.+)"
                 :git-url-tpl ["https://git.sr.ht/~" 'org "/" 'project]}]
-   [:gitlab    {:dep-url-re  #"^(?:io|com)\.gitlab\.([^/]+)\/(.+)"
-                :dep-url-tpl ["io.gitlab." 'org "/" 'project]
-                :git-url-re  #"^https://gitlab\.com\/([^/]+)\/(.+?(?=.git)?)(?:.git)?$"
-                :git-url-tpl ["https://gitlab.com/" 'org "/" 'project]}]
+   [:gitlab    {:dep-url-re    #"^(?:io|com)\.gitlab\.([^/]+)\/(.+)"
+                :dep-url-tpl   ["io.gitlab." 'org "/" 'project]
+                :git-url-re    #"^https://gitlab\.com\/([^/]+)\/(.+?(?=.git)?)(?:.git)?$"
+                :git-url-tpl   ["https://gitlab.com/" 'org "/" 'project]
+                :caret-ref-tpl ["refs/merge-requests/" 'id "/head"]}]
    [:generic   {:dep-url-tpl ['org "/" 'project]
                 :git-url-re  #"^https://[^/]+\/([^/]+)\/(.+?(?=.git)?)(?:.git)?$"}]])
 
@@ -255,9 +257,21 @@
 
 (defmulti resolve-version (fn [[type]] type))
 
+(defn- expand-caret-version [git-url version]
+  (let [[_ caret-id]                                 (re-find #"^\^(\d+)" version)
+        [git-service {caret-ref-tpl :caret-ref-tpl}] (when caret-id (git-url->git-service git-url))]
+    (cond
+      (and caret-id caret-ref-tpl)       (apply str (replace {'id caret-id} caret-ref-tpl))
+      (and caret-id (not caret-ref-tpl)) {:error {:error/id :resolve.git/caret-version-unsupported :git-service git-service}}
+      :else                              version)))
+
 (defmethod resolve-version :dep/git [[_type git-url version]]
-  (let [version (if (= :latest version) "HEAD" version)]
-    (resolve-git-ref git-url version)))
+  (let [{err :error :as version} (if (= :latest version)
+                                   "HEAD"
+                                   (expand-caret-version git-url version))]
+    (if-not err
+      (resolve-git-ref git-url version)
+      {:error err})))
 
 (defn ^:private local-repo-path []
   (fs/path (fs/home) ".m2" "repository"))
@@ -385,6 +399,7 @@
          :resolve.git/sha-not-found-offline     ["Could not find SHA, branch or tag '" :sha "' in repository '" :url "' while offline."]
          :resolve.git/repos-not-found           ["Could not find repository '" :url "'."]
          :resolve.git/repos-not-found-offine    ["Could not find repository '" :url "' while offline."]
+         :resolve.git/caret-version-unsupported ["For this git-hosting it's not possible to point to PRs. Use regular refs/SHAs instead."]
          :resolve.mvn/library-not-found         ["Could not find library '" :lib "' on Maven Central or Clojars."]
          :resolve.mvn/library-not-found-offline ["Could not find library '" :lib "' while offline."]
          :resolve.mvn/version-not-found         ["Could not find version '" :version "' of library '" :lib "' on Maven Central or Clojars."]
@@ -402,6 +417,7 @@
         (util/pred-> (complement :error) {:args args}
                      ;; e.g. [[:dep/local "foo" :latest] [:dep/mvn "bar/baz" :latest]]
                      (parse-args)
+                     #_(-> (doto prn))
                      (resolve-deps))]
     (if-not error
       deps

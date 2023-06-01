@@ -69,9 +69,12 @@
       [[:dep/git "https://github.com/user/project.git" :latest]]
 
       '("https://github.com/user/project" "main")
-      [[:dep/git "https://github.com/user/project" "main"]]))
+      [[:dep/git "https://github.com/user/project" "main"]]
 
-  ;; TODO bogus is a second arg that is not a version to the first, and that is no dep
+      '("io.github.user/project" "^12")
+      [[:dep/git "io.github.user/project" "^12"]]))
+
+;; TODO bogus is a second arg that is not a version to the first, and that is no dep
   #_(testing "bogus?"
       (are [args exp] (= {:deps exp} (sut/parse-args {:args args}))
 
