@@ -121,4 +121,5 @@
                                (set! clojure.core/*print-namespace-maps* false))
          :eval               (fn [form]
                                (eval `(do ~(handle-sigint-form) ~form)))
-         :print              syntax-highlight-pprint})))))
+         :print              syntax-highlight-pprint}))
+      (System/exit 0))))
