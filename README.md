@@ -15,9 +15,12 @@ This tools targets both Clojure newcomers as well as Clojure experts.
 Trying out Clojure is easier when you have code completion, syntax highlighting and function documentation and examples nearby. `deps-try` provides a REPL with exactly these IDE functionalities (and some more).   
 This means there's no need to install or configure any Clojure plugins/extensions for your editor. Also you don't need to setup a project this way, so instead of diving in the nitty gritty details of a `deps.edn` configuration file, you can start writing Clojure.  
 
-Quickly trying out one or more libraries is also easy with `deps-try`:
+Adding maven/git/local-libraries can be done using a convenient notation:
 ```
-$ deps-try some-maven/library com.github.user/a-git-project
+$ deps-try some-maven/library com.github.user/a-git-project ~/some/local/project
+
+# add additional libraries during a REPL-session (no restart needed)
+users=> :deps/try another/library "https://github.com/seancorfield/next-jdbc" "../other/local/project"
 ```
 Again, no need to setup or adjust a project, or type out the full configuration at the command line.
 
@@ -25,7 +28,7 @@ Again, no need to setup or adjust a project, or type out the full configuration 
 ## Features
 
 - always use the latest release of Clojure.
-- conveniently use dependencies from maven/clojars and various git-hostings.
+- conveniently use dependencies from maven/clojars, various git-hostings or local projects.
 - add dependencies _without_ restarting the REPL.
 - dependencies are resolved in isolation (as much as possible)
   - ...ignoring global, project or project deps.edn.
@@ -34,7 +37,7 @@ Again, no need to setup or adjust a project, or type out the full configuration 
   - code completion
   - see the docstring and source of a function
 - deps-try extends rebel-readline with:
-  - see examples of a function from clojuredocs.org
+  - show examples of a function from clojuredocs.org
   - pprint results with syntax highlighting
   - interrupt operations without quiting the REPL
   - easier copy/paste of multiline code
@@ -142,6 +145,19 @@ exec bb /absolute/path/to/deps-try-bb.jar "$@"
 ## Usage
 
 ``` bash
+Usage:
+  deps-try [dep-name [dep-version] [dep2-name ...] ...]
+
+Supported dep-name types:
+- maven
+  e.g. `metosin/malli`, `org.clojure/cache`.
+- git
+  - infer-notation, e.g. `com.github.user/project`, `ht.sr.~user/project`.
+  - url, e.g. `https://github.com/user/project`, `https://anything.org/user/project.git`.
+- local
+  - path to project containing `deps.edn`, e.g. `.`, `~/projects/my-project`, `./path/to/project`.
+
+Examples:
 # A REPL using the latest Clojure version
 $ deps-try
 
@@ -154,22 +170,22 @@ $ deps-try metosin/malli 0.9.2
 # Dependency from GitHub/GitLab/SourceHut (gets you the latest SHA from the default branch)
 $ deps-try https://github.com/metosin/malli
 
-# ...a specific branch/SHA
-$ deps-try https://github.com/metosin/malli some-branch-sha-or-tag
+# ...a specific branch/tag/SHA
+$ deps-try https://github.com/metosin/malli some-branch-tag-or-sha
 
 # ...using the 'infer' notation, e.g.
-# com.github.<user>/<project>, com.gitlab.<user>/<project>, ht.sr.<user>/<project>
+# com.github.<user>/<project>, com.gitlab.<user>/<project>, ht.sr.~<user>/<project>
 $ deps-try com.github.metosin/malli
-```
+
+# A local project
+$ deps-try . ~/some/project ../some/other/project
 
 During a REPL-session:
+# add additional dependencies
+user=> :deps/try dev.weavejester/medley "~/some/project"
 
-``` clojure
 # see help for all options
 user=> :repl/help
-
-# add dependencies
-user=> :deps/try dev.weavejester/medley
 ```
 
 ## Bindings
