@@ -130,7 +130,7 @@ user=> :repl/help
                 (let [verbose-output (with-out-str (deps/clojure {:dir (str tmp)} "-Sverbose" "-Spath"))
                       cp-file        (parse-cp-file verbose-output)
                       basis-file     (str/replace cp-file #".cp$" ".basis")
-                      default-cp     (deps->cp tmp '{org.clojure/clojure {:mvn/version "1.12.0-alpha2"}})
+                      default-cp     (deps->cp tmp '{org.clojure/clojure {:mvn/version "1.12.0-alpha3"}})
                       requested-cp   (deps->cp tmp requested-deps)
                       classpath      (str default-cp fs/path-separator init-cp fs/path-separator requested-cp)]
                   (warn-unless-minimum-clojure-cli-version "1.11.1.1273" (clojure-cli-version))
