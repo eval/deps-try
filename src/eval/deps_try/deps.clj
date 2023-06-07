@@ -228,7 +228,7 @@
                                  (str proto-part ":@" rem-url))
         ;; NOTE we can't really verify if `ref-or-sha` is a (partial) SHA (and *not* a ref).
         ;; So we treat it as a ref and pass it to ls-remote - paying a possible penalty.
-        ;; NOTE passing ref to gitlib/resolve yields latest *local* SHA of repos, not perse the latest SHA,
+        ;; NOTE passing branch to gitlib/resolve yields latest *local* SHA of repos, not perse the latest SHA,
         ;; therefor try `git ls-remote` first, and gitlib/resolve only when offline.
         cmd                    ["git" "ls-remote" "--symref" non-prompting-url ref-or-sha]
         {:keys [exit out err]} @(process cmd {:out :string :err :string})
