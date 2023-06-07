@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.6.0 (2023-06-07)
+
+- Support trying branch of PR or MR's.  
+  e.g. the branch belonging to PR #123: `deps-try com.github.user/project ^123`
+- Force killing all thread pools. Fixes [#16](https://github.com/eval/deps-try/issues/16).
+
 ## v0.5.0 (2023-06-01)
 
 - Support local projects as dependency.  
