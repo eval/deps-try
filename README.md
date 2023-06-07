@@ -218,7 +218,8 @@ $ clojure -Sdeps '{:deps {com.github.eval/deps-try {:deps/root "vendor/rebel-rea
 ## Credits
 
 Big thanks to [Bruce Hauman](https://github.com/bhauman) and contributors for creating [rebel-readline](https://github.com/bhauman/rebel-readline) 🌸.  
-While the [GitHub contributors page](https://github.com/eval/deps-try/graphs/contributors) now only shows a meager 1 commit from [Bruce Hauman](https://github.com/bhauman), this couldn't be farther from the truth obviously.
+While the [GitHub contributors page](https://github.com/eval/deps-try/graphs/contributors) now only shows a meager 1 commit from [Bruce Hauman](https://github.com/bhauman), this couldn't be farther from the truth obviously.  
+Big thanks to [Avery Quinn](https://github.com/avescodes) for coming up with [lein-try](https://github.com/avescodes/lein-try) which inspired the creation of this project (once tools-deps came out).
 
 ## LICENSE
 
