@@ -108,10 +108,10 @@ bbin 0.1.12
 
 
 ``` bash
-$ bbin install https://github.com/eval/deps-try/releases/download/stable/deps-try.jar
+$ bbin install https://github.com/eval/deps-try/releases/download/stable/deps-try-bb.jar
 
 # Check version
-$ deps-try -v
+$ deps-try-bb -v
 
 # Re-run the install command to upgrade
 ```
