@@ -9,6 +9,7 @@
             [rebel-readline.commands :as rebel-readline]
             [rebel-readline.core :as rebel-core]
             [rebel-readline.jline-api :as api]
+            [rebel-readline.tools :as rebel-tools]
             [rebel-readline.utils :refer [*debug-log*]])
   (:import [org.jline.reader LineReader]))
 
@@ -23,8 +24,8 @@
     (let [{:keys [deps error]} (try-deps/parse-dep-args (map str args))]
       (if-not error
         ((requiring-resolve 'clojure.repl.deps/add-libs) deps)
-        (println error)))
-    (println "Usage: `:deps/try metosin/malli \"0.9.2\" https://github.com/user/project`")))
+        (rebel-tools/display-error error)))
+    (rebel-tools/display-warning "Usage: :deps/try metosin/malli \"0.9.2\" https://github.com/user/project some-ref \"~/some/project\"")))
 
 
 (defmethod rebel-readline/command-doc :clojure/toggle-print-meta [_]
