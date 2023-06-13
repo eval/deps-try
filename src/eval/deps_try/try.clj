@@ -29,16 +29,16 @@
 
 
 (defmethod rebel-readline/command-doc :clojure/toggle-print-meta [_]
-  (str "Toggle clojure.core/*print-meta* on and off ("
-       (if clojure.core/*print-meta* "on" "off") ")"))
+  (let [current (if clojure.core/*print-meta* "on" "off")]
+    (str "Toggle clojure.core/*print-meta* on and off (" current ")")))
 
 (defmethod rebel-readline/command :clojure/toggle-print-meta [[_]]
   (set! clojure.core/*print-meta* (not clojure.core/*print-meta*)))
 
 
 (defmethod rebel-readline/command-doc :clojure/toggle-print-namespace-maps [_]
-  (str "Toggle clojure.core/*print-namespace-maps* on and off ("
-       (if clojure.core/*print-namespace-maps* "on" "off") ")"))
+  (let [current (if clojure.core/*print-namespace-maps* "on" "off")]
+    (str "Toggle clojure.core/*print-namespace-maps* on and off (" current ")")))
 
 (defmethod rebel-readline/command :clojure/toggle-print-namespace-maps [[_]]
   (set! clojure.core/*print-namespace-maps* (not clojure.core/*print-namespace-maps*)))
