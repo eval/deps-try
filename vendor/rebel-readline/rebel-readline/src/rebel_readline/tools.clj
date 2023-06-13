@@ -5,7 +5,7 @@
    [clojure.java.io :as io]
    [clojure.edn :as edn])
   (:import
-   [org.jline.utils AttributedStringBuilder AttributedStyle]
+   [org.jline.utils AttributedString AttributedStringBuilder AttributedStyle]
    [org.jline.keymap KeyMap]))
 
 ;; ----------------------------------------------
@@ -30,6 +30,14 @@
    (get @api/*line-reader* :color-theme)
    color-themes
    (get sk AttributedStyle/DEFAULT)))
+
+(defn display-error [msg]
+  (api/display-message
+   (AttributedString. msg (color :widget/error))))
+
+(defn display-warning [msg]
+  (api/display-message
+   (AttributedString. msg (color :widget/warning))))
 
 ;; String Highlighting
 ;; ----------------------------------------------
@@ -167,10 +175,8 @@
    :widget/apropos-highlight (fg-color 45)
    :widget/apropos-namespace (.faint (fg-color 243))
 
-   :widget/warning           AttributedStyle/DEFAULT
-   :widget/error             (fg-color 196)
-
-   })
+   :widget/warning           (.bold (fg-color 3))
+   :widget/error             (.bold (fg-color 196))})
 
 (register-color-theme! :dark-screen-theme dark-screen-theme)
 
