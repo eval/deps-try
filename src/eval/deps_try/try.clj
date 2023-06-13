@@ -80,6 +80,7 @@
       (doto (clj-line-reader/create
              (rebel-service/create {:data-path data-path}))
         (.setVariable LineReader/SECONDARY_PROMPT_PATTERN "%P ")
+        (.setVariable LineReader/HISTORY_SIZE "10000")
         (.setVariable LineReader/HISTORY_FILE (str history-file))))
     ;; repl time:
     (binding [*out* (api/safe-terminal-writer api/*line-reader*)]
