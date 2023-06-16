@@ -1,9 +1,19 @@
 # Changelog
 
+## v0.7.0 (UNRELEASED)
+
+- Add CWD to classpath.  
+  Ensures requiring of and using clojure.java.io/resource with local files works as expected.
+- Completion picks up on :deps/try-ed libraries.
+- Increase amount of history items.  
+  500 -> 10K
+- [#18](https://github.com/eval/deps-try/issues/18): Show parsing error in red when doing `:deps/try`.
+- [!20](https://github.com/eval/deps-try/pull/20): Fix bbin install instructions ([@mdiin](https://github.com/mdiin)).
+
 ## v0.6.0 (2023-06-07)
 
 - Support trying branch of PR or MR's.  
-  e.g. the branch belonging to PR #123: `deps-try com.github.user/project ^123`
+  e.g. the branch belonging to PR #123: `deps-try com.github.user/project ^123`.
 - Force killing all thread pools. Fixes [#16](https://github.com/eval/deps-try/issues/16).
 
 ## v0.5.0 (2023-06-01)
