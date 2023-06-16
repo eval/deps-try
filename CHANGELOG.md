@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.7.0 (UNRELEASED)
+## v0.7.0 (2023-06-16)
 
 - Add CWD to classpath.  
   Ensures requiring of and using clojure.java.io/resource with local files works as expected.
