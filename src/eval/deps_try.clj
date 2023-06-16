@@ -2,7 +2,6 @@
   {:clj-kondo/config '{:lint-as {babashka.fs/with-temp-dir clojure.core/let}}}
   (:require
    [babashka.classpath :as cp :refer [get-classpath]]
-   [babashka.deps :as deps]
    [babashka.process :as p]
    [clojure.java.io :as io]
    [clojure.string :as str]))
@@ -13,12 +12,9 @@
          '[babashka.fs :as fs] :reload
          '[babashka.http-client] :reload) ;; reload so we use the dep, not the built-in
 
-(defn parse-cp-file [s]
-  (some #(when (str/includes? % "cp_file")
-           (str/trim (second (str/split % #"=")))) (str/split-lines s)))
-
 (defn deps->cp [tmp deps]
-  (str/trim (with-out-str (deps/clojure {:dir (str tmp)} "-Spath" "-Sdeps" (str {:deps deps})))))
+  (str/trim (:out (p/sh {:dir (str tmp)} "clojure" "-Spath" "-Sdeps"
+                        (str {:paths [] :deps deps})))))
 
 (defn print-usage []
   (println "Usage:
@@ -83,9 +79,6 @@ user=> :repl/help
 
 (def ^:private clojure-cli-version-re #"^(\d+)\.(\d+)\.(\d+)\.(\d+)")
 
-(defn- clojure-cli-version []
-  (peek (str/split (str/trimr (:out (p/sh "clojure" "--version"))) #"\s+")))
-
 (defn- parse-clojure-cli-version [s]
   (map parse-long (rest (re-find clojure-cli-version-re s))))
 
@@ -118,22 +111,42 @@ user=> :repl/help
   (when-not (at-least-version? minimum version)
     (warn (str "Adding (additional) libraries to this REPL-session via ':deps/try some/lib' won't work as it requires Clojure CLI version >= " minimum " (current: " version ")."))))
 
+
+(defn- tdeps-verbose->map [s]
+  (let [[cp & pairs] (reverse (str/split-lines s))
+        keywordize   (comp keyword #(str/replace % \_ \-) name)] ;; `name` makes it also usable for keywords
+    (update-keys
+     (into {:cp cp}
+           (map #(str/split % #" += +") (filter seq pairs))) keywordize)))
+
+
+(defn- start-repl! [{requested-deps :deps parse-error :error}]
+  (if parse-error
+    (do (error parse-error) (System/exit 1))
+    (fs/with-temp-dir [tmp {}]
+      (let [default-deps                 {'org.clojure/clojure {:mvn/version "1.12.0-alpha3"}}
+            {:keys         [cp-file]
+             default-cp    :cp
+             tdeps-version :version
+             :as           _tdeps-paths} (-> (p/sh {:dir (str tmp)}
+                                                   "clojure" "-Sverbose" "-Spath"
+                                                   "-Sdeps" (str {:paths [] :deps default-deps}))
+                                             :out
+                                             tdeps-verbose->map)
+            basis-file                   (str/replace cp-file #".cp$" ".basis")
+            requested-cp                 (deps->cp tmp requested-deps)
+            classpath                    (str (fs/cwd) fs/path-separator
+                                              default-cp fs/path-separator
+                                              init-cp fs/path-separator requested-cp)]
+        (warn-unless-minimum-clojure-cli-version "1.11.1.1273" tdeps-version)
+        (p/exec "java" "-classpath" classpath
+                (str "-Dclojure.basis=" basis-file)
+                "clojure.main" "-m" "eval.deps-try.try")))))
+
 (defn -main [& args]
   (cond
     (print-version? args) (print-version)
     (print-usage? args)   (print-usage)
 
-    :else (let [{requested-deps :deps parse-error :error} (try-deps/parse-dep-args args)]
-            (if parse-error
-              (do (error parse-error) (System/exit 1))
-              (fs/with-temp-dir [tmp {}]
-                (let [verbose-output (with-out-str (deps/clojure {:dir (str tmp)} "-Sverbose" "-Spath"))
-                      cp-file        (parse-cp-file verbose-output)
-                      basis-file     (str/replace cp-file #".cp$" ".basis")
-                      default-cp     (deps->cp tmp '{org.clojure/clojure {:mvn/version "1.12.0-alpha3"}})
-                      requested-cp   (deps->cp tmp requested-deps)
-                      classpath      (str default-cp fs/path-separator init-cp fs/path-separator requested-cp)]
-                  (warn-unless-minimum-clojure-cli-version "1.11.1.1273" (clojure-cli-version))
-                  (p/exec "java" "-classpath" classpath
-                          (str "-Dclojure.basis=" basis-file)
-                          "clojure.main" "-m" "eval.deps-try.try")))))))
+    :else (let [parsed-args (try-deps/parse-dep-args args)]
+            (start-repl! parsed-args))))
