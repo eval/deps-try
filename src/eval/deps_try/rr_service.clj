@@ -1,6 +1,10 @@
 (ns eval.deps-try.rr-service
   (:require
    [babashka.fs :as fs]
+   [clojure.java.basis]
+   [clojure.string :as str]
+   [compliment.core]
+   [compliment.utils]
    [rebel-readline.clojure.line-reader :as clj-reader]
    [rebel-readline.clojure.service.local :as local-service]
    [rebel-readline.tools :as tools]))
@@ -45,6 +49,22 @@
         (set-examples-file-name! examples-file-name)
         (ensure-fresh-examples-cache! examples-file-name {:max-age (duration->millis {:weeks 2})})
         ((requiring-resolve 'orchard.clojuredocs/resolve-and-find-doc) wns wname)))))
+
+(defn- classpath-for-completions
+  "This 'fixes' two things with compliment.utils/classpath:
+  - it removes cwd from the classpath which can simply yield too many options (e.g. ~)
+  - it picksup added libraries"
+  []
+  (let [java-cp-sans-cwd (rest (str/split (System/getProperty "java.class.path") #":"))
+        basis-cp         (->> (clojure.java.basis/current-basis)
+                              :libs
+                              vals
+                              (mapcat :paths))]
+    (into java-cp-sans-cwd basis-cp)))
+
+(defmethod clj-reader/-complete ::service [_self word options]
+  (with-redefs [compliment.utils/classpath classpath-for-completions]
+    (doall (compliment.core/completions word options))))
 
 (defn create
   ([] (create nil))

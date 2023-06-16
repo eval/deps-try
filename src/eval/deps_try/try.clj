@@ -15,6 +15,9 @@
 
 (require '[babashka.fs :as fs] :reload)
 
+(defn- warm-up-completion-cache! []
+  (clj-line-reader/-complete {:rebel-readline.service/type ::rebel-service/service} "nil" {}))
+
 (defmethod rebel-readline/command-doc :deps/try [_]
   (str "Add dependencies (e.g. `:deps/try metosin/malli`)"))
 
@@ -23,7 +26,8 @@
   (if (seq args)
     (let [{:keys [deps error]} (try-deps/parse-dep-args (map str args))]
       (if-not error
-        ((requiring-resolve 'clojure.repl.deps/add-libs) deps)
+        (do ((requiring-resolve 'clojure.repl.deps/add-libs) deps)
+            (warm-up-completion-cache!))
         (rebel-tools/display-error error)))
     (rebel-tools/display-warning "Usage: :deps/try metosin/malli \"0.9.2\" https://github.com/user/project some-ref \"~/some/project\"")))
 
@@ -101,12 +105,8 @@
 
 
 (defn- load-slow-deps! []
-  (doto
-   (Thread. #(do
-               (require 'cljfmt.core)
-               (require 'compliment.core)))
-    (.setDaemon true)
-    (.start)))
+  (require 'cljfmt.core)
+  (warm-up-completion-cache!))
 
 
 (defn -main []
