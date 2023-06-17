@@ -24,9 +24,9 @@
     (.startsWith (str ns) "clojure.")
     (cond-> "https://clojuredocs.org/"
       ns (str ns)
-      name (str "/" (string/replace name #"\?$" "_q")))
+      (seq name) (str "/" (string/replace name #"\?$" "_q")))
     (.startsWith (str ns) "cljs.")
     (cond-> "http://cljs.github.io/api/"
-      ns (str ns)
-      name (str "/" (cljs-api-encode-name name)))
+      ns   (str ns)
+      (seq name) (str "/" (cljs-api-encode-name name)))
     :else nil))
