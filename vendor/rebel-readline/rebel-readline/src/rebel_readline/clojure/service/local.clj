@@ -83,13 +83,14 @@
   (clojure.repl/apropos var-str))
 
 (defmethod clj-reader/-doc ::service [self var-str]
-  (when-let [{:keys [ns name]} (clj-reader/-resolve-meta self var-str)]
-    ;; lazy-load for faster startup
-    (when-let [documentation (requiring-resolve 'compliment.core/documentation)]
-      (when-let [doc (documentation var-str)]
-        (let [url (clj-utils/url-for (str ns) (str name))]
-          (cond-> {:doc doc}
-            url (assoc :url url)))))))
+  (when-let [doc (not-empty ((requiring-resolve 'compliment.core/documentation) var-str))]
+    (let [meta-resolver     #(clj-reader/-resolve-meta self %)
+          alias->ns-str     #(some->> % symbol (get (ns-aliases *ns*)) str)
+          {:keys [ns name]} (or (meta-resolver var-str)
+                                (meta-resolver (alias->ns-str var-str)))
+          doc-url           (when ns (clj-utils/url-for (str ns) (str name)))]
+      (cond-> {:doc doc}
+        doc-url (assoc :url doc-url)))))
 
 (defmethod clj-reader/-eval ::service [self form]
   (let [res (call-with-timeout
