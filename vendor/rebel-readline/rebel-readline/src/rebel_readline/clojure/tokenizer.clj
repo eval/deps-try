@@ -176,7 +176,7 @@
 (def namespace-exp
   (str preceeded-by-delimiter
        "((?:" not-delimiter-or-period-exp "+\\.)+"
-       not-delimiter-or-period-exp "+)"))
+       not-delimiter-or-fslash-exp "+)"))
 
 (def character-exp
   (str preceeded-by-delimiter
