@@ -136,8 +136,8 @@ user=> :repl/help
             basis-file                   (str/replace cp-file #".cp$" ".basis")
             requested-cp                 (deps->cp tmp requested-deps)
             classpath                    (str (fs/cwd) fs/path-separator
-                                              requested-cp fs/path-separator
                                               default-cp fs/path-separator
+                                              requested-cp fs/path-separator
                                               init-cp)]
         (warn-unless-minimum-clojure-cli-version "1.11.1.1273" tdeps-version)
         (p/exec "java" "-classpath" classpath
