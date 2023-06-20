@@ -62,8 +62,8 @@
           (do (.append sb (.charAt syntax-str pos))
               (recur (inc pos) hd)))))))
 
-(defn highlight-str [color-fn tokenizer-fn syntax-str]
-  (highlight-tokens color-fn (tokenizer-fn syntax-str) syntax-str))
+(defn highlight-str [color-fn tokenizer-fn syntax-str opts]
+  (highlight-tokens color-fn (tokenizer-fn syntax-str opts) syntax-str))
 
 ;; Baseline service config
 ;; ----------------------------------------------

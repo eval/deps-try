@@ -178,6 +178,11 @@
        "((?:" not-delimiter-or-period-exp "+\\.)+"
        not-delimiter-or-fslash-exp "+)"))
 
+(defn ns-alias-exp [aliases]
+  (str preceeded-by-delimiter
+       "(" (clojure.string/join "|" aliases) ")/?"
+       followed-by-delimiter))
+
 (def character-exp
   (str preceeded-by-delimiter
        #"(\\\w+|\\[^\s])" #_#"(\\[^\s]|\\\w+|\\o\d+|\\u\d+)"
@@ -193,7 +198,7 @@
        "(\\*" not-delimiter-exp  "+\\*)"
        followed-by-delimiter))
 
-(def syntax-token-tagging-rexp
+(defn syntax-token-tagging-rexp [{aliases :ns-aliases}]
   (Pattern/compile (str
                     "(" string-literal ")|"
                     end-line-comment-regexp "|"
@@ -211,6 +216,7 @@
                     interop-call-exp "|"
                     function-arg-exp "|"
                     namespace-exp "|"
+                    (ns-alias-exp aliases) "|"
                     character-exp "|"
                     protocol-def-name-exp "|"
                     dynamic-var-exp)))
@@ -246,9 +252,9 @@
                :protocol-def-name
                :dynamic-var))
 
-(defn tag-font-lock [syntax-str]
+(defn tag-font-lock [syntax-str opts]
   (tag-matches syntax-str
-               syntax-token-tagging-rexp
+               (syntax-token-tagging-rexp opts)
                :font-lock/string        ;; :string-literal
                :font-lock/comment       ;; :line-comment
                :font-lock/core-form     ;; :def-call
@@ -273,6 +279,7 @@
                :font-lock/foreign       ;; :interop-call
                :font-lock/variable-name ;; :function-arg
                :font-lock/type          ;; :namespace
+               :font-lock/type          ;; :ns-aliases
                :font-lock/string        ;; :character
                :font-lock/foreign       ;; :protocol-def-name
                :font-lock/variable-name ;; :dynamic-var

@@ -52,7 +52,10 @@
 
 (def ^:dynamic *accept-fn* nil)
 
-(def highlight-clj-str (partial tools/highlight-str color tokenize/tag-font-lock))
+(defn highlight-clj-str
+  ([syntax-str] (highlight-clj-str syntax-str nil))
+  ([syntax-str opts]
+   (tools/highlight-str color tokenize/tag-font-lock syntax-str opts)))
 
 ;; ---------------------------------------------------------------------
 ;; ---------------------------------------------------------------------
@@ -1125,7 +1128,8 @@
       ;; so add this binding here
       (binding [*line-reader* reader]
         (if (:highlight @reader)
-          (.toAttributedString (highlight-clj-str buffer))
+          (let [aliases (keys (ns-aliases (find-ns (symbol (current-ns)))))]
+            (.toAttributedString (highlight-clj-str buffer {:ns-aliases aliases})))
           (AttributedString. buffer))))))
 
 ;; ----------------------------------------
