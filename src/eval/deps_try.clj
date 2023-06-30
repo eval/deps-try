@@ -124,7 +124,7 @@ user=> :repl/help
   (if parse-error
     (do (error parse-error) (System/exit 1))
     (fs/with-temp-dir [tmp {}]
-      (let [default-deps                 {'org.clojure/clojure {:mvn/version "1.12.0-alpha3"}}
+      (let [default-deps                 {'org.clojure/clojure {:mvn/version "1.12.0-alpha4"}}
             {:keys         [cp-file]
              default-cp    :cp
              tdeps-version :version
