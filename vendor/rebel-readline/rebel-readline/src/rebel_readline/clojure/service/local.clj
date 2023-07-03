@@ -4,7 +4,7 @@
    [rebel-readline.clojure.line-reader :as clj-reader]
    [rebel-readline.clojure.utils :as clj-utils]
    [rebel-readline.tools :as tools]
-   [rebel-readline.utils :as utils :refer [log]]))
+   [rebel-readline.utils :as utils :refer [strip-literals log]]))
 
 ;; taken from replicant
 ;; https://github.com/puredanger/replicant/blobcl/master/src/replicant/util.clj
@@ -54,11 +54,15 @@
 
 (def safe-meta (comp meta safe-resolve))
 
+(defn- var-str->ns [var-str]
+  (or (some-> (strip-literals var-str) symbol find-ns)
+      (some->> (strip-literals var-str) symbol (get (ns-aliases *ns*)))))
+
 (defn resolve-meta [var-str]
-  (or (safe-meta var-str)
-      (when-let [ns' (some-> var-str symbol find-ns)]
+  (or (safe-meta (strip-literals var-str))
+      (when-let [ns' (var-str->ns var-str)]
         (assoc (meta ns')
-               :ns var-str))))
+               :ns (str ns')))))
 
 (derive ::service ::clj-reader/clojure)
 
@@ -76,21 +80,22 @@
   (some-> *ns* str))
 
 (defmethod clj-reader/-source ::service [_ var-str]
-  (some->> (clojure.repl/source-fn (symbol var-str))
+  (some->> (clojure.repl/source-fn (symbol (strip-literals var-str)))
            (hash-map :source)))
 
 (defmethod clj-reader/-apropos ::service [_ var-str]
   (clojure.repl/apropos var-str))
 
 (defmethod clj-reader/-doc ::service [self var-str]
-  (when-let [doc (not-empty ((requiring-resolve 'compliment.core/documentation) var-str))]
-    (let [meta-resolver     #(clj-reader/-resolve-meta self %)
-          alias->ns-str     #(some->> % symbol (get (ns-aliases *ns*)) str)
-          {:keys [ns name]} (or (meta-resolver var-str)
-                                (meta-resolver (alias->ns-str var-str)))
-          doc-url           (when ns (clj-utils/url-for (str ns) (str name)))]
+  #_(when-let [])
+    ;; lazy-load for faster startup
+  (when-let [doc ((requiring-resolve 'compliment.core/documentation) var-str)]
+    (let [{:keys [ns name private]} (if (special-symbol? (symbol var-str))
+                                      {:ns (find-ns 'clojure.core) :name (symbol var-str)}
+                                      (clj-reader/-resolve-meta self var-str))
+          url (when (and (not private) ns) (clj-utils/url-for (str ns) (str name)))]
       (cond-> {:doc doc}
-        doc-url (assoc :url doc-url)))))
+        url (assoc :url url)))))
 
 (defmethod clj-reader/-eval ::service [self form]
   (let [res (call-with-timeout
@@ -117,3 +122,9 @@
           (tools/user-config)
           options
           {:rebel-readline.service/type ::service})))
+
+(comment
+  (clj-reader/-resolve-meta {:rebel-readline.service/type ::service} "map")
+  (clj-reader/-doc {:rebel-readline.service/type ::service} "if")
+
+  #_:end)
