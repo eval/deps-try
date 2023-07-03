@@ -1,5 +1,29 @@
 # Changelog
 
+## unreleased
+
+- Suggestions UI:
+  - don't limit amount (let jline handle this).  
+  - vars show up in yellow.  
+  - suggested namespaces that are not required show up magenta.  
+  - sort namespace suggestions based on 'depth'.  
+- Fix clojuredocs-url of namespaces.  
+- Upgrade [compliment/compliment](https://github.com/alexander-yakushev/compliment).  
+  Includes provided PRs:
+  - suggest namespaces from cljc files.  
+    e.g. TAB-ing at `(require '[malli.co|` now suggests `malli.core`.  
+  - docs of ns-alias work just like the full ns.  
+  - aliases can be completed.  
+  - completions and documentation also work when symbols are preceded by literals.  
+    e.g. `#'some-ns/some-db`
+- source and examples also work when symbols are preceded by literals.  
+- highlighter
+  - highlight ns-aliases.  
+  - don't highlight slash in `clojure.core/`.  
+- allow to override project-deps.  
+  e.g. `$ deps-try ~/projects/compliment-fork`
+- Use clojure 1.12.0-alpha4.  
+
 ## v0.7.0 (2023-06-16)
 
 - Add CWD to classpath.  
