@@ -7,14 +7,16 @@
    [compliment.utils]
    [rebel-readline.clojure.line-reader :as clj-reader]
    [rebel-readline.clojure.service.local :as local-service]
-   [rebel-readline.tools :as tools]))
+   [rebel-readline.tools :as tools]
+   [rebel-readline.utils :refer [strip-literals]]))
+
 
 (derive ::service ::local-service/service)
 
 (defn- word->doc-searchable
   "Turn word (string) into a [ns sym] tuple"
   [s]
-  (when-let [sym (some-> s not-empty symbol)]
+  (when-let [sym (some-> s not-empty strip-literals symbol)]
     (if (special-symbol? sym)
       (list (find-ns 'clojure.core) sym)
       (let [var->ns&name #(-> % meta ((juxt :ns :name)))]
@@ -47,6 +49,7 @@
     (when-let [[wns wname] (word->doc-searchable word)]
       (let [examples-file-name (fs/path data-path "clojuredocs-export.edn")]
         (set-examples-file-name! examples-file-name)
+        ;; TODO are we online?
         (ensure-fresh-examples-cache! examples-file-name {:max-age (duration->millis {:weeks 2})})
         ((requiring-resolve 'orchard.clojuredocs/resolve-and-find-doc) wns wname)))))
 
