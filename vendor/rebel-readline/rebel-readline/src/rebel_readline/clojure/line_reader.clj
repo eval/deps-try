@@ -1060,17 +1060,33 @@
                (log :complete-context e)
                nil))))))
 
-(defn candidate [{:keys [candidate type ns]}]
-  (Candidate.
-   candidate ;; value
-   candidate ;; display
-   nil ;; group
-   (cond-> nil
-     type (str (first (name type)))
-     ns   (str (when type " ") ns))
-   nil ;; suffix
-   nil ;; key
-   false))
+(defn candidate [{:keys [deprecated private candidate type ns sort
+                         namespace/other? namespace/found?]
+                  :or   {sort 0}}]
+  (let [qualified-candidate? (some-> candidate strip-literals symbol qualified-symbol?)
+        {:keys [red reset yellow magenta]
+         :as   _ansi-colors} {:red "\033[91m" :yellow "\033[93m" :reset "\033[0m" :magenta "\033[95m"}
+        displayed            (cond-> ""
+                               (= type :var)           (str yellow)
+                               (or private deprecated) (str red)
+                               (false? found?)         (str magenta)
+                               :always                 (str candidate))
+        colored?             (not= candidate displayed)
+        displayed            (if colored? (str displayed reset) displayed)]
+    (Candidate.
+     candidate ;; value (AttributedString. msg (color :widget/error))
+     displayed ;; display
+     nil ;; group
+     (cond-> nil
+       type                                       (str (first (name type)))
+       (and ns other? (not qualified-candidate?)) (str (when type " ") ns)
+       (false? found?)                            (str "?")
+       private                                    (str "-")
+       deprecated                                 (str "!"))
+     nil ;; suffix
+     nil ;; key
+     false
+     sort)))
 
 (defn command-token? [{:keys [line tokens word]} starts-with]
   (and (= 1 (count tokens))

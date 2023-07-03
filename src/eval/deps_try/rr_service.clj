@@ -66,8 +66,19 @@
     (into java-cp-sans-cwd basis-cp)))
 
 (defmethod clj-reader/-complete ::service [_self word options]
-  (with-redefs [compliment.utils/classpath classpath-for-completions]
-    (doall (compliment.core/completions word options))))
+  (let [options (if (:extra-metadata options) options (assoc options :extra-metadata #{:private :deprecated}))]
+    (with-redefs [compliment.utils/classpath classpath-for-completions]
+      #_(prn ::-complete :word word :options options)
+      (doall (cond-> (compliment.core/completions word options)
+               :namespace/other? (->> (map (fn [{:keys [ns] :as cand}]
+                                             (if-not (seq ns)
+                                               cand
+                                               (assoc cand :namespace/other? (not= ns (:ns options)))))))
+               :namespace/found? (->> (map (fn [{:keys [type candidate] :as cand}]
+                                             (if (not= type :namespace)
+                                               cand
+                                               (let [ns-found? (boolean (find-ns (symbol (strip-literals candidate))))]
+                                                 (assoc cand :namespace/found? ns-found?)))))))))))
 
 (defn create
   ([] (create nil))

@@ -33,3 +33,19 @@
             (.startsWith tp "apple") :light
             :else nil)))
       :dark))
+
+(defn split-by-leading-literals
+  "Meant for symbol-strings that might have leading @, #', or '.
+
+  Examples:
+  \"@some-atom\" => '(\"@\" \"some-atom\")
+  \"@#'a\" => '(\"@#'\" \"a\")
+  \"#'some.ns/some-var\" => '(\"#'\" \"some.ns/some-var\")
+
+  \" @wont-work\" => '(nil \" @wont-work\")
+  \"nothing-todo\" => '(nil \"nothing-todo\")
+  "
+  [symbol-str]
+  (next (re-matches #"(@{0,2}#'|'|@)?(.*)" symbol-str)))
+
+(def strip-literals (comp second split-by-leading-literals))
