@@ -702,7 +702,7 @@
 (defn format-column [wrd column]
   (let [max-width (apply max (map count column))]
     (map (partial format-pair-to-width wrd max-width)
-         (map #(string/split % #"\/") (sort column)))))
+         (map #(string/split % #"\/") (sort-by count column)))))
 
 (defn row-width [columns]
   (+ (apply + (map #(apply max (map count %))
@@ -764,7 +764,7 @@
       (> (Math/ceil (/ (count coll) cols)) 20)
       (recur (take (int (* 0.9 (count coll))) coll) total-width)
       :else
-      (map sort (partition-all (Math/ceil (/ (count coll) cols)) coll)))))
+      (map (partial sort-by count) (partition-all (Math/ceil (/ (count coll) cols)) coll)))))
 
 (defn formatted-apropos [wrd]
   (let [suggests (sort-by (juxt count identity)

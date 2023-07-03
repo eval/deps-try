@@ -5,9 +5,10 @@
 - Suggestions UI:
   - don't limit amount (let jline handle this).  
   - vars show up in yellow.  
-  - suggested namespaces that are not required show up magenta.  
+  - suggested namespaces that are not required show up in magenta.  
   - sort namespace suggestions based on 'depth'.  
 - Fix clojuredocs-url of namespaces.  
+- Sort apropos results by length.  
 - Upgrade [compliment/compliment](https://github.com/alexander-yakushev/compliment).  
   Includes provided PRs:
   - suggest namespaces from cljc files.  
@@ -17,6 +18,7 @@
   - completions and documentation also work when symbols are preceded by literals.  
     e.g. `#'some-ns/some-db`
 - source and examples also work when symbols are preceded by literals.  
+- docs now work for special forms.  
 - highlighter
   - highlight ns-aliases.  
   - don't highlight slash in `clojure.core/`.  
