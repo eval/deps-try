@@ -1,6 +1,6 @@
 # Changelog
 
-## unreleased
+## v0.8.0 (2023-07-03)
 
 - Suggestions UI:
   - don't limit amount (let jline handle this).  
