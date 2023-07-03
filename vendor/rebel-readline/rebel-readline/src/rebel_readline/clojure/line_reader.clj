@@ -1109,27 +1109,54 @@
   (when (command-token? parsed-line ":c")
     (find-completions [:cljs/quit] word)))
 
+
+
 ;; TODO abstract completion service here
 (defn clojure-completer []
+  ;; TODO move ns suggestions before class suggestions, e.g. ""
+  ;; TODO clojure.java doesn't show up when completing "clojure."
   (proxy [Completer] []
     (complete [^LineReader reader ^ParsedLine line ^java.util.List candidates]
-      (let [word (.word line)]
+      (let [word                     (.word line)
+            calc-depth               #(count (str/split (str %) #"\."))
+            word-depth               (calc-depth word)
+            type-order               (->> [:namespace :class :var :function]
+                                          (map-indexed (comp vec reverse list))
+                                          (into {}))
+            completion-of-type       #(comp (fn [t] (= t %)) :type)
+            candidate-with-depth-lte #(comp (fn [d] (< d (inc %))) calc-depth :candidate)]
         (when (and
                (:completion @*line-reader*)
                (not (string/blank? word))
                (pos? (count word)))
-          (let [options (let [ns' (current-ns)
-                              context (complete-context line)]
-                          (cond-> {}
-                            ns'     (assoc :ns ns')
-                            context (assoc :context context)))]
+          (let [{:keys [context] :as options} (let [ns'     (current-ns)
+                                                    context (complete-context line)]
+                                                (cond-> {}
+                                                  ns'     (assoc :ns ns')
+                                                  context (assoc :context context)))
+                context-is                    #(constantly (= % (some-> context first)))]
             (->>
              (or
               (repl-command-complete (meta line))
               (cljs-quit-complete (meta line))
-              (completions (.word line) options))
-             (map #(candidate %))
-             (take 10)
+              (->> (completions (.word line) options)
+                   #_(sort-by > :candidate)
+                   #_(sort-by (juxt #(-> % :candidate calc-depth) :candidate))
+                   (sort-by (juxt (completion-of-type :class) ;; always have classes at end
+                                  #_(comp type-order :type)
+                                  #(-> % :candidate calc-depth) :candidate))
+                   (filter (some-fn (every-pred (context-is 'import) (completion-of-type :class))
+                                    (candidate-with-depth-lte (inc word-depth))))
+                   #_(remove #(-> % :candidate calc-depth (> (inc word-depth))))))
+             #_not-empty
+             #_(#(doto % prn))
+             (map-indexed (fn [ix cand] (assoc cand :sort ix)))
+             #_(take 15)
+             #_(#(doto % prn))
+             #_(take 12)
+             (map candidate)
+             #_(take 15)
+             #_(#(doto % prn))
              (.addAll candidates))))))))
 
 ;; ----------------------------------------
