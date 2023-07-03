@@ -6,7 +6,7 @@
    [rebel-readline.clojure.tokenizer :as tokenize]
    [rebel-readline.clojure.sexp :as sexp]
    [rebel-readline.tools :as tools :refer [color service-dispatch]]
-   [rebel-readline.utils :as utils :refer [log]]
+   [rebel-readline.utils :as utils :refer [log strip-literals]]
    [clojure.string :as string]
    [clojure.java.io :as io]
    [clojure.main]
