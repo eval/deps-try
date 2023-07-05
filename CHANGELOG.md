@@ -3,7 +3,10 @@
 ## Unreleased
 
 - Add keybinding ^X^T to 'eval&tap at point'.  
-  Invoked with empty prompt it taps the result of the last evaluation (*1 or exception).
+  Invoked with empty prompt it taps the result of the last evaluation (*1 or exception).  
+- Upgrade compliment, and unlocking:  
+  - private vars are suggested using var-quote notation, e.g. `#'some-ns/|TAB`.  
+  - private and deprecated suggested vars are shown in red.  
 
 ## v0.8.0 (2023-07-03)
 
