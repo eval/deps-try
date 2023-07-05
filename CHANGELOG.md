@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Add keybinding ^X^T to 'eval&tap at point'.  
+  Invoked with empty prompt it taps the result of the last evaluation (*1 or exception).
+
 ## v0.8.0 (2023-07-03)
 
 - Suggestions UI:

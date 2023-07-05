@@ -9,8 +9,8 @@
    [rebel-readline.utils :as utils :refer [log strip-literals]]
    [clojure.string :as string]
    [clojure.java.io :as io]
-   [clojure.main]
-   [clojure.string :as str])
+   [clojure.datafy :as d]
+   [clojure.main])
   (:import
    [java.nio CharBuffer]
    [org.jline.keymap KeyMap]
@@ -848,6 +848,15 @@
      (display-less (format-data-eval-result result)))
    true))
 
+(def eval&tap-at-point-widget
+  (create-widget
+   (let [{:keys [result exception]} (in-place-eval)]
+     (tap> (d/datafy (or result
+                         exception
+                         (:repl/just-caught @*line-reader*)
+                         *1))))
+   true))
+
 ;; --------------------------------------------
 ;; Buffer position
 ;; --------------------------------------------
@@ -876,6 +885,7 @@
     (register-widget "clojure-examples-at-point"  examples-at-point-widget)
     (register-widget "clojure-apropos-at-point"   apropos-at-point-widget)
     (register-widget "clojure-eval-at-point"      eval-at-point-widget)
+    (register-widget "clojure-eval&tap-at-point"  eval&tap-at-point-widget)
 
     (register-widget "clojure-force-accept-line"  always-accept-line)
 
@@ -895,6 +905,7 @@
     (key-binding (str (KeyMap/ctrl \X) (KeyMap/ctrl \X)) "clojure-examples-at-point")
     (key-binding (str (KeyMap/ctrl \X) (KeyMap/ctrl \A)) "clojure-apropos-at-point")
     (key-binding (str (KeyMap/ctrl \X) (KeyMap/ctrl \E)) "clojure-eval-at-point")
+    (key-binding (str (KeyMap/ctrl \X) (KeyMap/ctrl \T)) "clojure-eval&tap-at-point")
     (key-binding (str (KeyMap/ctrl \X) (KeyMap/ctrl \M)) "clojure-force-accept-line")))
 
 (defn bind-clojure-widgets-vi-cmd [km-name]
@@ -1118,7 +1129,7 @@
   (proxy [Completer] []
     (complete [^LineReader reader ^ParsedLine line ^java.util.List candidates]
       (let [word                     (.word line)
-            calc-depth               #(count (str/split (str %) #"\."))
+            calc-depth               #(count (string/split (str %) #"\."))
             word-depth               (calc-depth word)
             type-order               (->> [:namespace :class :var :function]
                                           (map-indexed (comp vec reverse list))

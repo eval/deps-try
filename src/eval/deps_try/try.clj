@@ -10,7 +10,8 @@
             [rebel-readline.core :as rebel-core]
             [rebel-readline.jline-api :as api]
             [rebel-readline.tools :as rebel-tools]
-            [rebel-readline.utils :refer [*debug-log*]])
+            [rebel-readline.utils :refer [*debug-log*]]
+            [rebel-readline.clojure.main :as main])
   (:import [org.jline.reader LineReader]))
 
 (require '[babashka.fs :as fs] :reload)
@@ -108,6 +109,13 @@
   (require 'cljfmt.core)
   (warm-up-completion-cache!))
 
+(defn- persist-just-caught
+  "This is needed for tap-at-point to tap an exception that just occurred."
+  [ex]
+  (swap! api/*line-reader* assoc :repl/just-caught ex))
+
+(defn- reset-just-caught []
+  `(swap! api/*line-reader* dissoc :repl/just-caught))
 
 (defn -main []
   ;; via --debug flag?
@@ -117,11 +125,14 @@
       (rebel-core/ensure-terminal
        (repl
         {:deps-try/data-path data-path
+         :caught             (fn [ex]
+                               (persist-just-caught ex)
+                               (clojure.main/repl-caught ex))
          :init               (fn []
                                (load-slow-deps!)
                                (apply require clojure.main/repl-requires)
                                (set! clojure.core/*print-namespace-maps* false))
          :eval               (fn [form]
-                               (eval `(do ~(handle-sigint-form) ~form)))
+                               (eval `(do ~(handle-sigint-form) ~(reset-just-caught) ~form)))
          :print              syntax-highlight-pprint}))
       (System/exit 0))))
