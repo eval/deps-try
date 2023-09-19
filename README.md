@@ -223,7 +223,7 @@ Big thanks to [Avery Quinn](https://github.com/avescodes) for coming up with [le
 
 ## LICENSE
 
-Copyright (c) 2023 Gert Goet, ThinkCreate
+Copyright (c) 2023 Gert Goet, ThinkCreate.
 Distributed under the MIT license. See LICENSE.
 
 Code in vendor/rebel-readline originates from [rebel-readline](https://github.com/bhauman/rebel-readline) which is covered by the Eclipse Public License either version 1.0 or (at your option) any later version.

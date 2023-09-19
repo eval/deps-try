@@ -1,7 +1,8 @@
 # Changelog
 
-## Unreleased
+## v0.9.0 (2023-09-19)
 
+- Revert allowing overrides. Fixes [#23](https://github.com/eval/deps-try/issues/23).  
 - Add keybinding ^X^T to 'eval&tap at point'.  
   Invoked with empty prompt it taps the result of the last evaluation (*1 or exception).  
 - Upgrade compliment, and unlocking:  
