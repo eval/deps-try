@@ -42,11 +42,41 @@ Again, no need to setup or adjust a project, or type out the full configuration 
   - interrupt operations without quiting the REPL
   - easier copy/paste of multiline code
   - improved support for eval-at-point (e.g. set and list literals, var quote, deref)
+  - eval&tap-at-point
+  - improved suggestions
+    - more shown
+    - different colors for fns and vars, private vars/fns and deprecated vars.
 - toggle Clojure settings
   - `clojure.core/*print-meta*`
   - `clojure.core/*print-namespace-maps*` (default off)
 
 ## Installation
+
+### manual (Windows, Linux and macOS)
+
+#### Prerequisites
+
+* Install [Clojure](https://clojure.org/guides/install_clojure)
+* Install [babashka](https://github.com/babashka/babashka#installation)
+
+Verify that the following commands work:
+
+``` bash
+$ clj
+# REPL starts successfully, ergo Clojure and Java are correctly configured.
+$ bb --version
+babashka v1.3.176
+```
+
+#### Installation
+
+* Download [the latest stable bb-jar](https://github.com/eval/deps-try/releases/tag/stable).
+* Put an executable wrapper-script on $PATH. For example (for Linux and macOS):
+```bash
+#!/usr/bin/env sh
+
+exec bb /absolute/path/to/deps-try-bb.jar "$@"
+```
 
 ### Homebrew (Linux and macOS)
 
@@ -109,37 +139,13 @@ bbin 0.1.12
 
 ``` bash
 $ bbin install https://github.com/eval/deps-try/releases/download/stable/deps-try-bb.jar --as deps-try
+# or the unstable version (latest master)
+$ bbin install https://github.com/eval/deps-try/releases/download/unstable/deps-try-bb.jar --as deps-try-unstable
 
 # Check version
 $ deps-try -v
 
 # Re-run the install command to upgrade
-```
-
-### manual (Windows, Linux and macOS)
-
-#### Prerequisites
-
-* Install [Clojure](https://clojure.org/guides/install_clojure)
-* Install [babashka](https://github.com/babashka/babashka#installation)
-
-Verify that the following commands work:
-
-``` bash
-$ clj
-# REPL starts successfully, ergo Clojure and Java are correctly configured.
-$ bb --version
-babashka v1.3.176
-```
-
-#### Installation
-
-* Download [the latest stable bb-jar](https://github.com/eval/deps-try/releases/tag/stable).
-* Put an executable wrapper-script on $PATH. For example (for Linux and macOS):
-```bash
-#!/usr/bin/env sh
-
-exec bb /absolute/path/to/deps-try-bb.jar "$@"
 ```
 
 ## Usage
@@ -176,6 +182,8 @@ $ deps-try https://github.com/metosin/malli some-branch-tag-or-sha
 # ...using the 'infer' notation, e.g.
 # com.github.<user>/<project>, com.gitlab.<user>/<project>, ht.sr.~<user>/<project>
 $ deps-try com.github.metosin/malli
+# testdriving some PR (or MR on gitlab):
+$ deps-try com.github.metosin/malli ^123
 
 # A local project
 $ deps-try . ~/some/project ../some/other/project
@@ -195,6 +203,7 @@ user=> :repl/help
 | <kbd>Ctrl</kbd> + <kbd>X</kbd> <kbd>Ctrl</kbd> + <kbd>A</kbd> | Apropos. Search all public vars in loaded namespaces matching word for cursor. | ![deps-try-apropos](https://user-images.githubusercontent.com/290596/229820298-55c3a1e6-0fa1-4a84-b0d1-a04d8ae7ed85.gif)|
 |<kbd>Ctrl</kbd> + <kbd>X</kbd> <kbd>Ctrl</kbd> + <kbd>D</kbd>| Show doc of function (or namespace) using word before cursor. |<img width="624" alt="Screenshot 2023-04-04 at 15 38 12" src="https://user-images.githubusercontent.com/290596/229811188-cd9775e0-6f06-4300-a457-90b8d891e808.png">|
 | <kbd>Ctrl</kbd> + <kbd>X</kbd> <kbd>Ctrl</kbd> + <kbd>E</kbd> | Eval expression before cursor. |  ![deps-try-eval](https://user-images.githubusercontent.com/290596/229825665-b1a40a81-6185-419c-bac2-4ce029890765.gif)|
+| <kbd>Ctrl</kbd> + <kbd>X</kbd> <kbd>Ctrl</kbd> + <kbd>T</kbd> | Eval expression before cursor *and* `tap>` the result (taps the last result/exception on empty line). | |
 | <kbd>Ctrl</kbd> + <kbd>X</kbd> <kbd>Ctrl</kbd> + <kbd>M</kbd> | Force accept line (when cursor is a position where <kbd>Return</kbd> would insert a newline). | ![deps-try-force-accept](https://user-images.githubusercontent.com/290596/229837792-bf1b19e6-33e2-4c3c-8cf9-e8adf3d887fc.gif) |
 | <kbd>Ctrl</kbd> + <kbd>X</kbd> <kbd>Ctrl</kbd> + <kbd>S</kbd> | Show source of function using word before cursor. | <img width="623" alt="Screenshot 2023-04-04 at 17 26 47" src="https://user-images.githubusercontent.com/290596/229841609-293435c2-0d4e-4720-84c0-507448568a45.png"> |
 |<kbd>Ctrl</kbd> + <kbd>X</kbd> <kbd>Ctrl</kbd> + <kbd>X</kbd>| Searches [clojuredocs](https://clojuredocs.org/core-library) for examples using word before cursor. |<img width="623" alt="Screenshot 2023-04-04 at 15 32 26" src="https://user-images.githubusercontent.com/290596/229809276-26bb6fa2-e780-40f6-94d3-80a0662af1ec.png">|
