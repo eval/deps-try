@@ -111,9 +111,10 @@
 
 (defn- git-version? [s]
   ;; exclude anything that
-  ;; - looks like a mvn-dep
+  ;; - looks like a mvn- or git-dep
   ;; - looks like a forced local-dep (e.g. "~/project", "./project")
-  (and (not (mvn-dep? s))
+  (and (not (git-dep? s))
+       (not (mvn-dep? s))
        (not (re-find #"^[.~]" s))))
 
 (def ^:private version-types

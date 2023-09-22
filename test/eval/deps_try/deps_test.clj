@@ -68,6 +68,10 @@
       '("https://github.com/user/project.git")
       [[:dep/git "https://github.com/user/project.git" :latest]]
 
+      '("https://github.com/user/project1" "https://github.com/user/project2")
+      [[:dep/git "https://github.com/user/project1" :latest]
+       [:dep/git "https://github.com/user/project2" :latest]]
+
       '("https://github.com/user/project" "main")
       [[:dep/git "https://github.com/user/project" "main"]]
 

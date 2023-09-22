@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- git-url seen as version of git-url before it. Fixes [#24](https://github.com/eval/deps-try/issues/24).  
+
 ## v0.9.0 (2023-09-19)
 
 - Revert allowing overrides. Fixes [#23](https://github.com/eval/deps-try/issues/23).  
