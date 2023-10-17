@@ -17,6 +17,13 @@
 
 (require '[babashka.fs :as fs] :reload)
 
+(defn- ensure-path-exists! [path]
+  (fs/create-dirs path))
+
+(defn- ensure-file-exists! [path]
+  (when-not (fs/exists? path)
+    (fs/create-file path)))
+
 (defn- warm-up-completion-cache! []
   (clj-line-reader/-complete {:rebel-readline.service/type ::rebel-service/service} "nil" {}))
 
@@ -102,9 +109,6 @@
            (merge opts {:prompt (fn [])})
            seq
            flatten)))))
-
-(defn- ensure-path-exists! [path]
-  (fs/create-dirs path))
 
 (defn- load-slow-deps! []
   (require 'cljfmt.core)
