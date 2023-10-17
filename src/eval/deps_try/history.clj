@@ -14,17 +14,33 @@
       (toString [_this]
         (format "%d: %s" index line)))))
 
-(defn- history [{:keys [items writable-history]}]
-  (let [!history-items  (atom (vec items))
-        !index          (atom 0)
-        !next-ix        (atom 0)
-        next-ix         #(dec (swap! !next-ix inc))
-        !items          (atom [])
-        generate-items! (fn []
-                          (reset! !next-ix 0)
-                          (reset! !items
-                                  (into [] (map #(create-entry (next-ix) %) @!history-items)))
-                          (reset! !index (count @!items)))]
+(defn- history
+  "Options:
+  - `items` - history items, ordered as in a history file.
+  - `seed-items` - ordered as in a file. Will be consumed upon matching new lines."
+  [{:keys [items seed-items writable-history]}]
+  (let [!history-items     (atom (vec items))
+        !seed-items        (atom (vec seed-items))
+        !index             (atom 0)
+        !next-ix           (atom 0)
+        next-ix            #(dec (swap! !next-ix inc))
+        !items             (atom [])
+        generate-items!    (fn []
+                             (reset! !next-ix 0)
+                             (reset! !items
+                                     (-> []
+                                         (into (map #(create-entry (next-ix) %) @!history-items))
+                                         (into (map #(create-entry (next-ix) %) (reverse @!seed-items)))))
+                             (reset! !index (count @!items)))
+        line-matches-item? (fn [line item]
+                             (let [first-line #(-> % string/split-lines first)]
+                               (= (first-line line) (first-line item))))
+
+        ;; only first from !recipe-items is candidate to be consumed
+        possibly-consume-recipe-item! (fn [line]
+                                        (when (seq @!seed-items)
+                                          (when (line-matches-item? line (first @!seed-items))
+                                            (swap! !seed-items subvec 1))))]
     (generate-items!)
     (reify History
       (first [_this])
@@ -43,6 +59,7 @@
       (add [_this time line]
         (swap! !history-items conj line)
         (.add writable-history time line)
+        (possibly-consume-recipe-item! line)
         (generate-items!))
       (iterator [_this index]
         (.listIterator @!items index))
@@ -78,6 +95,8 @@
 
 (defn make-history
   "Extracts all commands from `history-file` and yields a seeded History instance."
-  [{:keys [history-file writable-history]}]
+  [{:keys [history-file seed-items writable-history]}]
   (let [hist-items (history-items history-file)]
-    (history {:items hist-items :writable-history writable-history})))
+    (history {:items            hist-items
+              :seed-items       seed-items
+              :writable-history writable-history})))
