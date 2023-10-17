@@ -3,6 +3,7 @@
             [clojure.pprint :as pp]
             [clojure.repl :as clj-repl]
             [eval.deps-try.deps :as try-deps]
+            [eval.deps-try.history :as history]
             [eval.deps-try.rr-service :as rebel-service]
             [rebel-readline.clojure.line-reader :as clj-line-reader]
             [rebel-readline.clojure.main :as rebel-main]
@@ -10,9 +11,9 @@
             [rebel-readline.core :as rebel-core]
             [rebel-readline.jline-api :as api]
             [rebel-readline.tools :as rebel-tools]
-            [rebel-readline.utils :refer [*debug-log*]]
-            [rebel-readline.clojure.main :as main])
-  (:import [org.jline.reader LineReader]))
+            [rebel-readline.utils :refer [*debug-log*]])
+  (:import [org.jline.reader LineReader]
+           [org.jline.reader.impl.history DefaultHistory]))
 
 (require '[babashka.fs :as fs] :reload)
 
@@ -86,7 +87,9 @@
              (rebel-service/create {:data-path data-path}))
         (.setVariable LineReader/SECONDARY_PROMPT_PATTERN "%P ")
         (.setVariable LineReader/HISTORY_SIZE "10000")
-        (.setVariable LineReader/HISTORY_FILE (str history-file))))
+        (.setVariable LineReader/HISTORY_FILE (str history-file))
+        (#(.setHistory % (history/make-history {:history-file     history-file
+                                                :writable-history (DefaultHistory. %)})))))
     ;; repl time:
     (binding [*out* (api/safe-terminal-writer api/*line-reader*)]
       (when-let [prompt-fn (:prompt opts)]
@@ -100,10 +103,8 @@
            seq
            flatten)))))
 
-
 (defn- ensure-path-exists! [path]
   (fs/create-dirs path))
-
 
 (defn- load-slow-deps! []
   (require 'cljfmt.core)
@@ -120,7 +121,7 @@
 (defn -main []
   ;; via --debug flag?
   (binding [*debug-log* false]
-    (let [data-path (fs/path (fs/xdg-data-home) "deps-try")]
+    (let [data-path (fs/xdg-data-home "deps-try")]
       (ensure-path-exists! data-path)
       (rebel-core/ensure-terminal
        (repl
