@@ -1,10 +1,13 @@
 (ns eval.deps-try
-  {:clj-kondo/config '{:lint-as {babashka.fs/with-temp-dir clojure.core/let}}}
+  {:clj-kondo/config '{:lint-as {babashka.fs/with-temp-dir clojure.core/let
+                                 eval.deps-try.util/pred-> clojure.core/->}}}
   (:require
    [babashka.classpath :as cp :refer [get-classpath]]
+   [babashka.cli :as cli]
    [babashka.process :as p]
    [clojure.java.io :as io]
-   [clojure.string :as str]))
+   [clojure.string :as str]
+   [eval.deps-try.util :as util]))
 
 (def init-cp (get-classpath))
 
@@ -18,9 +21,9 @@
 
 (defn print-usage []
   (println "Usage:
-  deps-try [dep-name [dep-version] [dep2-name ...] ...]
+  deps-try [dep-name [dep-version] [dep2-name ...] ...] [--recipe recipe]
 
-Supported dep-name types:
+Supported `dep-name` types:
 - maven
   e.g. `metosin/malli`, `org.clojure/cache`.
 - git
@@ -28,6 +31,10 @@ Supported dep-name types:
   - url, e.g. `https://github.com/user/project`, `https://anything.org/user/project.git`.
 - local
   - path to project containing `deps.edn`, e.g. `.`, `~/projects/my-project`, `./path/to/project`.
+
+Possible `recipe` values:
+- url, e.g. \"https://github.com/eval/deps-try/blob/master/recipes/namespaces.clj\"
+- paths, e.g. \"~/recipes/foo.clj\"
 
 Examples:
 # A REPL using the latest Clojure version
@@ -111,6 +118,9 @@ user=> :repl/help
   (when-not (at-least-version? minimum version)
     (warn (str "Adding (additional) libraries to this REPL-session via ':deps/try some/lib' won't work as it requires Clojure CLI version >= " minimum " (current: " version ")."))))
 
+(defn- print-error-and-exit! [m]
+  (print-message m {:msg-type :error})
+  (System/exit 1))
 
 (defn- tdeps-verbose->map [s]
   (let [[cp & pairs] (reverse (str/split-lines s))
@@ -141,12 +151,37 @@ user=> :repl/help
         (warn-unless-minimum-clojure-cli-version "1.11.1.1273" tdeps-version)
         (p/exec "java" "-classpath" classpath
                 (str "-Dclojure.basis=" basis-file)
-                "clojure.main" "-m" "eval.deps-try.try")))))
+                "clojure.main" "-m" "eval.deps-try.try"
+                "--recipe" "/Users/gert/projects/deps-try/deps-try/recipes/next_jdbc_postgresql.clj")))))
+
+(def ^:private cli-opts {:exec-args {:deps []}
+                         :alias     {:h :help, :v :version},
+                         :coerce    {:recipe :string :deps [:string]},
+                         :restrict  [:recipe :deps :help :version], :args->opts (repeat :deps)})
 
 (defn -main [& args]
-  (cond
-    (print-version? args) (print-version)
-    (print-usage? args)   (print-usage)
+  (let [parsed-opts (try
+                      (cli/parse-opts args cli-opts)
+                      (catch Exception e
+                        {:error (:msg (ex-data e))}))]
+    (cond
+      (:version parsed-opts) (print-version)
+      (:help parsed-opts)    (print-usage)
 
-    :else (let [parsed-args (try-deps/parse-dep-args args)]
-            (start-repl! parsed-args))))
+      :else (let [{error :error} (util/pred-> (complement :error) parsed-opts
+                                              (try-deps/parse-dep-args)
+                                              (start-repl!))]
+              (when error (print-error-and-exit! error))))))
+
+
+(comment
+  (try
+    (cli/parse-opts '("other/bar" "--recipe2" "rec1" "some/bar")
+                   {:exec-args {:deps []}
+                    :alias {:h :help, :v :version},
+                    :coerce {:recipe :string :deps [:string]},
+                    :restrict [:recipe :deps :help :version], :args->opts (repeat :deps)})
+    (catch Exception e
+      (ex-data e)))
+
+  #_:end)

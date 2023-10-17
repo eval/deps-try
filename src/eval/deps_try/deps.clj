@@ -413,9 +413,9 @@
         (apply str (replace replacements error-tpl)))
       (pr-str error))))
 
-(defn parse-dep-args [args]
+(defn parse-dep-args [{:keys [deps]}]
   (let [{:keys [error] :as deps}
-        (util/pred-> (complement :error) {:args args}
+        (util/pred-> (complement :error) {:args deps}
                      ;; e.g. [[:dep/local "foo" :latest] [:dep/mvn "bar/baz" :latest]]
                      (parse-args)
                      #_(-> (doto prn))
