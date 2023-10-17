@@ -4,6 +4,7 @@
             [clojure.repl :as clj-repl]
             [eval.deps-try.deps :as try-deps]
             [eval.deps-try.history :as history]
+            [eval.deps-try.recipe :as recipe]
             [eval.deps-try.rr-service :as rebel-service]
             [rebel-readline.clojure.line-reader :as clj-line-reader]
             [rebel-readline.clojure.main :as rebel-main]
@@ -87,15 +88,17 @@
 ;;  line-reader
 ;;    service
 
-(defn repl [{:deps-try/keys [data-path] :as opts}]
+(defn repl [{:deps-try/keys [data-path recipe] :as opts}]
   (rebel-core/with-line-reader
-    (let [history-file (fs/path data-path "history")]
+    (let [history-file (doto (fs/path data-path "history")
+                         (ensure-file-exists!))]
       (doto (clj-line-reader/create
              (rebel-service/create {:data-path data-path}))
         (.setVariable LineReader/SECONDARY_PROMPT_PATTERN "%P ")
         (.setVariable LineReader/HISTORY_SIZE "10000")
         (.setVariable LineReader/HISTORY_FILE (str history-file))
         (#(.setHistory % (history/make-history {:history-file     history-file
+                                                :seed-items       (:steps recipe)
                                                 :writable-history (DefaultHistory. %)})))))
     ;; repl time:
     (binding [*out* (api/safe-terminal-writer api/*line-reader*)]
@@ -122,22 +125,26 @@
 (defn- reset-just-caught []
   `(swap! api/*line-reader* dissoc :repl/just-caught))
 
-(defn -main []
+(defn -main [& args]
   ;; via --debug flag?
   (binding [*debug-log* false]
     (let [data-path (fs/xdg-data-home "deps-try")]
       (ensure-path-exists! data-path)
       (rebel-core/ensure-terminal
-       (repl
-        {:deps-try/data-path data-path
-         :caught             (fn [ex]
-                               (persist-just-caught ex)
-                               (clojure.main/repl-caught ex))
-         :init               (fn []
-                               (load-slow-deps!)
-                               (apply require clojure.main/repl-requires)
-                               (set! clojure.core/*print-namespace-maps* false))
-         :eval               (fn [form]
-                               (eval `(do ~(handle-sigint-form) ~(reset-just-caught) ~form)))
-         :print              syntax-highlight-pprint}))
+       (let [repl-opts (cond-> {:deps-try/data-path data-path
+                                #_#_:prompt (fn [] (println (str *ns* "=>"))) ;; when prompt is too deep
+                                :caught             (fn [ex]
+                                                      (persist-just-caught ex)
+                                                      (clojure.main/repl-caught ex))
+                                :init               (fn []
+                                                      (load-slow-deps!)
+                                                      (apply require clojure.main/repl-requires)
+                                                      (set! clojure.core/*print-namespace-maps* false))
+                                :eval               (fn [form]
+                                                      (eval `(do ~(handle-sigint-form)
+                                                                 ~(reset-just-caught)
+                                                                 ~form)))
+                                :print              syntax-highlight-pprint}
+                         (second args) (assoc :deps-try/recipe (recipe/parse (second args))))]
+         (repl repl-opts)))
       (System/exit 0))))
