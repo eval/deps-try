@@ -33,6 +33,7 @@
     #_(catch java.net.http.HttpConnectTimeoutException _
       {:status :unavailable})))
 
+
 (defn multi-url-test [urls options]
   (let [result (atom nil)
         stop?  #(let [{:keys [status]} @result]

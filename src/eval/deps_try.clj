@@ -7,8 +7,8 @@
    [babashka.process :as p]
    [clojure.java.io :as io]
    [clojure.string :as str]
-   [eval.deps-try.util :as util]
-   [babashka.fs :as fs]))
+   [eval.deps-try.recipe :as recipe]
+   [eval.deps-try.util :as util]))
 
 (def init-cp (get-classpath))
 
@@ -16,11 +16,17 @@
          '[babashka.fs :as fs] :reload
          '[babashka.http-client] :reload) ;; reload so we use the dep, not the built-in
 
-(defn deps->cp [tmp deps]
-  (str/trim (:out (p/sh {:dir (str tmp)} "clojure" "-Spath" "-Sdeps"
-                        (str {:paths [] :deps deps})))))
+(defn- run-clojure [opts & args]
+  (let [[opts args] (if (map? opts) [opts args] [nil (cons opts args)])]
+    (fs/with-temp-dir [tmp {}]
+      (apply p/sh (merge {:dir (str tmp)} opts)
+             "clojure" args))))
 
-(defn print-usage []
+(defn- deps->cp [deps]
+  (when (seq deps)
+    (str/trim (:out (run-clojure  "-Spath" "-Sdeps" (str {:paths [] :deps deps}))))))
+
+(defn- print-usage []
   (println "Usage:
   deps-try [dep-name [dep-version] [dep2-name ...] ...] [--recipe recipe]
 
@@ -68,7 +74,7 @@ user=> :deps/try dev.weavejester/medley \"~/some/project\"
 user=> :repl/help
 "))
 
-(defn print-version []
+(defn- print-version []
   (let [dev?    (nil? (io/resource "VERSION"))
         bin     (if dev? "deps-try-dev" "deps-try")
         version (str/trim
@@ -124,27 +130,35 @@ user=> :repl/help
            (map #(str/split % #" += +") (filter seq pairs))) keywordize)))
 
 
-(defn- start-repl! [{requested-deps :deps}]
-  (fs/with-temp-dir [tmp {}]
-    (let [default-deps                 {'org.clojure/clojure {:mvn/version "1.12.0-alpha4"}}
-          {:keys         [cp-file]
-           default-cp    :cp
-           tdeps-version :version
-           :as           _tdeps-paths} (-> (p/sh {:dir (str tmp)}
-                                                 "clojure" "-Sverbose" "-Spath"
-                                                 "-Sdeps" (str {:paths [] :deps default-deps}))
-                                           :out
-                                           tdeps-verbose->map)
-          basis-file                   (str/replace cp-file #".cp$" ".basis")
-          requested-cp                 (deps->cp tmp requested-deps)
-          classpath                    (str (fs/cwd) fs/path-separator
-                                            default-cp fs/path-separator
-                                            init-cp fs/path-separator requested-cp)]
-      (warn-unless-minimum-clojure-cli-version "1.11.1.1273" tdeps-version)
-      (p/exec "java" "-classpath" classpath
-              (str "-Dclojure.basis=" basis-file)
-              "clojure.main" "-m" "eval.deps-try.try"
-              "--recipe" "/Users/gert/projects/deps-try/deps-try/recipes/next_jdbc_postgresql.clj"))))
+(defn- start-repl! [{requested-deps              :deps
+                     {recipe-deps     :deps
+                      recipe-location :location} :recipe :as args}]
+  (prn :args args)
+  (let [default-deps                 {'org.clojure/clojure {:mvn/version "1.12.0-alpha4"}}
+        {:keys         [cp-file]
+         default-cp    :cp
+         tdeps-version :version
+         :as           _tdeps-paths} (-> (run-clojure "-Sverbose" "-Spath"
+                                                      "-Sdeps" (str {:paths [] :deps default-deps}))
+                                         :out
+                                         str/trim
+                                         tdeps-verbose->map)
+
+        basis-file   (str/replace cp-file #".cp$" ".basis")
+        requested-cp (deps->cp requested-deps)
+        recipe-cp    (deps->cp recipe-deps)
+        classpath    (cond-> (str (fs/cwd) fs/path-separator
+                                  default-cp fs/path-separator
+                                  init-cp fs/path-separator
+                                  requested-cp)
+                       recipe-cp (str fs/path-separator recipe-cp))
+        jvm-opts     [(str "-Dclojure.basis=" basis-file)]]
+    (warn-unless-minimum-clojure-cli-version "1.11.1.1273" tdeps-version)
+    (let [cmd (cond-> ["java" "-classpath" classpath]
+                (seq jvm-opts)  (into jvm-opts)
+                :always         (into ["clojure.main" "-m" "eval.deps-try.try"])
+                recipe-location (into ["--recipe" recipe-location]))]
+      (apply p/exec cmd))))
 
 (def ^:private cli-opts {:exec-args {:deps []}
                          :alias     {:h :help, :v :version},
@@ -160,15 +174,31 @@ user=> :repl/help
       (:version parsed-opts) (print-version)
       (:help parsed-opts)    (print-usage)
 
-      :else (let [{error :error} (util/pred-> (complement :error) parsed-opts
-                                              (try-deps/parse-dep-args)
-                                              (start-repl!))]
+      :else (let [parsed-recipe         (some-> parsed-opts :recipe (recipe/parse-arg))
+                  assoc-possible-recipe (fn [acc {:keys [error] :deps-try/keys [deps] :as recipe}]
+                                          (if-not (seq recipe)
+                                            acc
+                                            (let [{parse-dep-error :error
+                                                   parsed-deps     :deps} (when (seq deps)
+                                                                            (try-deps/parse-dep-args {:deps deps}))
+                                                  error                   (or error parse-dep-error)]
+                                              (cond-> acc
+                                                error       (assoc :error error)
+                                                parsed-deps (assoc :recipe (assoc recipe
+                                                                                  :deps parsed-deps))))))
+                  {error :error}        (util/pred-> (complement :error) parsed-opts
+                                                     (try-deps/parse-dep-args)
+                                                     (assoc-possible-recipe parsed-recipe)
+                                                     (start-repl!))]
               (when error (print-error-and-exit! error))))))
 
 
 (comment
+  
+  (try-deps/parse-dep-args {:deps ["metosin/malli"]})
+ 
   (try
-    (cli/parse-opts '("other/bar" "--recipe2" "rec1" "some/bar")
+    (cli/parse-opts '("other/bar" "--recipe" "rec1" "some/bar")
                    {:exec-args {:deps []}
                     :alias {:h :help, :v :version},
                     :coerce {:recipe :string :deps [:string]},
