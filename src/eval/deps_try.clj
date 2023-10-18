@@ -7,7 +7,8 @@
    [babashka.process :as p]
    [clojure.java.io :as io]
    [clojure.string :as str]
-   [eval.deps-try.util :as util]))
+   [eval.deps-try.util :as util]
+   [babashka.fs :as fs]))
 
 (def init-cp (get-classpath))
 
@@ -130,29 +131,27 @@ user=> :repl/help
            (map #(str/split % #" += +") (filter seq pairs))) keywordize)))
 
 
-(defn- start-repl! [{requested-deps :deps parse-error :error}]
-  (if parse-error
-    (do (error parse-error) (System/exit 1))
-    (fs/with-temp-dir [tmp {}]
-      (let [default-deps                 {'org.clojure/clojure {:mvn/version "1.12.0-alpha4"}}
-            {:keys         [cp-file]
-             default-cp    :cp
-             tdeps-version :version
-             :as           _tdeps-paths} (-> (p/sh {:dir (str tmp)}
-                                                   "clojure" "-Sverbose" "-Spath"
-                                                   "-Sdeps" (str {:paths [] :deps default-deps}))
-                                             :out
-                                             tdeps-verbose->map)
-            basis-file                   (str/replace cp-file #".cp$" ".basis")
-            requested-cp                 (deps->cp tmp requested-deps)
-            classpath                    (str (fs/cwd) fs/path-separator
-                                              default-cp fs/path-separator
-                                              init-cp fs/path-separator requested-cp)]
-        (warn-unless-minimum-clojure-cli-version "1.11.1.1273" tdeps-version)
-        (p/exec "java" "-classpath" classpath
-                (str "-Dclojure.basis=" basis-file)
-                "clojure.main" "-m" "eval.deps-try.try"
-                "--recipe" "/Users/gert/projects/deps-try/deps-try/recipes/next_jdbc_postgresql.clj")))))
+(defn- start-repl! [{requested-deps :deps}]
+  (fs/with-temp-dir [tmp {}]
+    (let [default-deps                 {'org.clojure/clojure {:mvn/version "1.12.0-alpha4"}}
+          {:keys         [cp-file]
+           default-cp    :cp
+           tdeps-version :version
+           :as           _tdeps-paths} (-> (p/sh {:dir (str tmp)}
+                                                 "clojure" "-Sverbose" "-Spath"
+                                                 "-Sdeps" (str {:paths [] :deps default-deps}))
+                                           :out
+                                           tdeps-verbose->map)
+          basis-file                   (str/replace cp-file #".cp$" ".basis")
+          requested-cp                 (deps->cp tmp requested-deps)
+          classpath                    (str (fs/cwd) fs/path-separator
+                                            default-cp fs/path-separator
+                                            init-cp fs/path-separator requested-cp)]
+      (warn-unless-minimum-clojure-cli-version "1.11.1.1273" tdeps-version)
+      (p/exec "java" "-classpath" classpath
+              (str "-Dclojure.basis=" basis-file)
+              "clojure.main" "-m" "eval.deps-try.try"
+              "--recipe" "/Users/gert/projects/deps-try/deps-try/recipes/next_jdbc_postgresql.clj"))))
 
 (def ^:private cli-opts {:exec-args {:deps []}
                          :alias     {:h :help, :v :version},
