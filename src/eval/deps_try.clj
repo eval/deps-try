@@ -78,13 +78,6 @@ user=> :repl/help
                    (slurp (io/resource "VERSION"))))]
     (println (str bin " " version))))
 
-(defn- print-usage? [args]
-  (contains? #{"-h" "--help" "help"} (first args)))
-
-(defn- print-version? [args]
-  (contains? #{"-v" "--version" "version"} (first args)))
-
-
 (def ^:private clojure-cli-version-re #"^(\d+)\.(\d+)\.(\d+)\.(\d+)")
 
 (defn- parse-clojure-cli-version [s]
