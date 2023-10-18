@@ -4,44 +4,8 @@
             [babashka.process :refer [process]]
             [clojure.string :as str]
             [clojure.tools.gitlibs :as gitlib]
+            [eval.deps-try.errors :as errors]
             [eval.deps-try.util :as util]))
-
-
-(require '[babashka.http-client :as http] :reload)
-
-(defn- url-test [url {:keys [timeout include-body] :or {timeout 1000 include-body false}}]
-  (try
-    (let [http-fn                     (if include-body #'http/get #'http/head)
-          {status :status body :body} (http-fn url {:throw false :timeout timeout})
-          status                      (cond
-                                        (< 199 status 400) :found
-                                        (< 399 status 500) :not-found
-                                        :else              :unavailable)]
-      (cond-> {:status status}
-        include-body (assoc :body body)))
-    (catch java.io.IOException _
-      {:status :offline})
-    (catch java.net.SocketException _
-      {:status :offline})
-    #_(catch java.nio.channels.UnresolvedAddressException _
-      {:status :unknown})
-    (catch java.net.ConnectException _
-      {:status :offline})
-    (catch java.net.http.HttpTimeoutException _
-      {:status :unavailable})
-    ;; TODO needed? not available in bb
-    #_(catch java.net.http.HttpConnectTimeoutException _
-      {:status :unavailable})))
-
-
-(defn multi-url-test [urls options]
-  (let [result (atom nil)
-        stop?  #(let [{:keys [status]} @result]
-                  (#{:offline :found} status))]
-    (doseq [url    urls
-            :while (not (stop?))]
-      (reset! result (url-test url options)))
-    @result))
 
 (def ^:private git-services
   [[:github    {:dep-url-re    #"^(?:io|com)\.github\.([^/]+)\/(.+)"
@@ -307,7 +271,7 @@
                                 (str (apply str (replace {\. \/} group)) "/" artifact))
         libify                #(str % lib-path "/maven-metadata.xml")
         urls                  (map (comp libify :url) (vals standard-repos))
-        {:keys [status body]} (multi-url-test urls {:include-body true})
+        {:keys [status body]} (util/multi-url-test urls {:include-body true})
         result                {:mvn/version {:mvn/version (if (= :latest version) "RELEASE" version)}}]
     (cond
       (= status :not-found) {:error {:error/id :resolve.mvn/library-not-found :lib lib :version version}}
@@ -392,28 +356,6 @@
       {:deps (into {} deps)}
       {:error error})))
 
-(defn format-error [{:error/keys [id] :as error}]
-  (let [errors-by-id
-        {:resolve.local/path-not-found          ["Could not find path '" :full-path "'."]
-         :resolve.local/not-a-deps-folder       ["Folder '" :full-path "' does not contain a file 'deps.edn'."]
-         :resolve.git/ref-not-found             ["Could not find branch or tag '" :ref "' in repository '" :url "'."]
-         :resolve.git/sha-not-found             ["Could not find SHA, branch or tag '" :sha "' in repository '" :url "'."]
-         :resolve.git/sha-not-found-offline     ["Could not find SHA, branch or tag '" :sha "' in repository '" :url "' while offline."]
-         :resolve.git/repos-not-found           ["Could not find repository '" :url "'."]
-         :resolve.git/repos-not-found-offine    ["Could not find repository '" :url "' while offline."]
-         :resolve.git/caret-version-unsupported ["For this git-hosting it's not possible to point to PRs. Use regular refs/SHAs instead."]
-         :resolve.mvn/library-not-found         ["Could not find library '" :lib "' on Maven Central or Clojars."]
-         :resolve.mvn/library-not-found-offline ["Could not find library '" :lib "' while offline."]
-         :resolve.mvn/version-not-found         ["Could not find version '" :version "' of library '" :lib "' on Maven Central or Clojars."]
-         :resolve.mvn/version-not-found-offline ["Could not find version '" :version "' of library '" :lib "' while offline."]}
-        extract-placeholders (fn [err]
-                               (filter keyword? err))]
-    (if-let [error-tpl (errors-by-id id)]
-      (let [placeholders (extract-placeholders error-tpl)
-            replacements (zipmap placeholders (map #(error % %) placeholders))]
-        (apply str (replace replacements error-tpl)))
-      (pr-str error))))
-
 (defn parse-dep-args [{:keys [deps]}]
   (let [{:keys [error] :as deps}
         (util/pred-> (complement :error) {:args deps}
@@ -423,7 +365,7 @@
                      (resolve-deps))]
     (if-not error
       deps
-      {:error (format-error error)})))
+      {:error (errors/format-error error)})))
 
 (comment
   (set! clojure.core/*print-namespace-maps* false)
