@@ -8,7 +8,8 @@
    [clojure.java.io :as io]
    [clojure.string :as str]
    [eval.deps-try.recipe :as recipe]
-   [eval.deps-try.util :as util]))
+   [eval.deps-try.util :as util]
+   [eval.deps-try.errors :as errors]))
 
 (def init-cp (get-classpath))
 
@@ -133,7 +134,7 @@ user=> :repl/help
 (defn- start-repl! [{requested-deps              :deps
                      {recipe-deps     :deps
                       recipe-location :location} :recipe :as args}]
-  (prn :args args)
+  #_(prn :args args)
   (let [default-deps                 {'org.clojure/clojure {:mvn/version "1.12.0-alpha4"}}
         {:keys         [cp-file]
          default-cp    :cp
@@ -190,7 +191,8 @@ user=> :repl/help
                                                      (try-deps/parse-dep-args)
                                                      (assoc-possible-recipe parsed-recipe)
                                                      (start-repl!))]
-              (when error (print-error-and-exit! error))))))
+              (when error
+                (print-error-and-exit! (errors/format-error error)))))))
 
 
 (comment

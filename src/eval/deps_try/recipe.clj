@@ -1,7 +1,9 @@
 (ns eval.deps-try.recipe
-  (:require [clojure.java.io :as io]
+  (:require [babashka.fs :as fs]
+            [clojure.java.io :as io]
             [clojure.string :as string]
-            [edamame.core :as e]))
+            [edamame.core :as e]
+            [eval.deps-try.util :as util]))
 
 (defn -parse [s]
   (let [[ns-step & steps] (string/split s #"(\r?\n){3,}")
@@ -14,30 +16,36 @@
     (merge {:location path}
      (-parse contents))))
 
+(defn parse-arg
+  "Parse the value for recipe that was provided by the user."
+  [recipe-arg]
+  (let [url?                 (re-find #"^http" recipe-arg)
+        expanded-path        (when-not url?
+                               (fs/absolutize (fs/normalize (fs/expand-home recipe-arg))))
+        {url-status :status} (when url? (util/url-test recipe-arg {}))
+        error                (cond
+                               (and url-status (= url-status :offline))  :parse.recipe/offline
+                               (and url-status (not= url-status :found)) :parse.recipe/url-not-found
+                               (and expanded-path
+                                    (not (fs/exists? expanded-path)))    :parse.recipe/path-not-found)]
+    (if error
+      {:error {:error/id error :path (or expanded-path recipe-arg)}}
+      (let [{:deps-try/keys [deps] :as parsed-recipe} (parse recipe-arg)]
+        (cond-> parsed-recipe
+          deps (assoc :deps deps))))))
+
 (defn- parse-recipe-string [s]
   (with-open [r (clojure.java.io/reader (char-array s))]
     (parse r)))
 
-(defn parse-arg
-  "Parse the value for recipe that was provided by the user."
-  [recipe-arg]
-  ;; concerned with
-  ;; - existance of recipe
-  ;; - does it look like a recipe?
-  ;; - parsing
-  ;; - yielding {:error ,,,} or {:deps-try/deps [] :steps [,,,]}
-  ;; possibly {:deps ,,,}
-  #_{:error "That's not a recipe!"}
-  (let [{:deps-try/keys [deps] :as parsed-recipe} (parse recipe-arg)]
-    (cond-> parsed-recipe
-      deps (assoc :deps deps))))
-
 (comment
   (parse "https://raw.githubusercontent.com/eval/deps-try/master/src/eval/deps_try.clj")
 
-  (parse "https://raw.githubusercontent.com/eval/deps-try/master/src/eval/deps_try/util.clj")
+  (parse-arg "https://raw.githubusercontent.com/eval/deps-try/master/src/eval/deps_try/util.clj2")
 
+  (util/url-test "https://raw.githubusercontent.com/eval/deps-try/master/src/eval/deps_try/util.clj2" {})
   (parse-arg "/Users/gert/projects/deps-try/deps-try/recipes/next_jdbc_postgresql.clj")
+
   (slurp "README.md")
   (slurp "/Users/gert/projects/deps-try/deps-try/recipes/next_jdbc_postgresql.clj")
   (parse-recipe-string

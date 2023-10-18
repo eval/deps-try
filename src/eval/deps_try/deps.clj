@@ -357,15 +357,11 @@
       {:error error})))
 
 (defn parse-dep-args [{:keys [deps]}]
-  (let [{:keys [error] :as deps}
-        (util/pred-> (complement :error) {:args deps}
+  (util/pred-> (complement :error) {:args deps}
                      ;; e.g. [[:dep/local "foo" :latest] [:dep/mvn "bar/baz" :latest]]
-                     (parse-args)
-                     #_(-> (doto prn))
-                     (resolve-deps))]
-    (if-not error
-      deps
-      {:error (errors/format-error error)})))
+               (parse-args)
+               #_(-> (doto prn))
+               (resolve-deps)))
 
 (comment
   (set! clojure.core/*print-namespace-maps* false)
