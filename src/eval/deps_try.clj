@@ -135,7 +135,7 @@ user=> :repl/help
                      {recipe-deps     :deps
                       recipe-location :location} :recipe :as args}]
   #_(prn :args args)
-  (let [default-deps                 {'org.clojure/clojure {:mvn/version "1.12.0-alpha4"}}
+  (let [default-deps                 {'org.clojure/clojure {:mvn/version "1.12.0-alpha5"}}
         {:keys         [cp-file]
          default-cp    :cp
          tdeps-version :version
