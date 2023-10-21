@@ -34,7 +34,7 @@
 
 (defmethod rebel-readline/command :deps/try [[_ & args]]
   (if (seq args)
-    (let [{:keys [deps error]} (try-deps/parse-dep-args (map str args))]
+    (let [{:keys [deps error]} (try-deps/parse-dep-args {:deps (map str args)})]
       (if-not error
         (do ((requiring-resolve 'clojure.repl.deps/add-libs) deps)
             (warm-up-completion-cache!))
