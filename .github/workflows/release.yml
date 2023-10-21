@@ -87,6 +87,7 @@ jobs:
           files: |
             deps-try-bb.jar
             deps-try.zip
+            resources/VERSION
       - name: Release unstable
         if: ${{ always() }}
         uses: softprops/action-gh-release@v1
@@ -102,6 +103,7 @@ jobs:
           files: |
             deps-try-bb.jar
             deps-try.zip
+            resources/VERSION
       - name: Tagged release
         if: "${{ needs.Config.outputs.tagged-release }}"
         uses: softprops/action-gh-release@v1
@@ -117,3 +119,4 @@ jobs:
           files: |
             deps-try-bb.jar
             deps-try.zip
+            resources/VERSION
