@@ -18,9 +18,9 @@
     (assoc (select-keys ns-meta [:deps-try/deps])
            :steps (into [ns-step] steps))))
 
-(defn parse [path]
-  (let [contents (-> path str slurp string/trim)]
-    (merge {:location (str path)}
+(defn parse [slurpable]
+  (let [contents (-> slurpable slurp string/trim)]
+    (merge {:location (str slurpable)}
            (-parse contents))))
 
 (defn parse-arg
@@ -44,7 +44,7 @@
         path-to-parse        (or expanded-path recipe-arg)]
     (if error
       {:error {:error/id error :path path-to-parse}}
-      (let [{:deps-try/keys [deps] :as parsed-recipe} (parse path-to-parse)]
+      (let [{:deps-try/keys [deps] :as parsed-recipe} (parse (str path-to-parse))]
         (cond-> parsed-recipe
           deps (assoc :deps deps))))))
 
