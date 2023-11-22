@@ -6,8 +6,15 @@
             [eval.deps-try.util :as util]))
 
 (defn -parse [s]
-  (let [[ns-step & steps] (string/split s #"(\r?\n){3,}")
-        ns-meta           (some-> ns-step (e/parse-string) (e/parse-ns-form) :meta)]
+  (let [[ns-form {:keys [end-row]}] ((juxt identity meta) (e/parse-string s))
+        ns-step                     (->> s string/split-lines (take end-row) (string/join \newline))
+        s-sans-ns                   (->> s
+                                         string/split-lines
+                                         (drop end-row)
+                                         (string/join \newline)
+                                         string/triml)
+        steps                       (string/split s-sans-ns #"(\r?\n){3,}")
+        ns-meta                     (:meta (e/parse-ns-form ns-form))]
     (assoc (select-keys ns-meta [:deps-try/deps])
            :steps (into [ns-step] steps))))
 
