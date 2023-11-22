@@ -12,25 +12,32 @@
            :steps (into [ns-step] steps))))
 
 (defn parse [path]
-  (let [contents (-> path slurp string/trim)]
-    (merge {:location path}
-     (-parse contents))))
+  (let [contents (-> path str slurp string/trim)]
+    (merge {:location (str path)}
+           (-parse contents))))
 
 (defn parse-arg
   "Parse the value for recipe that was provided by the user."
   [recipe-arg]
   (let [url?                 (re-find #"^http" recipe-arg)
         expanded-path        (when-not url?
-                               (fs/absolutize (fs/normalize (fs/expand-home recipe-arg))))
+                               (cond-> recipe-arg
+                                 (not (fs/extension recipe-arg)) (str ".clj")
+                                 :finally                        (-> fs/expand-home
+                                                                     fs/normalize
+                                                                     fs/absolutize)))
+        #_#__                    (prn :path expanded-path)
         {url-status :status} (when url? (util/url-test recipe-arg {}))
         error                (cond
-                               (and url-status (= url-status :offline))  :parse.recipe/offline
-                               (and url-status (not= url-status :found)) :parse.recipe/url-not-found
+                               (and url-status (= url-status :offline))           :parse.recipe/offline
+                               (and url-status (not= url-status :found))          :parse.recipe/url-not-found
                                (and expanded-path
-                                    (not (fs/exists? expanded-path)))    :parse.recipe/path-not-found)]
+                                    (not (and (fs/exists? expanded-path)
+                                              (fs/regular-file? expanded-path)))) :parse.recipe/path-not-found)
+        path-to-parse        (or expanded-path recipe-arg)]
     (if error
-      {:error {:error/id error :path (or expanded-path recipe-arg)}}
-      (let [{:deps-try/keys [deps] :as parsed-recipe} (parse recipe-arg)]
+      {:error {:error/id error :path path-to-parse}}
+      (let [{:deps-try/keys [deps] :as parsed-recipe} (parse path-to-parse)]
         (cond-> parsed-recipe
           deps (assoc :deps deps))))))
 

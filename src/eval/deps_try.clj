@@ -7,9 +7,10 @@
    [babashka.process :as p]
    [clojure.java.io :as io]
    [clojure.string :as str]
+   [eval.deps-try.errors :as errors]
    [eval.deps-try.recipe :as recipe]
    [eval.deps-try.util :as util]
-   [eval.deps-try.errors :as errors]))
+   [strojure.ansi-escape.core :as ansi]))
 
 (def init-cp (get-classpath))
 
@@ -27,18 +28,56 @@
   (when (seq deps)
     (str/trim (:out (run-clojure  "-Spath" "-Sdeps" (str {:paths [] :deps deps}))))))
 
+(def ^:private dev? (nil? (io/resource "VERSION")))
+
+(def ^:private version
+  (str/trim
+   (if dev?
+     (let [git-dir (fs/file (io/resource ".git"))]
+       (:out (p/sh {} "git" "--git-dir" (str git-dir) "describe" "--tags")))
+     (slurp (io/resource "VERSION")))))
+
 (defn- print-usage []
-  (println "Usage:
+  (let [usage [(str "A CLI to quickly try Clojure (libraries) on rebel-readline.")
+               (str ansi/bold "VERSION" ansi/reset \newline
+                    "  " version)
+               (str ansi/bold "USAGE" ansi/reset \newline
+                    "  $ deps-try [dep-name [dep-version] [dep2-name ...] ...] [--recipe recipe]")
+               (str ansi/bold "OPTIONS" ansi/reset \newline
+                    "  dep-name\n"
+                    "    dependency from maven (e.g. `metosin/malli`, `org.clojure/cache`),\n"
+                    "    git (e.g. `com.github.user/project`, `ht.sr.user/project`," \newline
+                    "    `https://github.com/user/project`, `https://anything.org/user/project.git`)," \newline
+                    "    or a local folder containing a file `deps.edn` (e.g. `.`," \newline
+                    "    `~/projects/my-project`, `./path/to/project`)." \newline
+                    \newline
+                    "  dep-version (optional)\n"
+                    "    A maven version (e.g. `1.2.3`, `LATEST`) or git ref (e.g. `some-branch`,"  \newline
+                    "    `v1.2.3`)." \newline
+                    "    The id of a PR or MR is also an acceptable version for git deps (e.g. `^123`)." \newline
+                    "    When not provided, `LATEST` is implied for maven deps and the latest SHA" \newline
+                    "    of the default-branch for git deps." \newline
+                    \newline
+                    "  --recipe" \newline
+                    "    Path or url to a Clojure file. The REPL-history will be seeded with the" \newline
+                    "    expressions from the file.")
+               (str ansi/bold "EXAMPLES" ansi/reset \newline
+                    "  ;; The latest version of malli from maven, and git-tag v1.3.894 of the next-jdbc repository" \newline
+                    "  $ deps-try metosin/malli io.github.seancorfield/next-jdbc v1.3.894")
+               nil]]
+    (print (str/join \newline (interpose nil usage))))
+
+  #_(println "Usage:
   deps-try [dep-name [dep-version] [dep2-name ...] ...] [--recipe recipe]
 
 Supported `dep-name` types:
 - maven
   e.g. `metosin/malli`, `org.clojure/cache`.
 - git
-  - infer-notation, e.g. `com.github.user/project`, `ht.sr.~user/project`.
+  - infer-notation, e.g. `com.github.user/project`, `ht.sr.user/project`.
   - url, e.g. `https://github.com/user/project`, `https://anything.org/user/project.git`.
 - local
-  - path to project containing `deps.edn`, e.g. `.`, `~/projects/my-project`, `./path/to/project`.
+  - path to folder containing a `deps.edn`, e.g. `.`, `~/projects/my-project`, `./path/to/project`.
 
 Possible `recipe` values:
 - url, e.g. \"https://github.com/eval/deps-try/blob/master/recipes/namespaces.clj\"
@@ -76,13 +115,7 @@ user=> :repl/help
 "))
 
 (defn- print-version []
-  (let [dev?    (nil? (io/resource "VERSION"))
-        bin     (if dev? "deps-try-dev" "deps-try")
-        version (str/trim
-                 (if dev?
-                   (let [git-dir (fs/file (io/resource ".git"))]
-                     (:out (p/sh {} "git" "--git-dir" (str git-dir) "describe" "--tags")))
-                   (slurp (io/resource "VERSION"))))]
+  (let [bin (if dev? "deps-try-dev" "deps-try")]
     (println (str bin " " version))))
 
 (def ^:private clojure-cli-version-re #"^(\d+)\.(\d+)\.(\d+)\.(\d+)")
@@ -134,7 +167,7 @@ user=> :repl/help
 (defn- start-repl! [{requested-deps              :deps
                      {recipe-deps     :deps
                       recipe-location :location} :recipe :as args}]
-  #_(prn :args args)
+  #_(prn ::args args)
   (let [default-deps                 {'org.clojure/clojure {:mvn/version "1.12.0-alpha5"}}
         {:keys         [cp-file]
          default-cp    :cp
@@ -177,16 +210,16 @@ user=> :repl/help
 
       :else (let [parsed-recipe         (some-> parsed-opts :recipe (recipe/parse-arg))
                   assoc-possible-recipe (fn [acc {:keys [error] :deps-try/keys [deps] :as recipe}]
+                                          #_(prn ::recipe recipe)
                                           (if-not (seq recipe)
                                             acc
                                             (let [{parse-dep-error :error
                                                    parsed-deps     :deps} (when (seq deps)
                                                                             (try-deps/parse-dep-args {:deps deps}))
                                                   error                   (or error parse-dep-error)]
-                                              (cond-> acc
+                                              (cond-> (assoc acc :recipe recipe)
                                                 error       (assoc :error error)
-                                                parsed-deps (assoc :recipe (assoc recipe
-                                                                                  :deps parsed-deps))))))
+                                                parsed-deps (update :recipe assoc :deps parsed-deps)))))
                   {error :error}        (util/pred-> (complement :error) parsed-opts
                                                      (try-deps/parse-dep-args)
                                                      (assoc-possible-recipe parsed-recipe)

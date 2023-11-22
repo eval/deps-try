@@ -42,6 +42,13 @@
     (rebel-tools/display-warning "Usage: :deps/try metosin/malli \"0.9.2\" https://github.com/user/project some-ref \"~/some/project\"")))
 
 
+(defmethod rebel-readline/command-doc :recipe/help [_]
+  "Print documentation about the current recipe and how to use them.")
+
+(defmethod rebel-readline/command :recipe/help [_]
+  (println "Helping"))
+
+
 (defmethod rebel-readline/command-doc :clojure/toggle-print-meta [_]
   (let [current (if clojure.core/*print-meta* "on" "off")]
     (str "Toggle clojure.core/*print-meta* on and off (" current ")")))
@@ -83,6 +90,8 @@
   `(let [thread# (Thread/currentThread)]
      (clj-repl/set-break-handler! (fn [_signal#] (.stop thread#)))))
 
+(defn- recipe-instructions [recipe]
+  "Recipe successfully loaded in the REPL-history. Type :recipe/help for help.")
 
 ;; terminel
 ;;  line-reader
@@ -104,6 +113,7 @@
     (binding [*out* (api/safe-terminal-writer api/*line-reader*)]
       (when-let [prompt-fn (:prompt opts)]
         (swap! api/*line-reader* assoc :prompt prompt-fn))
+      (when recipe (rebel-tools/display-warning (recipe-instructions recipe)))
       (println (rebel-core/help-message))
       (apply
        clojure.main/repl
@@ -127,6 +137,7 @@
 
 (defn -main [& args]
   ;; via --debug flag?
+  #_(prn ::args args)
   (binding [*debug-log* false]
     (let [data-path (fs/xdg-data-home "deps-try")]
       (ensure-path-exists! data-path)
