@@ -142,18 +142,18 @@ user=> :repl/help
                             (apply str (replace {:msg %} color)))]
     (println (maybe-color-wrap msg))))
 
-(defn- warn [m]
+(defn- print-warning [m]
   (print-message m {:msg-type :warning}))
 
-(defn- error [m]
+(defn- print-error [m]
   (print-message m {:msg-type :error}))
 
 (defn- warn-unless-minimum-clojure-cli-version [minimum version]
   (when-not (at-least-version? minimum version)
-    (warn (str "Adding (additional) libraries to this REPL-session via ':deps/try some/lib' won't work as it requires Clojure CLI version >= " minimum " (current: " version ")."))))
+    (print-warning (str "Adding (additional) libraries to this REPL-session via ':deps/try some/lib' won't work as it requires Clojure CLI version >= " minimum " (current: " version ")."))))
 
 (defn- print-error-and-exit! [m]
-  (print-message m {:msg-type :error})
+  (print-error m)
   (System/exit 1))
 
 (defn- tdeps-verbose->map [s]
@@ -227,13 +227,12 @@ user=> :repl/help
               (when error
                 (print-error-and-exit! (errors/format-error error)))))))
 
-
 (comment
-  
+
   (try-deps/parse-dep-args {:deps ["metosin/malli"]})
- 
+
   (try
-    (cli/parse-opts '("other/bar" "--recipe" "rec1" "some/bar")
+    (cli/parse-opts '("other/bar" "--recipe" "-")
                    {:exec-args {:deps []}
                     :alias {:h :help, :v :version},
                     :coerce {:recipe :string :deps [:string]},
