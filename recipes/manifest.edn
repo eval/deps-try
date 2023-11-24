@@ -1,0 +1,4 @@
+{:deps-try.manifest/recipes [{:deps-try.recipe/name      "clojure/namespaces"
+                              :deps-try.recipe/title     "Introduction to namespaces."}
+                             {:deps-try.recipe/name      "malli-select/introduction"
+                              :deps-try.recipe/title     "Introduction to malli-select, a library for spec2-inspired selection of Malli-schemas."}]}
