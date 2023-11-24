@@ -24,4 +24,4 @@
       (let [placeholders (extract-placeholders error-tpl)
             replacements (zipmap placeholders (map #(error % %) placeholders))]
         (apply str (replace replacements error-tpl)))
-      (pr-str error))))
+      (if (string? error) error (pr-str error)))))

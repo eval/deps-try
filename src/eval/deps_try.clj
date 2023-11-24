@@ -59,60 +59,17 @@
                     "    of the default-branch for git deps." \newline
                     \newline
                     "  --recipe" \newline
-                    "    Path or url to a Clojure file. The REPL-history will be seeded with the" \newline
-                    "    expressions from the file.")
+                    "    Name of recipe (see recipes command) or a path or url to a Clojure file." \newline
+                    "    The REPL-history will be seeded with the expressions from the recipe.")
                (str ansi/bold "EXAMPLES" ansi/reset \newline
                     "  ;; The latest version of malli from maven, and git-tag v1.3.894 of the next-jdbc repository" \newline
                     "  $ deps-try metosin/malli io.github.seancorfield/next-jdbc v1.3.894")
+               (str ansi/bold "COMMANDS" ansi/reset \newline
+                    "  recipes  show list of recipes"
+                    #_#_#_"  ;; The latest version of malli from maven, and git-tag v1.3.894 of the next-jdbc repository" \newline
+                      "  $ deps-try metosin/malli io.github.seancorfield/next-jdbc v1.3.894")
                nil]]
-    (print (str/join \newline (interpose nil usage))))
-
-  #_(println "Usage:
-  deps-try [dep-name [dep-version] [dep2-name ...] ...] [--recipe recipe]
-
-Supported `dep-name` types:
-- maven
-  e.g. `metosin/malli`, `org.clojure/cache`.
-- git
-  - infer-notation, e.g. `com.github.user/project`, `ht.sr.user/project`.
-  - url, e.g. `https://github.com/user/project`, `https://anything.org/user/project.git`.
-- local
-  - path to folder containing a `deps.edn`, e.g. `.`, `~/projects/my-project`, `./path/to/project`.
-
-Possible `recipe` values:
-- url, e.g. \"https://github.com/eval/deps-try/blob/master/recipes/namespaces.clj\"
-- paths, e.g. \"~/recipes/foo.clj\"
-
-Examples:
-# A REPL using the latest Clojure version
-$ deps-try
-
-# A REPL with specific dependencies (latest version implied)
-$ deps-try metosin/malli criterium/criterium
-
-# ...specific version
-$ deps-try metosin/malli 0.9.2
-
-# Dependency from GitHub/GitLab/SourceHut (gets you the latest SHA from the default branch)
-$ deps-try https://github.com/metosin/malli
-
-# ...a specific branch/tag/SHA
-$ deps-try https://github.com/metosin/malli some-branch-tag-or-sha
-
-# ...using the 'infer' notation, e.g.
-# com.github.<user>/<project>, com.gitlab.<user>/<project>, ht.sr.~<user>/<project>
-$ deps-try com.github.metosin/malli
-
-# A local project
-$ deps-try . ~/some/project ../some/other/project
-
-During a REPL-session:
-# add additional dependencies
-user=> :deps/try dev.weavejester/medley \"~/some/project\"
-
-# see help for all options
-user=> :repl/help
-"))
+    (print (str/join \newline (interpose nil usage)))))
 
 (defn- print-version []
   (let [bin (if dev? "deps-try-dev" "deps-try")]
@@ -166,7 +123,7 @@ user=> :repl/help
 
 (defn- start-repl! [{requested-deps              :deps
                      {recipe-deps     :deps
-                      recipe-location :location} :recipe :as args}]
+                      recipe-location :location} :recipe :as _args}]
   #_(prn ::args args)
   (let [default-deps                 {'org.clojure/clojure {:mvn/version "1.12.0-alpha5"}}
         {:keys         [cp-file]
@@ -199,33 +156,69 @@ user=> :repl/help
                          :coerce    {:recipe :string :deps [:string]},
                          :restrict  [:recipe :deps :help :version], :args->opts (repeat :deps)})
 
-(defn -main [& args]
-  (let [parsed-opts (try
-                      (cli/parse-opts args cli-opts)
-                      (catch Exception e
-                        {:error (:msg (ex-data e))}))]
-    (cond
-      (:version parsed-opts) (print-version)
-      (:help parsed-opts)    (print-usage)
+(defn- handle-recipes-cmd [{{:keys [refresh]} :opts}]
+  ;; TODO print recipes (after refresh)
+  ;; TODO handle option help
+  ;; TODO err on more args
+  (println (str "Showing all the recipes " (when refresh "after refresh!"))))
 
-      :else (let [parsed-recipe         (some-> parsed-opts :recipe (recipe/parse-arg))
-                  assoc-possible-recipe (fn [acc {:keys [error] :deps-try/keys [deps] :as recipe}]
-                                          #_(prn ::recipe recipe)
-                                          (if-not (seq recipe)
-                                            acc
-                                            (let [{parse-dep-error :error
-                                                   parsed-deps     :deps} (when (seq deps)
-                                                                            (try-deps/parse-dep-args {:deps deps}))
-                                                  error                   (or error parse-dep-error)]
-                                              (cond-> (assoc acc :recipe recipe)
-                                                error       (assoc :error error)
-                                                parsed-deps (update :recipe assoc :deps parsed-deps)))))
-                  {error :error}        (util/pred-> (complement :error) parsed-opts
-                                                     (try-deps/parse-dep-args)
-                                                     (assoc-possible-recipe parsed-recipe)
-                                                     (start-repl!))]
-              (when error
-                (print-error-and-exit! (errors/format-error error)))))))
+(defn- handle-repl-start [{{:keys [recipe] :as parsed-opts} :opts}]
+  (let [parsed-recipe         (some-> recipe (recipe/parse-arg))
+        assoc-possible-recipe (fn [acc {:keys [error] :deps-try/keys [deps] :as recipe}]
+                                #_(prn ::recipe recipe)
+                                (if-not (seq recipe)
+                                  acc
+                                  (let [{parse-dep-error :error
+                                         parsed-deps     :deps} (when (seq deps)
+                                                                  (try-deps/parse-dep-args {:deps deps}))
+                                        error                   (or error parse-dep-error)]
+                                    (cond-> (assoc acc :recipe recipe)
+                                      error       (assoc :error error)
+                                      parsed-deps (update :recipe assoc :deps parsed-deps)))))
+        {error :error}        (util/pred-> (complement :error) parsed-opts
+                                           (try-deps/parse-dep-args)
+                                           (assoc-possible-recipe parsed-recipe)
+                                           (start-repl!))]
+    (when error
+      (print-error-and-exit! (errors/format-error error)))))
+
+(defn- handle-fallback-cmd [{{:keys [help version]} :opts :as cli-args}]
+  (cond
+    version (print-version)
+    help    (print-usage)
+    :else   (handle-repl-start cli-args)))
+
+
+(comment
+  (cli/parse-opts '("foo/bar") cli-opts #_{:alias {:h :help :v :version}})
+
+  (cli/dispatch dispatch-table
+   #_[{:cmds ["recipe:ls"], :fn identity #_#'eval.deps-try/handle-cmd-recipe-ls, :restrict [:refresh :help], :exec-args {}}
+    {:cmds [], :fn identity, :restrict [:version :deps :help :recipe], :coerce {:deps [:string]} :alias {:h :help, :v :version} :exec-args {:deps []} :args->opts (repeat :deps)}]
+                '("foo/bar") {} #_cli-opts)
+  #_:end)
+
+(def ^:private dispatch-table
+  [{:cmds     ["recipes"]
+    :fn       #'handle-recipes-cmd
+    :restrict [:refresh :help]}
+   {:cmds      []
+    :fn        #'handle-fallback-cmd
+    :restrict  [:version :deps :help :recipe]
+    :coerce    {:deps [:string]}
+    :alias     {:h :help
+                :v :version}
+    :exec-args {:deps []} :args->opts (repeat :deps)}])
+
+(defn -main [& args]
+  (try
+    (cli/dispatch dispatch-table args {})
+    (catch Exception e
+      (-> e
+          ex-data
+          :msg
+          errors/format-error
+          print-error-and-exit!))))
 
 (comment
 
