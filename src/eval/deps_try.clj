@@ -4,9 +4,13 @@
   (:require
    [babashka.classpath :as cp :refer [get-classpath]]
    [babashka.cli :as cli]
+   [babashka.fs :as fs] :reload
+   [babashka.http-client] :reload
    [babashka.process :as p]
+   [clojure.edn :as edn]
    [clojure.java.io :as io]
-   [clojure.string :as str]
+   [clojure.string :as string]
+   [eval.deps-try.deps :as try-deps]
    [eval.deps-try.errors :as errors]
    [eval.deps-try.recipe :as recipe]
    [eval.deps-try.util :as util]
@@ -14,7 +18,7 @@
 
 (def init-cp (get-classpath))
 
-(require '[eval.deps-try.deps :as try-deps]
+#_(require '[eval.deps-try.deps :as try-deps]
          '[babashka.fs :as fs] :reload
          '[babashka.http-client] :reload) ;; reload so we use the dep, not the built-in
 
@@ -26,12 +30,12 @@
 
 (defn- deps->cp [deps]
   (when (seq deps)
-    (str/trim (:out (run-clojure  "-Spath" "-Sdeps" (str {:paths [] :deps deps}))))))
+    (string/trim (:out (run-clojure  "-Spath" "-Sdeps" (str {:paths [] :deps deps}))))))
 
 (def ^:private dev? (nil? (io/resource "VERSION")))
 
 (def ^:private version
-  (str/trim
+  (string/trim
    (if dev?
      (let [git-dir (fs/file (io/resource ".git"))]
        (:out (p/sh {} "git" "--git-dir" (str git-dir) "describe" "--tags")))
@@ -69,7 +73,7 @@
                     #_#_#_"  ;; The latest version of malli from maven, and git-tag v1.3.894 of the next-jdbc repository" \newline
                       "  $ deps-try metosin/malli io.github.seancorfield/next-jdbc v1.3.894")
                nil]]
-    (print (str/join \newline (interpose nil usage)))))
+    (print (string/join \newline (interpose nil usage)))))
 
 (defn- print-version []
   (let [bin (if dev? "deps-try-dev" "deps-try")]
@@ -114,11 +118,11 @@
   (System/exit 1))
 
 (defn- tdeps-verbose->map [s]
-  (let [[cp & pairs] (reverse (str/split-lines s))
-        keywordize   (comp keyword #(str/replace % \_ \-) name)] ;; `name` makes it also usable for keywords
+  (let [[cp & pairs] (reverse (string/split-lines s))
+        keywordize   (comp keyword #(string/replace % \_ \-) name)] ;; `name` makes it also usable for keywords
     (update-keys
      (into {:cp cp}
-           (map #(str/split % #" += +") (filter seq pairs))) keywordize)))
+           (map #(string/split % #" += +") (filter seq pairs))) keywordize)))
 
 
 (defn- start-repl! [{requested-deps              :deps
@@ -132,10 +136,10 @@
          :as           _tdeps-paths} (-> (run-clojure "-Sverbose" "-Spath"
                                                       "-Sdeps" (str {:paths [] :deps default-deps}))
                                          :out
-                                         str/trim
+                                         string/trim
                                          tdeps-verbose->map)
 
-        basis-file   (str/replace cp-file #".cp$" ".basis")
+        basis-file   (string/replace cp-file #".cp$" ".basis")
         requested-cp (deps->cp requested-deps)
         recipe-cp    (deps->cp recipe-deps)
         classpath    (cond-> (str (fs/cwd) fs/path-separator
@@ -151,16 +155,44 @@
                 recipe-location (into ["--recipe" recipe-location]))]
       (apply p/exec cmd))))
 
+(defn- recipe-manifest-contents []
+  (let [remote-manifest-file "https://raw.githubusercontent.com/eval/deps-try/master/recipes/manifest.edn"
+        default-recipes-path (doto (fs/path (fs/xdg-data-home "deps-try") "recipes" "default")
+                               (fs/create-dirs))
+        local-manifest-file  (fs/file default-recipes-path "manifest.edn")]
+    (when-not (fs/exists? local-manifest-file)
+      (spit local-manifest-file (slurp remote-manifest-file)))
+    (edn/read-string (slurp local-manifest-file))))
+
+(defn recipes []
+  (:deps-try.manifest/recipes (recipe-manifest-contents)))
+
 (def ^:private cli-opts {:exec-args {:deps []}
                          :alias     {:h :help, :v :version},
                          :coerce    {:recipe :string :deps [:string]},
                          :restrict  [:recipe :deps :help :version], :args->opts (repeat :deps)})
 
-(defn- handle-recipes-cmd [{{:keys [refresh]} :opts}]
+(defn- print-recipes [recipes cli-opts]
+  (let [no-color?      (util/no-color? cli-opts)
+        plain-mode?    (util/plain-mode? cli-opts)
+        skip-header?   plain-mode?
+        column-atts    {:deps-try.recipe/name "name" :deps-try.recipe/title "title"}
+        max-width      (when-not plain-mode?
+                         (:cols (util/terminal-dimensions)))
+        title-truncate #(util/truncate %1 {:truncate-to %2
+                                           :omission    "…"})]
+    (util/print-table column-atts recipes {:skip-header         skip-header?
+                                           :max-width           max-width
+                                           :width-reduce-column :deps-try.recipe/title
+                                           :width-reduce-fn     title-truncate
+                                           :no-color            no-color?})))
+
+(defn- handle-recipes-cmd [{{:keys [refresh] :as opts} :opts}]
   ;; TODO print recipes (after refresh)
   ;; TODO handle option help
   ;; TODO err on more args
-  (println (str "Showing all the recipes " (when refresh "after refresh!"))))
+  (print-recipes (sort-by :deps-try.recipe/name (recipes)) opts)
+  #_(println (str "Showing all the recipes " (when refresh "after refresh!"))))
 
 (defn- handle-repl-start [{{:keys [recipe] :as parsed-opts} :opts}]
   (let [parsed-recipe         (some-> recipe (recipe/parse-arg))
@@ -201,7 +233,7 @@
 (def ^:private dispatch-table
   [{:cmds     ["recipes"]
     :fn       #'handle-recipes-cmd
-    :restrict [:refresh :help]}
+    :restrict [:refresh :help :plain :color]}
    {:cmds      []
     :fn        #'handle-fallback-cmd
     :restrict  [:version :deps :help :recipe]
@@ -221,15 +253,25 @@
           print-error-and-exit!))))
 
 (comment
+  ;; manifest
+  {:deps-try.manifest/recipes [{:deps-try.recipe/name      "clojure/namespaces"
+                                :deps-try.recipe/title     "Learn all about Clojure namespaces"
+                                :deps-try.recipe/desc "Some introduction to namespaces."}]}
+
+  ;; a manifest is generated from a folder containing recipes
+  ;; title&desc are constructed from the ns-doc: the title being the first line, the description being the rest (or all?)
+  ;; a manifest-file lives in the xdg-cache-home
+  ;; it can be fw compatible with more reposes or not:
+  ;; $xdg-cache-home/recipes/default/manifest.edn
 
   (try-deps/parse-dep-args {:deps ["metosin/malli"]})
 
   (try
     (cli/parse-opts '("other/bar" "--recipe" "-")
-                   {:exec-args {:deps []}
-                    :alias {:h :help, :v :version},
-                    :coerce {:recipe :string :deps [:string]},
-                    :restrict [:recipe :deps :help :version], :args->opts (repeat :deps)})
+                    {:exec-args {:deps []}
+                     :alias     {:h :help, :v :version},
+                     :coerce    {:recipe :string :deps [:string]},
+                     :restrict  [:recipe :deps :help :version], :args->opts (repeat :deps)})
     (catch Exception e
       (ex-data e)))
 
