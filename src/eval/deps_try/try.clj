@@ -48,6 +48,22 @@
 (defmethod rebel-readline/command :recipe/help [_]
   (println "Helping"))
 
+(defmethod rebel-readline/command-doc :recipe/quit [_]
+  "Remove any remaining recipe steps from the REPL-history.")
+
+(defn- quit-recipe! []
+  (let [history-file (.getVariable api/*line-reader* LineReader/HISTORY_FILE)]
+    (.setHistory api/*line-reader*
+                 (history/make-history {:history-file     history-file
+                                        :writable-history (DefaultHistory. api/*line-reader*)}))
+    (swap! api/*line-reader* dissoc :deps-try/recipe)
+    (rebel-tools/display-warning "Recipe quit.")))
+
+(defmethod rebel-readline/command :recipe/quit [_]
+  (if (:deps-try/recipe @api/*line-reader*)
+    (quit-recipe!)
+    (rebel-tools/display-warning "No active recipe.")))
+
 
 (defmethod rebel-readline/command-doc :clojure/toggle-print-meta [_]
   (let [current (if clojure.core/*print-meta* "on" "off")]
@@ -113,7 +129,9 @@
     (binding [*out* (api/safe-terminal-writer api/*line-reader*)]
       (when-let [prompt-fn (:prompt opts)]
         (swap! api/*line-reader* assoc :prompt prompt-fn))
-      (when recipe (rebel-tools/display-warning (recipe-instructions recipe)))
+      (when recipe
+        (swap! api/*line-reader* assoc :deps-try/recipe recipe)
+        (rebel-tools/display-warning (recipe-instructions recipe)))
       (println (rebel-core/help-message))
       (apply
        clojure.main/repl
