@@ -15,7 +15,7 @@
    :resolve.mvn/version-not-found-offline ["Could not find version '" :version "' of library '" :lib "' while offline."]
    :parse.recipe/path-not-found           ["Recipe not found: file '" :path "' does not exist."]
    :parse.recipe/url-not-found            ["Recipe not found: url '" :path "' not found."]
-   :parse.recipe/offline                  ["Recipe not found: url'" :path "' not reachable while offline."]})
+   :parse.recipe/offline                  ["Recipe '" :path "' can't be loaded while offline."]})
 
 (defn format-error [{:error/keys [id] :as error}]
   (let [extract-placeholders (fn [err]
