@@ -127,6 +127,7 @@
 
 (defn- start-repl! [{requested-deps              :deps
                      {recipe-deps     :deps
+                      ns-only         :ns-only
                       recipe-location :location} :recipe :as _args}]
   #_(prn ::args args)
   (let [default-deps                 {'org.clojure/clojure {:mvn/version "1.12.0-alpha5"}}
@@ -152,7 +153,9 @@
     (let [cmd (cond-> ["java" "-classpath" classpath]
                 (seq jvm-opts)  (into jvm-opts)
                 :always         (into ["clojure.main" "-m" "eval.deps-try.try"])
-                recipe-location (into ["--recipe" recipe-location]))]
+                recipe-location (into (if ns-only
+                                        ["--recipe-ns" recipe-location]
+                                        ["--recipe" recipe-location])))]
       (apply p/exec cmd))))
 
 (defn- recipe-manifest-contents []
@@ -194,8 +197,10 @@
   (print-recipes (sort-by :deps-try.recipe/name (recipes)) opts)
   #_(println (str "Showing all the recipes " (when refresh "after refresh!"))))
 
-(defn- handle-repl-start [{{:keys [recipe] :as parsed-opts} :opts}]
-  (let [parsed-recipe         (some-> recipe (recipe/parse-arg))
+(defn- handle-repl-start [{{:keys [recipe recipe-ns] :as parsed-opts} :opts}]
+  (let [parsed-recipe         (some-> (or recipe recipe-ns)
+                                      (recipe/parse-arg)
+                                      (assoc :ns-only (boolean recipe-ns)))
         assoc-possible-recipe (fn [acc {:keys [error] :deps-try/keys [deps] :as recipe}]
                                 #_(prn ::recipe recipe)
                                 (if-not (seq recipe)
@@ -236,7 +241,7 @@
     :restrict [:refresh :help :plain :color]}
    {:cmds      []
     :fn        #'handle-fallback-cmd
-    :restrict  [:version :deps :help :recipe]
+    :restrict  [:version :deps :help :recipe :recipe-ns]
     :coerce    {:deps [:string]}
     :alias     {:h :help
                 :v :version}

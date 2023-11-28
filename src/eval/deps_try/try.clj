@@ -46,7 +46,7 @@
   "Print documentation about the current recipe and how to use them.")
 
 (defmethod rebel-readline/command :recipe/help [_]
-  (println "Helping"))
+  (println "Helping hand"))
 
 (defmethod rebel-readline/command-doc :recipe/quit [_]
   "Remove any remaining recipe steps from the REPL-history.")
@@ -106,8 +106,8 @@
   `(let [thread# (Thread/currentThread)]
      (clj-repl/set-break-handler! (fn [_signal#] (.stop thread#)))))
 
-(defn- recipe-instructions [recipe]
-  "Recipe successfully loaded in the REPL-history. Type :recipe/help for help.")
+(defn- recipe-instructions [{:keys [ns-only]}]
+  (str "Recipe" (when ns-only " namespace") " successfully loaded in the REPL-history. Type :recipe/help for help."))
 
 ;; terminel
 ;;  line-reader
@@ -123,7 +123,8 @@
         (.setVariable LineReader/HISTORY_SIZE "10000")
         (.setVariable LineReader/HISTORY_FILE (str history-file))
         (#(.setHistory % (history/make-history {:history-file     history-file
-                                                :seed-items       (:steps recipe)
+                                                :seed-items       (cond->> (:steps recipe)
+                                                                    (:ns-only recipe) (take 1))
                                                 :writable-history (DefaultHistory. %)})))))
     ;; repl time:
     (binding [*out* (api/safe-terminal-writer api/*line-reader*)]
@@ -174,6 +175,13 @@
                                                                  ~(reset-just-caught)
                                                                  ~form)))
                                 :print              syntax-highlight-pprint}
-                         (second args) (assoc :deps-try/recipe (recipe/parse (second args))))]
+                         (second args) (assoc :deps-try/recipe
+                                              (let [recipe (recipe/parse (second args))]
+                                                (assoc recipe :ns-only (= (first args) "--recipe-ns")))))]
          (repl repl-opts)))
       (System/exit 0))))
+
+(comment
+  (recipe/parse "/Users/gert/projects/deps-try/deps-try-recipes/recipes/next-jdbc/postgresql.clj")
+
+  #_:end)

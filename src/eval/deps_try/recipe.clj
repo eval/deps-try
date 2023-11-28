@@ -18,7 +18,8 @@
     (assoc (select-keys ns-meta [:deps-try/deps])
            :steps (into [ns-step] steps))))
 
-(defn parse [slurpable]
+(defn parse
+  [slurpable]
   (let [contents (-> slurpable slurp string/trim)]
     (merge {:location (str slurpable)}
            (-parse contents))))
