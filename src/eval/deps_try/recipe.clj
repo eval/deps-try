@@ -58,7 +58,7 @@
   (parse-arg "https://raw.githubusercontent.com/eval/deps-try/master/src/eval/deps_try/util.clj2")
 
   (util/url-test "https://raw.githubusercontent.com/eval/deps-try/master/src/eval/deps_try/util.clj2" {})
-  (parse-arg "/Users/gert/projects/deps-try/deps-try/recipes/next_jdbc_postgresql.clj")
+  (count (:steps (parse-arg "/Users/gert/projects/deps-try/deps-try-recipes/recipes/next-jdbc/intro-sqlite.clj")))
 
   (slurp "README.md")
   (slurp "/Users/gert/projects/deps-try/deps-try/recipes/next_jdbc_postgresql.clj")

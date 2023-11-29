@@ -158,17 +158,22 @@
                                         ["--recipe" recipe-location])))]
       (apply p/exec cmd))))
 
-(defn- recipe-manifest-contents []
+(defn- recipe-manifest-contents [{:keys [refresh] :as _cli-opts}]
   (let [remote-manifest-file "https://raw.githubusercontent.com/eval/deps-try/master/recipes/manifest.edn"
         default-recipes-path (doto (fs/path (fs/xdg-data-home "deps-try") "recipes" "default")
                                (fs/create-dirs))
-        local-manifest-file  (fs/file default-recipes-path "manifest.edn")]
-    (when-not (fs/exists? local-manifest-file)
-      (spit local-manifest-file (slurp remote-manifest-file)))
-    (edn/read-string (slurp local-manifest-file))))
+        manifest-file        (fs/file default-recipes-path "manifest.edn")]
+    (when (or
+           refresh
+           (not (fs/exists? manifest-file))
+           (util/file-last-modified-before? manifest-file {:weeks -1}))
+      (try (spit manifest-file (slurp remote-manifest-file)) (catch Exception)))
+    ;; TODO edn read error at this point: file not present, corrupt contents(???)
+    ;; currently: "/home/user/.local/share/deps-try/recipes/default/manifest.edn (No such file or directory)"
+    (edn/read-string (slurp manifest-file))))
 
-(defn recipes []
-  (:deps-try.manifest/recipes (recipe-manifest-contents)))
+(defn recipes [cli-opts]
+  (:deps-try.manifest/recipes (recipe-manifest-contents cli-opts)))
 
 (def ^:private cli-opts {:exec-args {:deps []}
                          :alias     {:h :help, :v :version},
@@ -190,12 +195,11 @@
                                            :width-reduce-fn     title-truncate
                                            :no-color            no-color?})))
 
-(defn- handle-recipes-cmd [{{:keys [refresh] :as opts} :opts}]
+(defn- handle-recipes-cmd [{cli-opts :opts}]
   ;; TODO print recipes (after refresh)
   ;; TODO handle option help
   ;; TODO err on more args
-  (print-recipes (sort-by :deps-try.recipe/name (recipes)) opts)
-  #_(println (str "Showing all the recipes " (when refresh "after refresh!"))))
+  (print-recipes (sort-by :deps-try.recipe/name (recipes cli-opts)) cli-opts))
 
 (defn- handle-repl-start [{{:keys [recipe recipe-ns] :as parsed-opts} :opts}]
   (let [parsed-recipe         (some-> (or recipe recipe-ns)
@@ -252,22 +256,17 @@
     (cli/dispatch dispatch-table args {})
     (catch Exception e
       (-> e
-          ex-data
-          :msg
+          (Throwable->map)
+          :cause
           errors/format-error
           print-error-and-exit!))))
 
 (comment
+
   ;; manifest
   {:deps-try.manifest/recipes [{:deps-try.recipe/name      "clojure/namespaces"
                                 :deps-try.recipe/title     "Learn all about Clojure namespaces"
                                 :deps-try.recipe/desc "Some introduction to namespaces."}]}
-
-  ;; a manifest is generated from a folder containing recipes
-  ;; title&desc are constructed from the ns-doc: the title being the first line, the description being the rest (or all?)
-  ;; a manifest-file lives in the xdg-cache-home
-  ;; it can be fw compatible with more reposes or not:
-  ;; $xdg-cache-home/recipes/default/manifest.edn
 
   (try-deps/parse-dep-args {:deps ["metosin/malli"]})
 

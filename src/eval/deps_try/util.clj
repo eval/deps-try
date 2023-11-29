@@ -1,7 +1,28 @@
 (ns eval.deps-try.util
   (:require [babashka.fs :as fs] :reload
+            [babashka.http-client :as http] :reload
             [babashka.process :as p]
             [clojure.string :as string]))
+
+(defn duration->millis [{:keys [seconds minutes hours days weeks]
+                          :or   {seconds 0 minutes 0 hours 0 days 0 weeks 0}}]
+  (let [days    (+ days (* weeks 7))
+        hours   (+ hours (* days 24))
+        minutes (+ minutes (* hours 60))
+        seconds (+ seconds (* minutes 60))]
+    (* 1000 seconds)))
+
+(defn shift-instant
+  ([duration-or-millis]
+   (shift-instant duration-or-millis (java.time.Instant/now)))
+  ([duration-or-millis since]
+   (let [millis (if (map? duration-or-millis) (duration->millis duration-or-millis) duration-or-millis)]
+     (.plusMillis since millis))))
+
+(defn file-last-modified-before? [file inst-duration-or-millis]
+  ;; TODO assert duration ago
+  (let [instant (if (inst? inst-duration-or-millis) inst-duration-or-millis (shift-instant inst-duration-or-millis))]
+    (.isBefore (-> file fs/last-modified-time fs/file-time->instant) instant)))
 
 (defmacro  pred->
   "When expr satisfies pred, threads it into the first form (via ->),
@@ -23,15 +44,11 @@
           g
           (last steps)))))
 
-
 (defn when-pred
   ^{:author "Sergey Trofimov"
     :source "https://ask.clojure.org/index.php/8945/something-like-when-pred-in-the-core"}
   [pred v]
   (when (pred v) v))
-
-
-(require '[babashka.http-client :as http] :reload)
 
 (defn url-test [url {:keys [timeout include-body] :or {timeout 1000 include-body false}}]
   (try
