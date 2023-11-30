@@ -18,10 +18,6 @@
 
 (def init-cp (get-classpath))
 
-#_(require '[eval.deps-try.deps :as try-deps]
-         '[babashka.fs :as fs] :reload
-         '[babashka.http-client] :reload) ;; reload so we use the dep, not the built-in
-
 (defn- run-clojure [opts & args]
   (let [[opts args] (if (map? opts) [opts args] [nil (cons opts args)])]
     (fs/with-temp-dir [tmp {}]
@@ -29,6 +25,7 @@
              "clojure" args))))
 
 (defn- deps->cp [deps]
+  #_(prn ::deps->cp :deps deps)
   (when (seq deps)
     (string/trim (:out (run-clojure  "-Spath" "-Sdeps" (str {:paths [] :deps deps}))))))
 
