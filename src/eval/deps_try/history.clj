@@ -17,7 +17,7 @@
 (defn- history
   "Options:
   - `items` - history items, ordered as in a history file.
-  - `seed-items` - ordered as in a file. Will be consumed upon matching new lines."
+  - `seed-items` - ordered as in a file. Will be consumed upon matching eval-ed lines."
   [{:keys [items seed-items writable-history]}]
   (let [!history-items     (atom (vec items))
         !seed-items        (atom (vec seed-items))
@@ -36,11 +36,16 @@
                              (let [first-line #(-> % string/split-lines first)]
                                (= (first-line line) (first-line item))))
 
-        ;; only first from !recipe-items is candidate to be consumed
-        possibly-consume-recipe-item! (fn [line]
-                                        (when (seq @!seed-items)
-                                          (when (line-matches-item? line (first @!seed-items))
-                                            (swap! !seed-items subvec 1))))]
+        ;; consumes all seed-items up til the one matching `line`
+        possibly-consume-seed-items!
+        (fn [line]
+          (when-let [line-ix (-> @!seed-items
+                                 (->> (map-indexed (fn [ix item]
+                                                     (and (line-matches-item? line item) ix))))
+                                 (doto prn)
+                                 (->> (remove false?))
+                                 first)]
+            (swap! !seed-items subvec (inc line-ix))))]
     (generate-items!)
     (reify History
       (first [_this])
@@ -59,7 +64,7 @@
       (add [_this time line]
         (swap! !history-items conj line)
         (.add writable-history time line)
-        (possibly-consume-recipe-item! line)
+        (possibly-consume-seed-items! line)
         (generate-items!))
       (iterator [_this index]
         (.listIterator @!items index))
