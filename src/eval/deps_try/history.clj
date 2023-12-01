@@ -35,14 +35,20 @@
         line-matches-item? (fn [line item]
                              (let [first-line #(-> % string/split-lines first)]
                                (= (first-line line) (first-line item))))
+        comment-only-line? (fn [line]
+                             (->> line
+                                  string/split-lines
+                                  (remove #(re-find #"^;+" %))
+                                  empty?))
 
         ;; consumes all seed-items up til the one matching `line`
         possibly-consume-seed-items!
         (fn [line]
           (when-let [line-ix (-> @!seed-items
+                                 #_(doto prn)
                                  (->> (map-indexed (fn [ix item]
                                                      (and (line-matches-item? line item) ix))))
-                                 (doto prn)
+                                 #_(doto prn)
                                  (->> (remove false?))
                                  first)]
             (swap! !seed-items subvec (inc line-ix))))]
@@ -62,8 +68,9 @@
       (get [_this index]
         (.line (get @!items index)))
       (add [_this time line]
-        (swap! !history-items conj line)
-        (.add writable-history time line)
+        (when-not (comment-only-line? line)
+          (swap! !history-items conj line)
+          (.add writable-history time line))
         (possibly-consume-seed-items! line)
         (generate-items!))
       (iterator [_this index]
