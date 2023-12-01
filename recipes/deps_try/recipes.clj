@@ -41,7 +41,7 @@
 ;; An example recipe-namespace:
 ;; (ns foo
 ;;   "Some description"
-;;   {:deps-try/deps ["metosin/malli" "0.13.0" "foo/bar"]}
+;;   {:deps-try.recipe/deps ["metosin/malli" "0.13.0" "foo/bar"]}
 ;;   (:require [malli.core :as m]
 ;;             [bar.core :as b]))
 ;;
