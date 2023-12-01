@@ -1,4 +1,14 @@
-{:deps-try.manifest/recipes [{:deps-try.recipe/name      "clojure/namespaces"
-                              :deps-try.recipe/title     "Introduction to namespaces."}
-                             {:deps-try.recipe/name      "malli/malli-select"
-                              :deps-try.recipe/title     "Introduction to malli-select, a library for spec2-inspired selection of Malli-schemas."}]}
+{:deps-try.manifest/recipes
+ [{:deps-try.recipe/url
+   "https://raw.githubusercontent.com/eval/deps-try/recipes/recipes/deps_try/recipes.clj",
+   :deps-try.recipe/name "deps-try/recipes",
+   :deps-try.recipe/title "Introducing recipes"}
+  {:deps-try.recipe/url
+   "https://raw.githubusercontent.com/eval/deps-try/recipes/recipes/next_jdbc/intro_sqlite.clj",
+   :deps-try.recipe/name "next-jdbc/intro-sqlite",
+   :deps-try.recipe/title "A next-jdbc introduction using SQLite"}
+  {:deps-try.recipe/url
+   "https://raw.githubusercontent.com/eval/deps-try/recipes/recipes/malli/malli_select.clj",
+   :deps-try.recipe/name "malli/malli-select",
+   :deps-try.recipe/title
+   "Introduction to malli-select, a library for spec2-inspired selection of Malli-schemas"}]}
