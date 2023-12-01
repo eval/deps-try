@@ -7,6 +7,8 @@
 
 (defn -parse [s]
   (let [[ns-form {:keys [end-row]}] ((juxt identity meta) (e/parse-string s {:quote true}))
+        docstring                   (when (> (count ns-form) 2)
+                                      (util/when-pred string? (nth ns-form 2)))
         ns-step                     (->> s string/split-lines (take end-row) (string/join \newline))
         s-sans-ns                   (->> s
                                          string/split-lines
@@ -15,8 +17,11 @@
                                          string/triml)
         steps                       (string/split s-sans-ns #"(\r?\n){3,}")
         ns-meta                     (:meta (e/parse-ns-form ns-form))]
-    (assoc (select-keys ns-meta [:deps-try/deps])
-           :steps (into [ns-step] steps))))
+    (-> ns-meta
+        (select-keys [:deps-try.recipe/deps :deps-try.recipe/status])
+        (assoc :steps (into [ns-step] steps))
+        (cond->
+         docstring (assoc :docstring docstring)))))
 
 (defn parse
   [slurpable]
@@ -30,9 +35,7 @@
                                    (re-find #"\.clj" (str %)))
         slurpable            (cond
                                (url? recipe-arg)  recipe-arg
-                               (path? recipe-arg) (-> recipe-arg fs/expand-home fs/normalize fs/absolutize)
-                               :else              (str "https://raw.githubusercontent.com/eval/deps-try/master/recipes/"
-                                                       recipe-arg ".clj"))
+                               (path? recipe-arg) (-> recipe-arg fs/expand-home fs/normalize fs/absolutize))
         {url-status :status} (when (url? slurpable) (util/url-test slurpable {}))
         error                (cond
                                (and url-status (= url-status :offline))   :parse.recipe/offline
@@ -51,7 +54,34 @@
   (with-open [r (clojure.java.io/reader (char-array s))]
     (parse r)))
 
+(defn generate&print-manifest [{:keys [exclude-status folder base-url]}]
+  (let [base-url         (str base-url
+                              (when-not (re-find #"\/$" base-url) "/"))
+        path->name       (fn [p]
+                           (-> (str p)
+                               (string/replace-first #"\.clj$" "")
+                               (string/replace #"_" "-")))
+        docstring->title #(some-> % (string/split-lines) first (string/replace #"\. *$" ""))
+        recipes          (filterv some?
+                                  (map (fn [p]
+                                         (let [rel-path                         (fs/relativize folder p)
+                                               {:keys                 [docstring]
+                                                :deps-try.recipe/keys [status]} (parse (str p))]
+                                           (when-not ((set exclude-status) status)
+                                             (cond-> {:deps-try.recipe/url (str base-url rel-path)
+                                                      :deps-try.recipe/name (path->name rel-path)}
+                                               docstring (assoc :deps-try.recipe/title (docstring->title docstring))))))
+                                       (fs/glob folder "**/*.clj")))]
+    (binding [clojure.core/*print-namespace-maps* false]
+      ((requiring-resolve 'clojure.pprint/pprint) {:deps-try.manifest/recipes recipes}))))
+
 (comment
+  (def recipes (fs/path (fs/cwd) "recipes"))
+
+  (fs/relativize (str recipes) (first (fs/glob recipes "**/*.clj")))
+
+  (fs/glob "/Users/gert/projects/deps-try/deps-try-recipes/recipes" "**/*.clj")
+  (parse "/Users/gert/projects/deps-try/deps-try-recipes/recipes/next_jdbc/postgresql.clj")
 
   (parse "https://raw.githubusercontent.com/eval/deps-try/master/src/eval/deps_try.clj")
 

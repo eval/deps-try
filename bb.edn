@@ -1,2 +1,10 @@
 {:deps     {io.github.eval/deps-try {:local/root "."}}
- :bbin/bin {deps-try {:main-opts ["-m" "eval.deps-try"]}}}
+ :bbin/bin {deps-try {:main-opts ["-m" "eval.deps-try"]}}
+ :tasks
+ {gen-manifest {:doc      "Generate recipe-manifest and print to stdout"
+                :requires ([babashka.fs :as fs])
+                :task     (exec 'eval.deps-try.recipe/generate&print-manifest
+                                {:exec-args
+                                 {:exclude-status #{:draft}
+                                  :base-url       "https://raw.githubusercontent.com/eval/deps-try/master/recipes"
+                                  :folder         (str (fs/path (fs/cwd) "recipes"))}})}}}

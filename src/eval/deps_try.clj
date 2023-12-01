@@ -198,11 +198,16 @@
   ;; TODO err on more args
   (print-recipes (sort-by :deps-try.recipe/name (recipes cli-opts)) cli-opts))
 
+
 (defn- handle-repl-start [{{:keys [recipe recipe-ns] :as parsed-opts} :opts}]
-  (let [parsed-recipe         (some-> (or recipe recipe-ns)
+  (let [recipes-by-name       (update-vals (group-by :deps-try.recipe/name (recipes {})) first)
+        known-recipe-url      (some->> (or recipe recipe-ns)
+                                       (get recipes-by-name)
+                                       :deps-try.recipe/url)
+        parsed-recipe         (some-> (or known-recipe-url recipe recipe-ns)
                                       (recipe/parse-arg)
                                       (assoc :ns-only (boolean recipe-ns)))
-        assoc-possible-recipe (fn [acc {:keys [error] :deps-try/keys [deps] :as recipe}]
+        assoc-possible-recipe (fn [acc {:keys [error] :deps-try.recipe/keys [deps] :as recipe}]
                                 #_(prn ::recipe recipe)
                                 (if-not (seq recipe)
                                   acc

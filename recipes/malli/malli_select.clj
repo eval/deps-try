@@ -2,7 +2,7 @@
 ;; $ deps-try --recipe malli/malli-select
 (ns recipes.malli.malli-select
   "Introduction to malli-select, a library for spec2-inspired selection of Malli-schemas."
-  {:deps-try/deps ["dk.thinkcreate/malli-select"  "metosin/malli"]}
+  {:deps-try.recipe/deps ["dk.thinkcreate/malli-select"  "metosin/malli"]}
   (:require [malli-select.core :as ms]
             [malli.core :as m :refer [form] :rename {form p}]
             [malli.generator :as mg]))
