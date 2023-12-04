@@ -61,7 +61,7 @@
 
 ;; Most recipes are like tutorials and so instead of just
 ;; submitting every step, it's good to know about the eval-at-point
-;; keybinding as it allows you to try things out:
+;; keybinding as it allows you to quickly try variations:
 ;; Put the cursor on any of the commas in the code below and press
 ;; Control-x Control-e. It will you show you the evaluated result of
 ;; the expressions before it, giving you an insight in intermediate
