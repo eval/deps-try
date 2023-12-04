@@ -38,6 +38,7 @@
         comment-only-line? (fn [line]
                              (->> line
                                   string/split-lines
+                                  (remove string/blank?)
                                   (remove #(re-find #"^;+" %))
                                   empty?))
 
