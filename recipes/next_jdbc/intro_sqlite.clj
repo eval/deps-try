@@ -128,8 +128,8 @@
 
 
 ;; Fin!
-;; For any recipe additions/corrections, visit https://github.com/eval/deps-try
-
+;; Missing anything from this recipe or got corrections?
+;; Open a PR at https://github.com/eval/deps-try
 (comment
   ;; more
   (sql/find-by-keys ds :address {:name "Gert"} {:limit 10})

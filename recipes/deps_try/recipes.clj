@@ -4,7 +4,7 @@
   "Introducing recipes."
   {:deps-try.recipe/deps []})
 
-;; A recipe is a normal clj-file that is loaded from disk or via http, e.g.:
+;; A recipe is a normal clj-file that is loaded from disk or over http, e.g.:
 ;;
 ;; $ deps-try --recipe ./some/local/path/to/foo.clj
 ;; $ deps-try --recipe https://gist.github.com/eval/ee80ebddaa120a7732396cea8cfc96da/raw
@@ -28,8 +28,8 @@
 ;; regular history items remain).
 ;;
 ;; You don't need to submit *every* single step in order to progress:
-;; a submitted step will ensure that any step up to that step is
-;; removed from the front of the history.
+;; a submitted step will ensure that any step before it is removed
+;; from the front of the history as well.
 ;;
 
 
@@ -50,10 +50,31 @@
 
 
 ;; Instead of loading the full recipe into the REPL's history, a
-;; user can also only load the namespace-step of a recipe:
+;; user can also load just the namespace-step of a recipe:
 ;;
 ;; $ deps-try --recipe-ns https://gist.github.com/eval/ee80ebddaa120a7732396cea8cfc96da/raw
 ;;
 ;; This has as benefit that the history is only slightly adjusted,
 ;; while still getting the benefit of having the needed dependencies and requires.
 ;;
+
+
+;; Most recipes are like tutorials and so instead of just
+;; submitting every step, it's good to know about the eval-at-point
+;; keybinding as it allows you to try things out:
+;; Put the cursor on any of the commas in the code below and press
+;; Control-x Control-e. It will you show you the evaluated result of
+;; the expressions before it, giving you an insight in intermediate
+;; results.
+;;
+(filter odd?
+        (map inc (range 5),),),
+
+
+;; When you loaded a recipe and you want to remove the steps from the REPL-history,
+;; just do `:recipe/quit`.
+;;
+
+;; Fin!
+;; Missing anything from this recipe or got corrections?
+;; Open a PR at https://github.com/eval/deps-try
