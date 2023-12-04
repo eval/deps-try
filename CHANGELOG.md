@@ -1,8 +1,14 @@
 # Changelog
 
-## Unreleased
+## v0.10.0 (2023-12-04)
 
-- git-url seen as version of git-url before it. Fixes [#24](https://github.com/eval/deps-try/issues/24).  
+- [!28](https://github.com/eval/deps-try/pull/28): introduce recipes  
+  Try it out: `$ deps-try --recipe deps-try/recipes`.  
+  See all built-in recipes: `$ deps-try recipes`.  
+  This feature was sponsored by [Clojurists Together](https://www.clojuriststogether.org/) ✨.
+- fancier help-message
+- using Clojure v1.12.0-alpha5
+- Fix: git-url seen as version of git-url before it ([#24](https://github.com/eval/deps-try/issues/24)).  
 
 ## v0.9.0 (2023-09-19)
 

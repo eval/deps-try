@@ -1,12 +1,15 @@
 {:paths   ["src" "resources" "."]
- :deps    {org.slf4j/slf4j-nop        {:mvn/version "2.0.5"} ;; suppress logging
-           com.bhauman/rebel-readline {:local/root "./vendor/rebel-readline/rebel-readline"}
-           org.clojure/tools.gitlibs  {:mvn/version "2.5.190"}
-           babashka/fs                {:mvn/version "0.3.17"}
-           cider/orchard              {:mvn/version "0.11.0"}
-           org.babashka/http-client   {:mvn/version "0.2.9"}
-           babashka/process           {:mvn/version "0.5.21"}
-           org.clojure/clojure        {:mvn/version "1.12.0-alpha4"}}
+ :deps    {org.slf4j/slf4j-nop             {:mvn/version "2.0.5"} ;; suppress logging
+           com.bhauman/rebel-readline      {:local/root "./vendor/rebel-readline/rebel-readline"}
+           org.clojure/tools.gitlibs       {:mvn/version "2.5.197"}
+           babashka/fs                     {:mvn/version "0.4.19"}
+           cider/orchard                   {:mvn/version "0.16.1"}
+           org.babashka/http-client        {:mvn/version "0.4.15"}
+           babashka/process                {:mvn/version "0.5.21"}
+           borkdude/edamame                {:mvn/version "1.3.23"}
+           org.babashka/cli                {:mvn/version "0.7.53"}
+           com.github.strojure/ansi-escape {:mvn/version "1.0.2-08"}
+           org.clojure/clojure             {:mvn/version "1.12.0-alpha5"}}
  :aliases {:test {:extra-paths ["test"]
                   :extra-deps  {nl.zeekat/data.sub {:mvn/version "0.1.4"}
                                 io.github.cognitect-labs/test-runner
