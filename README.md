@@ -222,6 +222,8 @@ user=> :repl/help
 
 ## Recipes
 
+_This feature was sponsored by [Clojurists Together](https://www.clojuriststogether.org/) ✨ in Q3-2023._
+
 Recipes are normal Clojure files (local or online) that are split up in steps (i.e. a block of code separated by two empty lines). When you load a recipe these steps are then first in REPL-history until a step is submitted, walking you through the recipe as it were.  
 Recipes can be used as tutorials, bug reports, walkthroughs, or just function as a snippet that contains dependencies, requires and helper-functions to get you started quickly in some domain.
 
