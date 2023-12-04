@@ -156,7 +156,7 @@
       (apply p/exec cmd))))
 
 (defn- recipe-manifest-contents [{:keys [refresh] :as _cli-opts}]
-  (let [remote-manifest-file "https://raw.githubusercontent.com/eval/deps-try/recipes/recipes/manifest.edn"
+  (let [remote-manifest-file "https://raw.githubusercontent.com/eval/deps-try/master/recipes/manifest.edn"
         default-recipes-path (doto (fs/path (fs/xdg-data-home "deps-try") "recipes" "default")
                                (fs/create-dirs))
         manifest-file        (fs/file default-recipes-path "manifest.edn")]
