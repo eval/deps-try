@@ -66,9 +66,7 @@
                     "  ;; The latest version of malli from maven, and git-tag v1.3.894 of the next-jdbc repository" \newline
                     "  $ deps-try metosin/malli io.github.seancorfield/next-jdbc v1.3.894")
                (str ansi/bold "COMMANDS" ansi/reset \newline
-                    "  recipes  show list of recipes"
-                    #_#_#_"  ;; The latest version of malli from maven, and git-tag v1.3.894 of the next-jdbc repository" \newline
-                      "  $ deps-try metosin/malli io.github.seancorfield/next-jdbc v1.3.894")
+                    "  recipes    show list of recipes (--refresh to update manifest)")
                nil]]
     (print (string/join \newline (interpose nil usage)))))
 
