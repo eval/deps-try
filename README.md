@@ -204,6 +204,13 @@ $ deps-try com.github.metosin/malli ^123
 # A local project
 $ deps-try . ~/some/project ../some/other/project
 
+# Loading a recipe
+# ...built-in recipe (to learn more about recipes)
+$ deps-try --recipe deps-try/recipes
+
+# ...external
+$ deps-try --recipe https://gist.github.com/eval/ee80ebddaa120a7732396cea8cfc96da/raw
+
 During a REPL-session:
 # add additional dependencies
 user=> :deps/try dev.weavejester/medley "~/some/project"
@@ -214,8 +221,8 @@ user=> :repl/help
 
 ## Recipes
 
-Recipes are normal Clojure files (local or online) that are split up in steps (i.e. a step is a block of code separated by two empty lines). When you load a recipe these steps are then first in REPL-history until a step is submitted, walking you through the recipe as it were.  
-Recipes can be used as tutorials, bug reports, walkthroughs, or just as a snippet that contains dependencies, requires and helper-functions to get you started quickly in some domain.
+Recipes are normal Clojure files (local or online) that are split up in steps (i.e. a block of code separated by two empty lines). When you load a recipe these steps are then first in REPL-history until a step is submitted, walking you through the recipe as it were.  
+Recipes can be used as tutorials, bug reports, walkthroughs, or just function as a snippet that contains dependencies, requires and helper-functions to get you started quickly in some domain.
 
 There's a couple of built-in recipes:
 ```
