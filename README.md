@@ -45,7 +45,8 @@ Again, no need to setup or adjust a project, or type out the full configuration 
   - easier copy/paste of multiline code
   - improved support for eval-at-point (e.g. set and list literals, var quote, deref)
   - eval&tap-at-point
-    - on an empty line this will tap the last result/exception.
+    - like eval-at-point and it taps the result.
+    - taps the last result/exception on an empty line.
   - improved suggestions
     - more shown
     - different colors for fns and vars, private vars/fns and deprecated vars.
