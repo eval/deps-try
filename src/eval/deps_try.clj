@@ -43,7 +43,7 @@
                (str ansi/bold "VERSION" ansi/reset \newline
                     "  " version)
                (str ansi/bold "USAGE" ansi/reset \newline
-                    "  $ deps-try [dep-name [dep-version] [dep2-name ...] ...] [--recipe recipe]")
+                    "  $ deps-try [dep-name [dep-version] [dep2-name ...] ...] [--recipe[-ns] recipe]")
                (str ansi/bold "OPTIONS" ansi/reset \newline
                     "  dep-name\n"
                     "    dependency from maven (e.g. `metosin/malli`, `org.clojure/cache`),\n"
@@ -59,9 +59,9 @@
                     "    When not provided, `LATEST` is implied for maven deps and the latest SHA" \newline
                     "    of the default-branch for git deps." \newline
                     \newline
-                    "  --recipe" \newline
+                    "  --recipe, --recipe-ns" \newline
                     "    Name of recipe (see recipes command) or a path or url to a Clojure file." \newline
-                    "    The REPL-history will be seeded with the expressions from the recipe.")
+                    "    The REPL-history will be seeded with the (ns-)steps from the recipe.")
                (str ansi/bold "EXAMPLES" ansi/reset \newline
                     "  ;; The latest version of malli from maven, and git-tag v1.3.894 of the next-jdbc repository" \newline
                     "  $ deps-try metosin/malli io.github.seancorfield/next-jdbc v1.3.894")
@@ -156,7 +156,7 @@
       (apply p/exec cmd))))
 
 (defn- recipe-manifest-contents [{:keys [refresh] :as _cli-opts}]
-  (let [remote-manifest-file "https://raw.githubusercontent.com/eval/deps-try/master/recipes/manifest.edn"
+  (let [remote-manifest-file "https://raw.githubusercontent.com/eval/deps-try/recipes/recipes/manifest.edn"
         default-recipes-path (doto (fs/path (fs/xdg-data-home "deps-try") "recipes" "default")
                                (fs/create-dirs))
         manifest-file        (fs/file default-recipes-path "manifest.edn")]

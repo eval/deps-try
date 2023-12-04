@@ -4,6 +4,11 @@
    :deps-try.recipe/name "deps-try/recipes",
    :deps-try.recipe/title "Introducing recipes"}
   {:deps-try.recipe/url
+   "https://raw.githubusercontent.com/eval/deps-try/recipes/recipes/portal/intro.clj",
+   :deps-try.recipe/name "portal/intro",
+   :deps-try.recipe/title
+   "Introduction to portal, a Clojure tool to navigate data"}
+  {:deps-try.recipe/url
    "https://raw.githubusercontent.com/eval/deps-try/recipes/recipes/next_jdbc/intro_sqlite.clj",
    :deps-try.recipe/name "next-jdbc/intro-sqlite",
    :deps-try.recipe/title "A next-jdbc introduction using SQLite"}

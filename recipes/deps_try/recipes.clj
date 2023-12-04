@@ -15,6 +15,7 @@
 ;;
 ;; To load a built-in recipe:
 ;; $ deps-try --recipe malli/malli-select
+;;
 
 
 ;; The contents of the recipe-file is broken up in steps that are added to
@@ -29,6 +30,7 @@
 ;; You don't need to submit *every* single step in order to progress:
 ;; a submitted step will ensure that any step up to that step is
 ;; removed from the front of the history.
+;;
 
 
 ;; Like any Clojure file, a recipe starts with a namespace declaration where
@@ -54,3 +56,4 @@
 ;;
 ;; This has as benefit that the history is only slightly adjusted,
 ;; while still getting the benefit of having the needed dependencies and requires.
+;;
