@@ -30,6 +30,8 @@ Again, no need to setup or adjust a project, or type out the full configuration 
 - always use the latest release of Clojure.
 - conveniently use dependencies from maven/clojars, various git-hostings or local projects.
 - add dependencies _without_ restarting the REPL.
+- recipes
+  - seed the REPL-history with steps from a file.
 - dependencies are resolved in isolation (as much as possible)
   - ...ignoring global, project or project deps.edn.
 - rebel-readline provides:
@@ -43,6 +45,7 @@ Again, no need to setup or adjust a project, or type out the full configuration 
   - easier copy/paste of multiline code
   - improved support for eval-at-point (e.g. set and list literals, var quote, deref)
   - eval&tap-at-point
+    - on an empty line this will tap the last result/exception.
   - improved suggestions
     - more shown
     - different colors for fns and vars, private vars/fns and deprecated vars.
@@ -151,17 +154,30 @@ $ deps-try -v
 ## Usage
 
 ``` bash
-Usage:
-  deps-try [dep-name [dep-version] [dep2-name ...] ...]
+USAGE
+  $ deps-try [dep-name [dep-version] [dep2-name ...] ...] [--recipe[-ns] recipe]
 
-Supported dep-name types:
-- maven
-  e.g. `metosin/malli`, `org.clojure/cache`.
-- git
-  - infer-notation, e.g. `com.github.user/project`, `ht.sr.~user/project`.
-  - url, e.g. `https://github.com/user/project`, `https://anything.org/user/project.git`.
-- local
-  - path to project containing `deps.edn`, e.g. `.`, `~/projects/my-project`, `./path/to/project`.
+OPTIONS
+  dep-name
+    dependency from maven (e.g. `metosin/malli`, `org.clojure/cache`),
+    git (e.g. `com.github.user/project`, `ht.sr.user/project`,
+    `https://github.com/user/project`, `https://anything.org/user/project.git`),
+    or a local folder containing a file `deps.edn` (e.g. `.`,
+    `~/projects/my-project`, `./path/to/project`).
+
+  dep-version (optional)
+    A maven version (e.g. `1.2.3`, `LATEST`) or git ref (e.g. `some-branch`,
+    `v1.2.3`).
+    The id of a PR or MR is also an acceptable version for git deps (e.g. `^123`).
+    When not provided, `LATEST` is implied for maven deps and the latest SHA
+    of the default-branch for git deps.
+
+  --recipe, --recipe-ns
+    Name of recipe (see recipes command) or a path or url to a Clojure file.
+    The REPL-history will be seeded with the (ns-)steps from the recipe.
+
+COMMANDS
+  recipes  show list of recipes
 
 Examples:
 # A REPL using the latest Clojure version
@@ -196,6 +212,35 @@ user=> :deps/try dev.weavejester/medley "~/some/project"
 user=> :repl/help
 ```
 
+## Recipes
+
+Recipes are normal Clojure files (local or online) that are split up in steps (i.e. a step is a block of code separated by two empty lines). When you load a recipe these steps are then first in REPL-history until a step is submitted, walking you through the recipe as it were.  
+Recipes can be used as tutorials, bug reports, walkthroughs, or just as a snippet that contains dependencies, requires and helper-functions to get you started quickly in some domain.
+
+There's a couple of built-in recipes:
+```
+# showing built-in recipes
+$ deps-try recipes
+name                    title
+──────────────────────  ─────────────────────────────────────────────────────────────────────────────────────
+deps-try/recipes        Introducing recipes
+malli/malli-select      Introduction to malli-select, a library for spec2-inspired selection of Malli-schemas
+next-jdbc/intro-sqlite  A next-jdbc introduction using SQLite
+portal/intro            Introduction to portal, a Clojure tool to navigate data
+
+# loading
+$ deps-try --recipe deps-try/recipes
+
+# online recipe
+$ deps-try --recipe https://gist.github.com/eval/ee80ebddaa120a7732396cea8cfc96da/raw
+
+# local recipe
+$ deps-try --recipe ./path/to/recipe.clj
+```
+
+If you have suggestions for (new) recipes: PRs are welcome!
+
+
 ## Bindings
 | Binding | Comment |  |
 | --- | :-- | --: |
@@ -211,6 +256,7 @@ user=> :repl/help
 | <kbd>Esc</kbd>/<kbd>Alt</kbd> + <kbd>Return</kbd> | Insert newline (where <kbd>Return</kbd> would otherwise submit line). | ![deps-try-insert-newline](https://user-images.githubusercontent.com/290596/229849928-c9532a81-4eda-4334-bbde-ca6acbf7a4ab.gif)|
 | <kbd>Code</kbd> + <kbd>↑</kbd> | Searches history for lines starting with <kbd>Code</kbd> (e.g. find all requires, defs etc). | ![deps-try-arrow-up](https://user-images.githubusercontent.com/290596/229852412-12539ee4-0d17-4de9-937d-19060306908d.gif) |
 | <kbd>Alt</kbd> + <kbd>p</kbd> / <kbd>Alt</kbd> + <kbd>n</kbd> | Step back-/forward through history _without_ stepping through every line of a history item (as <kbd>↑</kbd>/<kbd>↓</kbd> do).| |
+
 
 ## FAQ
 
