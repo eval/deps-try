@@ -1,3 +1,5 @@
 # These are supported funding model platforms
 
-github: eval
+github: [eval]
+open_collective: eval
+custom: ["https://getalby.com/p/eval"]
