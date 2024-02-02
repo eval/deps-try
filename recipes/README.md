@@ -1,8 +1,28 @@
-# REPL recipes
+# REPL Recipes
 
 This folder contains built-in recipes. Recipes are essentially Clojure source files that (if you were to load it via the CLI: `deps-try --recipe builtin/recipe`) gets chopped up in individual expressions that get front-loaded in the REPL's history.
 This allows someone to step through code by just continuously selecting the most recent item from the REPL history.  
-A recipe can denote libraries as dependencies. These will be put on the classpath when loading the recipe. A recipe is great in that way to provide code tutorials.
+A recipe can denote libraries as dependencies which will then be put on the classpath when loading the recipe.
+Recipes can in this way be used as tutorials, bug reports, or as snippets to quickly jump into a domain with the right dependencies, ns-aliases and helper-functions.
+
+<div align="center">
+<p>
+<!-- <sup>
+<a href="https://polar.sh/eval/subscription">My open source work is supported by the community</a>
+</sup> -->
+</p>
+<sup>REPL Recipes are made possible by:</sup>
+<br>
+<br>
+<a href="https://www.clojuriststogether.org/">
+	<img src="https://github.com/eval/deps-try/assets/290596/b74c3688-e778-47ea-abd4-0ab920b1d5ef" width="160"/>
+
+  <!-- <b>Some description</b> -->
+</a>
+<br>
+<br>
+  <a href="https://polar.sh/eval/subscriptions">Your logo here?</a>
+</div>
 
 ## Usage
 
@@ -19,7 +39,9 @@ next-jdbc/intro-sqlite  A next-jdbc introduction using SQLite
 portal/intro            Introduction to portal, a Clojure tool to navigate data
 ```
 
-### starting recipe
+If you have suggestions for (new) recipes: PRs are welcome!
+
+### loading recipe
 
 Builtin recipe:
 ```bash
@@ -28,7 +50,11 @@ $ deps-try --recipe deps-try/recipes
 
 Non built-in recipe
 ```bash
-$ deps-try --recipe https://gist.githubusercontent.com/eval/ee80ebddaa120a7732396cea8cfc96da/raw
+# url
+$ deps-try --recipe https://gist.github.com/eval/ee80ebddaa120a7732396cea8cfc96da/raw
+
+# local recipe
+$ deps-try --recipe ./path/to/recipe.clj
 ```
 
 ## LICENSE
