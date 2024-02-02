@@ -2,7 +2,7 @@
   (:require [babashka.fs :as fs]
             [clojure.java.io :as io]
             [clojure.string :as string]
-            [edamame.core :as e] :reload
+            [edamame.core :as e]
             [eval.deps-try.util :as util]))
 
 (defn -parse [s]
