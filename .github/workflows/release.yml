@@ -63,7 +63,7 @@ jobs:
       - name: Install clojure tools
         uses: DeLaGuardo/setup-clojure@9.4
         with:
-          bb: 1.1.173 # ~ year ago
+          bb: 1.1.180 # ~ year ago
       - name: Update VERSION
         run: echo "${{ needs.Config.outputs.version }}" > resources/VERSION
       - name: Zip it
