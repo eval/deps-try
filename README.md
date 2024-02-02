@@ -224,32 +224,7 @@ user=> :repl/help
 
 _This feature was sponsored by [Clojurists Together](https://www.clojuriststogether.org/) ✨ in Q3-2023._
 
-Recipes are normal Clojure files (local or online) that are split up in steps (i.e. a block of code separated by two empty lines). When you load a recipe these steps are then first in REPL-history until a step is submitted, walking you through the recipe as it were.  
-Recipes can be used as tutorials, bug reports, walkthroughs, or just function as a snippet that contains dependencies, requires and helper-functions to get you started quickly in some domain.
-
-There's a couple of built-in recipes ([sources](https://github.com/eval/deps-try/tree/master/recipes)):
-```
-# showing built-in recipes
-$ deps-try recipes
-name                    title
-──────────────────────  ─────────────────────────────────────────────────────────────────────────────────────
-deps-try/recipes        Introducing recipes
-malli/malli-select      Introduction to malli-select, a library for spec2-inspired selection of Malli-schemas
-next-jdbc/intro-sqlite  A next-jdbc introduction using SQLite
-portal/intro            Introduction to portal, a Clojure tool to navigate data
-
-# loading
-$ deps-try --recipe deps-try/recipes
-
-# online recipe
-$ deps-try --recipe https://gist.github.com/eval/ee80ebddaa120a7732396cea8cfc96da/raw
-
-# local recipe
-$ deps-try --recipe ./path/to/recipe.clj
-```
-
-If you have suggestions for (new) recipes: PRs are welcome!
-
+Read all about [recipes here](https://github.com/eval/deps-try/tree/master/recipes). 
 
 ## Bindings
 | Binding | Comment |  |
