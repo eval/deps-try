@@ -29,22 +29,41 @@
     (merge {:location (str slurpable)}
            (-parse contents))))
 
+
+(defn- recipe-arg-dispatch [arg]
+  (if (re-find #"^http" (str arg))
+    :url
+    :path))
+
+(defmulti recipe-arg->slurpable #'recipe-arg-dispatch)
+(defmethod recipe-arg->slurpable :url [arg]
+  (let [gist?             (re-find #"gist\.github\.com" arg)
+        ensure-raw-suffix #(cond-> %
+                             (not (re-find #"\/raw$" %)) (str "/raw"))]
+    (cond-> arg
+      gist? ensure-raw-suffix)))
+
+(defmethod recipe-arg->slurpable :path [arg]
+  (-> arg fs/expand-home fs/normalize fs/absolutize))
+
+
+(defmulti validate-slurpable #'recipe-arg-dispatch)
+
+(defmethod validate-slurpable :url [slurpable]
+  (let [{url-status :status} (util/url-test slurpable {})]
+    (cond
+      (= url-status :offline)  :parse.recipe/offline
+      (not= url-status :found) :parse.recipe/url-not-found
+      :else nil)))
+
+(defmethod validate-slurpable :path [slurpable]
+  (when-not (and (fs/exists? slurpable)
+                 (fs/regular-file? slurpable))
+    :parse.recipe/path-not-found))
+
 (defn parse-arg [recipe-arg]
-  (let [url?                 #(re-find #"^http" (str %))
-        path?                #(and (not (url? %))
-                                   (re-find #"\.clj" (str %)))
-        slurpable            (cond
-                               (url? recipe-arg)  recipe-arg
-                               (path? recipe-arg) (-> recipe-arg fs/expand-home fs/normalize fs/absolutize))
-        {url-status :status} (when (url? slurpable) (util/url-test slurpable {}))
-        error                (cond
-                               (and url-status (= url-status :offline))   :parse.recipe/offline
-                               (and url-status (not= url-status :found))  :parse.recipe/url-not-found
-                               (and
-                                (path? slurpable)
-                                (not (and (fs/exists? slurpable)
-                                          (fs/regular-file? slurpable)))) :parse.recipe/path-not-found)]
-    (if error
+  (let [slurpable (recipe-arg->slurpable recipe-arg)]
+    (if-let [error (validate-slurpable slurpable)]
       {:error {:error/id error :path recipe-arg}}
       (let [{:deps-try/keys [deps] :as parsed-recipe} (parse (str slurpable))]
         (cond-> parsed-recipe

@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- recipes: support regular gist-urls (without '/raw')
+
 ## v0.10.0 (2023-12-04)
 
 - [!28](https://github.com/eval/deps-try/pull/28): introduce recipes  
