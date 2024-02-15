@@ -5,6 +5,14 @@
             [edamame.core :as e]
             [eval.deps-try.util :as util]))
 
+(defn- strip-leading-comments
+  "(strip-leading-comments \";; Use this recipe like so,,,\n(ns recipe.hello)\")
+  ;; => \"(ns recipe.hello)\"
+  "
+  [s]
+  (let [[comments _] (string/split s #"\(ns" 2)]
+    (subs s (count (str comments)))))
+
 (defn -parse [s]
   (let [[ns-form {:keys [end-row]}] ((juxt identity meta) (e/parse-string s {:quote true}))
         docstring                   (when (> (count ns-form) 2)
@@ -27,7 +35,7 @@
   [slurpable]
   (let [contents (-> slurpable slurp string/trim)]
     (merge {:location (str slurpable)}
-           (-parse contents))))
+           (-parse (strip-leading-comments contents)))))
 
 
 (defn- recipe-arg-dispatch [arg]
@@ -95,6 +103,7 @@
       ((requiring-resolve 'clojure.pprint/pprint) {:deps-try.manifest/recipes recipes}))))
 
 (comment
+
   (def recipes (fs/path (fs/cwd) "recipes"))
 
   (fs/relativize (str recipes) (first (fs/glob recipes "**/*.clj")))
@@ -112,7 +121,8 @@
   (slurp "README.md")
   (slurp "/Users/gert/projects/deps-try/deps-try/recipes/next_jdbc_postgresql.clj")
   (parse-recipe-string
-   "(ns my.namespace
+   ";; some comment
+(ns my.namespace
   {:clj-kondo/config '{:linters {:unresolved-symbol {:level :off}}}})")
 
   (parse-recipe-string
