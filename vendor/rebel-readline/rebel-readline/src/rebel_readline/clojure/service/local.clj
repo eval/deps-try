@@ -2,9 +2,10 @@
   (:require
    [clojure.repl]
    [rebel-readline.clojure.line-reader :as clj-reader]
-   [rebel-readline.clojure.utils :as clj-utils]
+   [rebel-readline.clojure.utils :as clj-utils :refer [when-pred]]
    [rebel-readline.tools :as tools]
-   [rebel-readline.utils :as utils :refer [strip-literals log]]))
+   [rebel-readline.utils :as utils :refer [strip-literals log]]
+   [clojure.string :as string]))
 
 ;; taken from replicant
 ;; https://github.com/puredanger/replicant/blobcl/master/src/replicant/util.clj
@@ -86,14 +87,40 @@
 (defmethod clj-reader/-apropos ::service [_ var-str]
   (clojure.repl/apropos var-str))
 
+(defn- javadoc-url [klass-dot-method]
+  (when-let [[_ nses&klass klass method]
+             (re-find #"(?x)  # matches e.g. \"java.util.Date.new\", \"Integer\", \"Integer.parse\"
+                        (?<nses>.*?                       # non-greedy capture all
+                          (?:\.?(?<klass>[A-Z][A-Za-z]+)) # match \".Class\", capture \"Class\"
+                            (?=\.)?                       # prevent reading beyond dot
+                          )
+                          (?:\.(?<method>[^\s]+))?        # optional method or field
+                          " klass-dot-method)]
+    (let [java-version-19+  (some->> (clj-utils/java-version)
+                                     (re-find #"^(\d*)\.")
+                                     last
+                                     parse-long
+                                     (when-pred #(> % 18)))
+          base-url          (str "https://docs.oracle.com/en/java/javase/"
+                                 (or java-version-19+ 19)
+                                 "/docs/api/search.html?q=")
+          constructor-query (when (= method "new")
+                              (str nses&klass "+" klass "("))
+          q                 (or constructor-query
+                                (cond-> nses&klass
+                                  method (str "+" method)))]
+      #_(prn-str :ns&klass ns&klass :method method :q q)
+      (str base-url q))))
+
 (defmethod clj-reader/-doc ::service [self var-str]
-  #_(when-let [])
     ;; lazy-load for faster startup
   (when-let [doc ((requiring-resolve 'compliment.core/documentation) var-str)]
-    (let [{:keys [ns name private]} (if (special-symbol? (symbol var-str))
-                                      {:ns (find-ns 'clojure.core) :name (symbol var-str)}
-                                      (clj-reader/-resolve-meta self var-str))
-          url (when (and (not private) ns) (clj-utils/url-for (str ns) (str name)))]
+    (let [{:keys [ns name private]
+           :as   _meta} (if (special-symbol? (symbol var-str))
+                          {:ns (find-ns 'clojure.core) :name (symbol var-str)}
+                          (clj-reader/-resolve-meta self var-str))
+          url           (when (and (not private) ns) (clj-utils/url-for (str ns) (str name)))
+          url           (or url (javadoc-url (first (string/split-lines doc))))]
       (cond-> {:doc doc}
         url (assoc :url url)))))
 

@@ -2,6 +2,12 @@
   (:require
    [clojure.string :as string]))
 
+(defn java-version []
+  (System/getProperty "java.version"))
+
+(defn when-pred [pred v]
+  (when (pred v) v))
+
 ;; taken from cljs-api-gen.encode
 (def cljs-api-encoding
   {"."  "DOT"

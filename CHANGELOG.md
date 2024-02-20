@@ -2,7 +2,11 @@
 
 ## Unreleased
 
+- Clojure 1.12.0-alpha7
 - recipes: support regular gist-urls (without '/raw')
+- recipes: remove leading comments
+- doc: show search-doc-url for Java classes
+- fix typos in README (@eNotchy)
 
 ## v0.10.0 (2023-12-04)
 
