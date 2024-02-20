@@ -88,14 +88,13 @@
   (clojure.repl/apropos var-str))
 
 (defn- javadoc-url [klass-dot-method]
-  (when-let [[_ nses&klass klass method]
-             (re-find #"(?x)  # matches e.g. \"java.util.Date.new\", \"Integer\", \"Integer.parse\"
-                        (?<nses>.*?                       # non-greedy capture all
-                          (?:\.?(?<klass>[A-Z][A-Za-z]+)) # match \".Class\", capture \"Class\"
-                            (?=\.)?                       # prevent reading beyond dot
-                          )
-                          (?:\.(?<method>[^\s]+))?        # optional method or field
-                          " klass-dot-method)]
+  (when-let [{:keys [nses-and-klass klass method]}
+             (not-empty (clj-utils/re-named-captures
+                         #"(?x)  # matches e.g. \"java.util.Date.new\", \"Integer\", \"Integer.parse\"
+                           (?<nsesAndKlass>.*?                # non-greedy capture all
+                             (?:\.?(?<klass>[A-Z][A-Za-z]+))) # match \".Class\", capture \"Class\"
+                           (?:\.(?<method>[^\s]+))?           # optional method or field
+                          " klass-dot-method {:keywordize true}))]
     (let [java-version-19+  (some->> (clj-utils/java-version)
                                      (re-find #"^(\d*)\.")
                                      last
@@ -105,11 +104,10 @@
                                  (or java-version-19+ 19)
                                  "/docs/api/search.html?q=")
           constructor-query (when (= method "new")
-                              (str nses&klass "+" klass "("))
+                              (str nses-and-klass "+" klass "("))
           q                 (or constructor-query
-                                (cond-> nses&klass
+                                (cond-> nses-and-klass
                                   method (str "+" method)))]
-      #_(prn-str :ns&klass ns&klass :method method :q q)
       (str base-url q))))
 
 (defmethod clj-reader/-doc ::service [self var-str]

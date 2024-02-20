@@ -6,6 +6,7 @@
 - recipes: support regular gist-urls (without '/raw')
 - recipes: remove leading comments
 - doc: show search-doc-url for Java classes
+- fix: incorrect unescape of escaped quotes in history
 - fix typos in README (@eNotchy)
 
 ## v0.10.0 (2023-12-04)
