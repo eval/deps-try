@@ -103,7 +103,8 @@
   [history-file]
   (let [unescape-cmd  #(-> %
                            (string/replace #"\\n" "\n")
-                           (string/replace #"\\r" "\r"))]
+                           (string/replace #"\\r" "\r")
+                           (string/replace #"\\(.)" "$1"))]
     (map #(unescape-cmd (second (string/split % #":" 2))) (fs/read-all-lines history-file))))
 
 (defn make-history
