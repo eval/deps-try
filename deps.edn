@@ -9,7 +9,7 @@
            borkdude/edamame                {:mvn/version "1.4.24"}
            org.babashka/cli                {:mvn/version "0.7.53"}
            com.github.strojure/ansi-escape {:mvn/version "1.0.2-08"}
-           org.clojure/clojure             {:mvn/version "1.12.0-alpha7"}}
+           org.clojure/clojure             {:mvn/version "1.12.0-alpha8"}}
  :aliases {:test {:extra-paths ["test"]
                   :extra-deps  {nl.zeekat/data.sub {:mvn/version "0.1.4"}
                                 io.github.cognitect-labs/test-runner
