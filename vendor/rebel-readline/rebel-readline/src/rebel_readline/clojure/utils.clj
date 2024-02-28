@@ -5,35 +5,40 @@
 (defn java-version []
   (System/getProperty "java.version"))
 
-(defn when-pred [pred v]
-  (when (pred v) v))
+(defn whenp
+  "Yields `v` when it's truthy and all `preds` pass.
 
-(defn re-named-groups [re]
-  (let [matcher        (re-matcher re "")
-        named-group-re #"\(\?<([a-zA-Z][a-zA-Z0-9]*)>"]
-    ;; .groupNames since Java 20
-    (try (keys (.groupNames ^java.util.regex.Matcher matcher))
-         (catch IllegalArgumentException _
-           (map last (re-seq named-group-re (str re)))))))
+  Examples:
+  (whenp 1 odd? pos?) ;; => 1
+  (whenp 2 odd? pos?) ;; => nil
 
-(letfn [(camel->kebab
-          "Simple/naive transformation that works for re group-names"
-          [s]
-          (-> s
-              (string/replace #"[A-Z]" (comp #(str "-" %) string/lower-case))
-              (string/replace #"^-|-$" "")))]
+  ;; when `v` is false-ish you get nil
+  (whenp nil odd? pos?) ;; => nil
+
+  (whenp coll seq) ;; =>  nil or a collection with at least 1 item
+  (whenp nil odd)"
+  ([v] v)
+  ([v & preds]
+   (when (and v ((apply every-pred preds) v))
+     v)))
+
+;; Simple/naive transformation that works for re group-names
+(letfn [(kebab->camel [s]
+          (string/replace s  #"-([a-z])" #(.toUpperCase (%1 1))))]
   (defn re-named-captures
-    ([re s] (re-named-captures re s nil))
-    ([re s {:keys [keywordize] :or {keywordize identity}}]
-     (let [keywordize-fn (if (true? keywordize) (comp keyword camel->kebab) keywordize)]
-       (if-let [matcher (let [m (re-matcher re s)]
-                          (when (re-find m) m))]
-         (reduce (fn [acc group]
-                   (if-let [captured (.group matcher group)]
-                     (assoc acc (keywordize-fn group) captured)
-                     acc)) {} (re-named-groups re))
-         {})))))
+    "Yields captures by group name.
 
+    Examples:
+    (re-named-captures #\"(?<foo>Foo) (?<barAndBaz>\\w+)\" \"Foo BarBaz\" [:foo :bar-and-baz])
+    ;; => {:foo \"Foo\" :bar-and-baz \"BarBaz\"}
+  "
+    [re s ks]
+    (when-let [^java.util.regex.Matcher matching (whenp (re-matcher re s) re-find)]
+      (let [group->key (reduce (fn [acc k]
+                                 (let [group-name (if (keyword? k) (kebab->camel (name k)) k)]
+                                   (assoc acc group-name k))) {} ks)]
+        (reduce (fn [acc [gn k]]
+                  (assoc acc k (.group matching gn))) {} group->key)))))
 
 ;; taken from cljs-api-gen.encode
 (def cljs-api-encoding

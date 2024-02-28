@@ -2,7 +2,7 @@
   (:require
    [clojure.repl]
    [rebel-readline.clojure.line-reader :as clj-reader]
-   [rebel-readline.clojure.utils :as clj-utils :refer [when-pred]]
+   [rebel-readline.clojure.utils :as clj-utils :refer [whenp]]
    [rebel-readline.tools :as tools]
    [rebel-readline.utils :as utils :refer [strip-literals log]]
    [clojure.string :as string]))
@@ -94,14 +94,13 @@
                            (?<nsesAndKlass>.*?                # non-greedy capture all
                              (?:\.?(?<klass>[A-Z][A-Za-z]+))) # match \".Class\", capture \"Class\"
                            (?:\.(?<method>[^\s]+))?           # optional method or field
-                          " klass-dot-method {:keywordize true}))]
-    (let [java-version-19+  (some->> (clj-utils/java-version)
-                                     (re-find #"^(\d*)\.")
-                                     last
-                                     parse-long
-                                     (when-pred #(> % 18)))
+                          " klass-dot-method [:nses-and-klass :klass :method]))]
+    (let [java-major        (some-> (clj-utils/java-version)
+                                    (->> (re-find #"^(\d*)\."))
+                                    last
+                                    parse-long)
           base-url          (str "https://docs.oracle.com/en/java/javase/"
-                                 (or java-version-19+ 19)
+                                 (max java-major 19)
                                  "/docs/api/search.html?q=")
           constructor-query (when (= method "new")
                               (str nses-and-klass "+" klass "("))

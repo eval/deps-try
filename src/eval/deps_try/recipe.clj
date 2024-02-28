@@ -3,7 +3,7 @@
             [clojure.java.io :as io]
             [clojure.string :as string]
             [edamame.core :as e]
-            [eval.deps-try.util :as util]))
+            [eval.deps-try.util :as util :refer [whenp]]))
 
 (defn- strip-leading-comments
   "(strip-leading-comments \";; Use this recipe like so,,,\n(ns recipe.hello)\")
@@ -15,8 +15,10 @@
 
 (defn -parse [s]
   (let [[ns-form {:keys [end-row]}] ((juxt identity meta) (e/parse-string s {:quote true}))
-        docstring                   (when (> (count ns-form) 2)
-                                      (util/when-pred string? (nth ns-form 2)))
+        docstring                   (some-> ns-form
+                                            (whenp (comp #(< 2 %) count))
+                                            (nth 2)
+                                            (whenp string?))
         ns-step                     (->> s string/split-lines (take end-row) (string/join \newline))
         s-sans-ns                   (->> s
                                          string/split-lines

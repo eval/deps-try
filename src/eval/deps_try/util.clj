@@ -44,11 +44,22 @@
           g
           (last steps)))))
 
-(defn when-pred
-  ^{:author "Sergey Trofimov"
-    :source "https://ask.clojure.org/index.php/8945/something-like-when-pred-in-the-core"}
-  [pred v]
-  (when (pred v) v))
+(defn whenp
+  "Yields `v` when it's truthy and all `preds` pass.
+
+  Examples:
+  (whenp 1 odd? pos?) ;; => 1
+  (whenp 2 odd? pos?) ;; => nil
+
+  ;; when `v` is false-ish you get nil
+  (whenp nil odd? pos?) ;; => nil
+
+  (whenp coll seq) ;; =>  nil or a collection with at least 1 item
+  (whenp nil odd)"
+  ([v] v)
+  ([v & preds]
+   (when (and v ((apply every-pred preds) v))
+     v)))
 
 (defn url-test [url {:keys [timeout include-body] :or {timeout 1000 include-body false}}]
   (try
