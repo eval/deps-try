@@ -2,11 +2,14 @@
 
 ## Unreleased
 
-- Clojure 1.12.0-alpha7
+- completions: include instance methods and constructors.
+  This to support Clojure's 1.12 qualified methods.
+- completions: show link to Oracle's javadoc for class members/methods.
+- Clojure 1.12.0-alpha8
 - recipes: support regular gist-urls (without '/raw')
 - recipes: remove leading comments
 - doc: show search-doc-url for Java classes
-- fix: incorrect unescape of escaped quotes in history
+- fix: incorrect unescape of escaped quotes in history  
 - fix typos in README (@eNotchy)
 
 ## v0.10.0 (2023-12-04)
