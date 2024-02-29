@@ -157,7 +157,7 @@
 
 (defn -main [& args]
   ;; via --debug flag?
-  (let [prepare? (filter #{"-P"} args)]
+  (let [prepare? (first (filter #{"-P"} args))]
     (if prepare?
       (System/exit 0)
       (binding [*debug-log* false]
