@@ -121,10 +121,10 @@
 
 
 (defn- start-repl! [{requested-deps              :deps
+                     prepare                     :prepare
                      {recipe-deps     :deps
                       ns-only         :ns-only
                       recipe-location :location} :recipe :as _args}]
-  #_(prn ::args args)
   (let [default-deps                 {'org.clojure/clojure {:mvn/version "1.12.0-alpha8"}}
         {:keys         [cp-file]
          default-cp    :cp
@@ -148,6 +148,7 @@
     (let [cmd (cond-> ["java" "-classpath" classpath]
                 (seq jvm-opts)  (into jvm-opts)
                 :always         (into ["clojure.main" "-m" "eval.deps-try.try"])
+                prepare         (into ["-P"])
                 recipe-location (into (if ns-only
                                         ["--recipe-ns" recipe-location]
                                         ["--recipe" recipe-location])))]
@@ -219,6 +220,7 @@
         {error :error}        (util/pred-> (complement :error) parsed-opts
                                            (try-deps/parse-dep-args)
                                            (assoc-possible-recipe parsed-recipe)
+                                           (->> (merge parsed-opts))
                                            (start-repl!))]
     (when error
       (print-error-and-exit! (errors/format-error error)))))
@@ -245,10 +247,11 @@
     :restrict [:refresh :help :plain :color]}
    {:cmds      []
     :fn        #'handle-fallback-cmd
-    :restrict  [:version :deps :help :recipe :recipe-ns]
-    :coerce    {:deps [:string]}
+    :restrict  [:version :deps :help :recipe :recipe-ns :print-deps :prepare]
+    :coerce    {:deps [:string] :prepare boolean}
     :alias     {:h :help
-                :v :version}
+                :v :version
+                :P :prepare}
     :exec-args {:deps []} :args->opts (repeat :deps)}])
 
 (defn -main [& args]

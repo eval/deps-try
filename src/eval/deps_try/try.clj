@@ -157,30 +157,32 @@
 
 (defn -main [& args]
   ;; via --debug flag?
-  #_(prn ::args args)
-  (binding [*debug-log* false]
-    (let [data-path (fs/xdg-data-home "deps-try")]
-      (ensure-path-exists! data-path)
-      (rebel-core/ensure-terminal
-       (let [repl-opts (cond-> {:deps-try/data-path data-path
-                                #_#_:prompt (fn [] (println (str *ns* "=>"))) ;; when prompt is too deep
-                                :caught             (fn [ex]
-                                                      (persist-just-caught ex)
-                                                      (clojure.main/repl-caught ex))
-                                :init               (fn []
-                                                      (load-slow-deps!)
-                                                      (apply require clojure.main/repl-requires)
-                                                      (set! clojure.core/*print-namespace-maps* false))
-                                :eval               (fn [form]
-                                                      (eval `(do ~(handle-sigint-form)
-                                                                 ~(reset-just-caught)
-                                                                 ~form)))
-                                :print              syntax-highlight-pprint}
-                         (second args) (assoc :deps-try/recipe
-                                              (let [recipe (recipe/parse (second args))]
-                                                (assoc recipe :ns-only (= (first args) "--recipe-ns")))))]
-         (repl repl-opts)))
-      (System/exit 0))))
+  (let [prepare? (filter #{"-P"} args)]
+    (if prepare?
+      (System/exit 0)
+      (binding [*debug-log* false]
+        (let [data-path (fs/xdg-data-home "deps-try")]
+          (ensure-path-exists! data-path)
+          (rebel-core/ensure-terminal
+           (let [repl-opts (cond-> {:deps-try/data-path data-path
+                                    #_#_:prompt (fn [] (println (str *ns* "=>"))) ;; when prompt is too deep
+                                    :caught             (fn [ex]
+                                                          (persist-just-caught ex)
+                                                          (clojure.main/repl-caught ex))
+                                    :init               (fn []
+                                                          (load-slow-deps!)
+                                                          (apply require clojure.main/repl-requires)
+                                                          (set! clojure.core/*print-namespace-maps* false))
+                                    :eval               (fn [form]
+                                                          (eval `(do ~(handle-sigint-form)
+                                                                     ~(reset-just-caught)
+                                                                     ~form)))
+                                    :print              syntax-highlight-pprint}
+                             (second args) (assoc :deps-try/recipe
+                                                  (let [recipe (recipe/parse (second args))]
+                                                    (assoc recipe :ns-only (= (first args) "--recipe-ns")))))]
+             (repl repl-opts)))
+          (System/exit 0))))))
 
 (comment
   (recipe/parse "/Users/gert/projects/deps-try/deps-try-recipes/recipes/next-jdbc/postgresql.clj")
