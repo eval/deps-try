@@ -1,5 +1,6 @@
 (ns eval.deps-try.try
-  (:require [clojure.main]
+  (:require [babashka.cli :as cli]
+            [clojure.main]
             [clojure.pprint :as pp]
             [clojure.repl :as clj-repl]
             [eval.deps-try.deps :as try-deps]
@@ -156,16 +157,17 @@
   `(swap! api/*line-reader* dissoc :repl/just-caught))
 
 (defn -main [& args]
-  ;; via --debug flag?
-  (let [prepare? (first (filter #{"-P"} args))]
-    (if prepare?
+  (let [opts      (cli/parse-opts args {:restrict [:recipe :recipe-ns :prepare]
+                                        :spec     {:recipe  {}
+                                                   :prepare {:alias :P}}})
+        data-path (fs/xdg-data-home "deps-try")]
+    (ensure-path-exists! data-path)
+    (if (:prepare opts)
       (System/exit 0)
-      (binding [*debug-log* false]
-        (let [data-path (fs/xdg-data-home "deps-try")]
-          (ensure-path-exists! data-path)
-          (rebel-core/ensure-terminal
-           (let [repl-opts (cond-> {:deps-try/data-path data-path
-                                    #_#_:prompt (fn [] (println (str *ns* "=>"))) ;; when prompt is too deep
+      (binding [*debug-log* false] ;; via --debug flag?
+        (rebel-core/ensure-terminal
+         (let [recipe-path ((some-fn :recipe :recipe-ns) opts)
+               repl-opts   (cond-> {:deps-try/data-path data-path
                                     :caught             (fn [ex]
                                                           (persist-just-caught ex)
                                                           (clojure.main/repl-caught ex))
@@ -178,13 +180,14 @@
                                                                      ~(reset-just-caught)
                                                                      ~form)))
                                     :print              syntax-highlight-pprint}
-                             (second args) (assoc :deps-try/recipe
-                                                  (let [recipe (recipe/parse (second args))]
-                                                    (assoc recipe :ns-only (= (first args) "--recipe-ns")))))]
-             (repl repl-opts)))
-          (System/exit 0))))))
+                             recipe-path (assoc :deps-try/recipe
+                                                (let [recipe (recipe/parse recipe-path)]
+                                                  (assoc recipe :ns-only (:recipe-ns opts)))))]
+           (repl repl-opts)))
+        (System/exit 0)))))
 
 (comment
+
   (recipe/parse "/Users/gert/projects/deps-try/deps-try-recipes/recipes/next-jdbc/postgresql.clj")
 
   #_:end)
