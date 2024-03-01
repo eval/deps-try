@@ -19,6 +19,7 @@
 (def init-cp (get-classpath))
 
 (defn- run-clojure [opts & args]
+  #_(prn ::run-clojure :opts opts :args args)
   (let [[opts args] (if (map? opts) [opts args] [nil (cons opts args)])]
     (fs/with-temp-dir [tmp {}]
       (apply p/sh (merge {:dir (str tmp)} opts)
@@ -125,6 +126,7 @@
                      {recipe-deps     :deps
                       ns-only         :ns-only
                       recipe-location :location} :recipe :as _args}]
+  #_(prn ::args _args)
   (let [default-deps                 {'org.clojure/clojure {:mvn/version "1.12.0-alpha8"}}
         {:keys         [cp-file]
          default-cp    :cp
@@ -199,9 +201,9 @@
 
 
 (defn- handle-repl-start [{{:keys [recipe recipe-ns] :as parsed-opts} :opts}]
-  (let [recipes-by-name       (update-vals (group-by :deps-try.recipe/name (recipes {})) first)
+  (let [recipes-by-name       #(update-vals (group-by :deps-try.recipe/name (recipes {})) first)
         known-recipe-url      (some->> (or recipe recipe-ns)
-                                       (get recipes-by-name)
+                                       (get (recipes-by-name))
                                        :deps-try.recipe/url)
         parsed-recipe         (some-> (or known-recipe-url recipe recipe-ns)
                                       (recipe/parse-arg)
@@ -255,6 +257,7 @@
     :exec-args {:deps []} :args->opts (repeat :deps)}])
 
 (defn -main [& args]
+  #_(prn ::args args)
   (try
     (cli/dispatch dispatch-table args {})
     (catch Exception e
