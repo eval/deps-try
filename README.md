@@ -169,7 +169,7 @@ exec bb /absolute/path/to/deps-try-bb.jar "$@"
 ## Usage
 
 ``` bash
-$ deps-try-dev -h
+$ deps-try -h
 A CLI to quickly try Clojure (libraries) on rebel-readline.
 
 VERSION

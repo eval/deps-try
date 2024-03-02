@@ -1,10 +1,12 @@
 # Changelog
 
-## Unreleased
+## v0.11.0 (2024-03-02)
 
-- completions: include instance methods and constructors.
+- release docker image  
+  `docker run -it ghcr.io/eval/deps-try`
+- completions: include class instance methods and constructors.
   This to support Clojure's 1.12 qualified methods.
-- completions: show link to Oracle's javadoc for class members/methods.
+- docs: show link to Oracle's javadoc for class members/methods.
 - Clojure 1.12.0-alpha8
 - recipes: support regular gist-urls (without '/raw')
 - recipes: remove leading comments
