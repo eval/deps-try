@@ -1,5 +1,7 @@
 FROM clojure:temurin-21-tools-deps-bullseye-slim
 
+ARG TAG=unstable
+
 RUN apt-get -yqq update && \
     apt-get -yqq upgrade && \
     apt-get -yqq install sudo && \
@@ -23,7 +25,7 @@ ENV HOME=/home/deps-try-user
 USER deps-try-user
 WORKDIR /home/deps-try-user
 
-RUN curl -sLO https://github.com/eval/deps-try/releases/download/unstable/deps-try-bb.jar && \
+RUN curl -sLO https://github.com/eval/deps-try/releases/download/${TAG}/deps-try-bb.jar && \
   bb deps-try-bb.jar -P
 
 ENTRYPOINT ["/usr/local/bin/bb", "deps-try-bb.jar"]

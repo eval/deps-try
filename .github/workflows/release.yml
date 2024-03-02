@@ -160,3 +160,5 @@ jobs:
           push: true
           labels: ${{ steps.meta.outputs.labels }}
           tags: ${{ steps.meta.outputs.tags }}
+          build-args: |
+            TAG=${{ needs.Config.outputs.stable == 'true' && 'stable' || 'unstable' }}
