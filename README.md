@@ -56,31 +56,19 @@ Again, no need to setup or adjust a project, or type out the full configuration 
 
 ## Installation
 
-### manual (Windows, Linux and macOS)
+### Docker
 
-#### Prerequisites
+The easiest way to start.
 
-* Install [Clojure](https://clojure.org/guides/install_clojure)
-* Install [babashka](https://github.com/babashka/babashka#installation)
-
-Verify that the following commands work:
-
-``` bash
-$ clj
-# REPL starts successfully, ergo Clojure and Java are correctly configured.
-$ bb --version
-babashka v1.3.176
-```
-
-#### Installation
-
-* Download [the latest stable bb-jar](https://github.com/eval/deps-try/releases/tag/stable).
-* Put an executable wrapper-script on $PATH. For example (for Linux and macOS):
 ```bash
-#!/usr/bin/env sh
+# latest stable
+$ docker run -it ghcr.io/eval/deps-try
 
-exec bb /absolute/path/to/deps-try-bb.jar "$@"
+# unstable (i.e. master branch)
+$ docker run -it ghcr.io/eval/deps-try:unstable
 ```
+
+See `-h` or [Usage](#usage) for detailed options.
 
 ### Homebrew (Linux and macOS)
 
@@ -152,9 +140,41 @@ $ deps-try -v
 # Re-run the install command to upgrade
 ```
 
+### manual (Windows, Linux and macOS)
+
+#### Prerequisites
+
+* Install [Clojure](https://clojure.org/guides/install_clojure)
+* Install [babashka](https://github.com/babashka/babashka#installation)
+
+Verify that the following commands work:
+
+``` bash
+$ clj
+# REPL starts successfully, ergo Clojure and Java are correctly configured.
+$ bb --version
+babashka v1.3.176
+```
+
+#### Installation
+
+* Download [the latest stable bb-jar](https://github.com/eval/deps-try/releases/tag/stable).
+* Put an executable wrapper-script on $PATH. For example (for Linux and macOS):
+```bash
+#!/usr/bin/env sh
+
+exec bb /absolute/path/to/deps-try-bb.jar "$@"
+```
+
 ## Usage
 
 ``` bash
+$ deps-try-dev -h
+A CLI to quickly try Clojure (libraries) on rebel-readline.
+
+VERSION
+  v0.10.0-35-gf52910b
+
 USAGE
   $ deps-try [dep-name [dep-version] [dep2-name ...] ...] [--recipe[-ns] recipe]
 
@@ -178,7 +198,7 @@ OPTIONS
     The REPL-history will be seeded with the (ns-)steps from the recipe.
 
 COMMANDS
-  recipes  show list of recipes
+  recipes    list built-in recipes (--refresh to update)
 
 Examples:
 # A REPL using the latest Clojure version
@@ -199,7 +219,7 @@ $ deps-try https://github.com/metosin/malli some-branch-tag-or-sha
 # ...using the 'infer' notation, e.g.
 # com.github.<user>/<project>, com.gitlab.<user>/<project>, ht.sr.~<user>/<project>
 $ deps-try com.github.metosin/malli
-# testdriving some PR (or MR on gitlab):
+# testdriving some PR (or MR from gitlab):
 $ deps-try com.github.metosin/malli ^123
 
 # A local project
@@ -210,7 +230,7 @@ $ deps-try . ~/some/project ../some/other/project
 $ deps-try --recipe deps-try/recipes
 
 # ...external
-$ deps-try --recipe https://gist.github.com/eval/ee80ebddaa120a7732396cea8cfc96da/raw
+$ deps-try --recipe https://gist.github.com/eval/ee80ebddaa120a7732396cea8cfc96da
 
 During a REPL-session:
 # add additional dependencies
@@ -263,7 +283,7 @@ Big thanks to [Avery Quinn](https://github.com/avescodes) for coming up with [le
 
 ## LICENSE
 
-Copyright (c) 2023 Gert Goet, ThinkCreate.
+Copyright (c) 2024 Gert Goet, ThinkCreate.
 Distributed under the MIT license. See LICENSE.
 
 Code in vendor/rebel-readline originates from [rebel-readline](https://github.com/bhauman/rebel-readline) which is covered by the Eclipse Public License either version 1.0 or (at your option) any later version.
