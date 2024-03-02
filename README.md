@@ -198,7 +198,7 @@ OPTIONS
     The REPL-history will be seeded with the (ns-)steps from the recipe.
 
 COMMANDS
-  recipes    list built-in recipes (--refresh to update)
+  recipes    list built-in recipes (`recipes --refresh` to update)
 
 Examples:
 # A REPL using the latest Clojure version
