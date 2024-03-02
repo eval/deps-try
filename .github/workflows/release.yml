@@ -148,6 +148,7 @@ jobs:
         with:
           images: ghcr.io/eval/deps-try
           tags: |
+            type=raw,value=latest,enable=${{ needs.Config.outputs.stable == 'true' }}
             type=raw,value=stable,enable=${{ needs.Config.outputs.stable == 'true' }}
             type=raw,value=unstable,enable=${{ needs.Config.outputs.pre-release == 'true' }}
             type=pep440,pattern={{version}},value=${{ needs.Config.outputs.version }},enable=${{ needs.Config.outputs.stable == 'true' }}
