@@ -26,6 +26,6 @@ USER deps-try-user
 WORKDIR /home/deps-try-user
 
 RUN curl -sLO https://github.com/eval/deps-try/releases/download/${TAG}/deps-try-bb.jar && \
-  bb deps-try-bb.jar -P
+  bb deps-try-bb.jar -P && bb deps-try-bb.jar recipes
 
 ENTRYPOINT ["/usr/local/bin/bb", "deps-try-bb.jar"]
