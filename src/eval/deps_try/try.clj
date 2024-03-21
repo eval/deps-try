@@ -122,6 +122,7 @@
       (doto (clj-line-reader/create
              (rebel-service/create {:data-path data-path}))
         (.setVariable LineReader/SECONDARY_PROMPT_PATTERN "%P ")
+        (.setVariable LineReader/FEATURES_MAX_BUFFER_SIZE 2000)
         (.setVariable LineReader/HISTORY_SIZE "10000")
         (.setVariable LineReader/HISTORY_FILE (str history-file))
         (#(.setHistory % (history/make-history {:history-file     history-file
