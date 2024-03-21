@@ -108,7 +108,7 @@
      (clj-repl/set-break-handler! (fn [_signal#] (.stop thread#)))))
 
 (defn- recipe-instructions [{:keys [ns-only]}]
-  (str "Recipe" (when ns-only " namespace") " successfully loaded in the REPL-history. Type :recipe/help for help."))
+  (str "Recipe" (when ns-only " namespace") " successfully loaded in the REPL-history. Press arrow-up to start with the first step."))
 
 
 ;; terminel
