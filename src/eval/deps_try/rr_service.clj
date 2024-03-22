@@ -57,8 +57,11 @@
                               (mapcat :paths))]
     (into java-cp-sans-cwd basis-cp)))
 
-(defmethod clj-reader/-complete ::service [_self word options]
-  (let [options (if (:extra-metadata options) options (assoc options :extra-metadata #{:private :deprecated}))]
+(defmethod clj-reader/-complete ::service [self word options]
+  (let [options (merge {:ns *ns*} options)
+        options (if (:extra-metadata options)
+                  options
+                  (assoc options :extra-metadata #{:private :deprecated}))]
     (with-redefs [compliment.utils/classpath classpath-for-completions]
       #_(prn ::-complete :word word :options options)
       (doall (cond-> (compliment.core/completions word options)
