@@ -1,8 +1,8 @@
 (ns eval.deps-try.recipe
-  (:require [babashka.fs :as fs]
-            [clojure.java.io :as io]
+  (:require [clojure.java.io :as io]
             [clojure.string :as string]
             [edamame.core :as e]
+            [eval.deps-try.fs :as fs]
             [eval.deps-try.util :as util :refer [whenp]]))
 
 (defn- strip-leading-comments

@@ -1,10 +1,9 @@
 (ns eval.deps-try.deps
   {:clj-kondo/config '{:lint-as {eval.deps-try.util/pred-> clojure.core/->}}}
-  (:require [babashka.fs :as fs]
-            [babashka.process :refer [process]]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [clojure.tools.gitlibs :as gitlib]
-            [eval.deps-try.errors :as errors]
+            [eval.deps-try.fs :as fs]
+            [eval.deps-try.process :refer [process]]
             [eval.deps-try.util :as util]))
 
 (def ^:private git-services

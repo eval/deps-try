@@ -1,7 +1,7 @@
 (ns eval.deps-try.history
   "Responsible for creating a history object."
-  (:require [babashka.fs :as fs]
-            [clojure.string :as string])
+  (:require [clojure.string :as string]
+            [eval.deps-try.fs :as fs])
   (:import [java.time Instant]
            [org.jline.reader History History$Entry]))
 

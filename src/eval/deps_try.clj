@@ -1,10 +1,9 @@
 (ns eval.deps-try
-  {:clj-kondo/config '{:lint-as {babashka.fs/with-temp-dir clojure.core/let
+  {:clj-kondo/config '{:lint-as {eval.deps-try.fs/with-temp-dir clojure.core/let
                                  eval.deps-try.util/pred-> clojure.core/->}}}
   (:require
    [babashka.classpath :as cp :refer [get-classpath]]
    [babashka.cli :as cli]
-   [babashka.fs :as fs] :reload
    [babashka.http-client] :reload
    [babashka.process :as p]
    [clojure.edn :as edn]
@@ -12,6 +11,7 @@
    [clojure.string :as string]
    [eval.deps-try.deps :as try-deps]
    [eval.deps-try.errors :as errors]
+   [eval.deps-try.fs :as fs]
    [eval.deps-try.recipe :as recipe]
    [eval.deps-try.util :as util]
    [strojure.ansi-escape.core :as ansi]))

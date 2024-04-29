@@ -1,10 +1,10 @@
 (ns eval.deps-try.rr-service
   (:require
-   [babashka.fs :as fs]
    [clojure.java.basis]
    [clojure.string :as str]
    [compliment.core]
    [compliment.utils]
+   [eval.deps-try.fs :as fs]
    [eval.deps-try.util :as util]
    [rebel-readline.clojure.line-reader :as clj-reader]
    [rebel-readline.clojure.service.local :as local-service]

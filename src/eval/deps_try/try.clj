@@ -4,6 +4,7 @@
             [clojure.pprint :as pp]
             [clojure.repl :as clj-repl]
             [eval.deps-try.deps :as try-deps]
+            [eval.deps-try.fs :as fs]
             [eval.deps-try.history :as history]
             [eval.deps-try.recipe :as recipe]
             [eval.deps-try.rr-service :as rebel-service]
@@ -16,8 +17,6 @@
             [rebel-readline.utils :refer [*debug-log*]])
   (:import [org.jline.reader LineReader]
            [org.jline.reader.impl.history DefaultHistory]))
-
-(require '[babashka.fs :as fs] :reload)
 
 (defn- ensure-path-exists! [path]
   (fs/create-dirs path))

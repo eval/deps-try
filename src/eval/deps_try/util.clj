@@ -1,8 +1,8 @@
 (ns eval.deps-try.util
-  (:require [babashka.fs :as fs] :reload
-            [babashka.http-client :as http] :reload
-            [babashka.process :as p]
-            [clojure.string :as string]))
+  (:require [babashka.http-client :as http] :reload
+            [clojure.string :as string]
+            [eval.deps-try.fs :as fs]
+            [eval.deps-try.process :as p]))
 
 (defn duration->millis [{:keys [seconds minutes hours days weeks]
                           :or   {seconds 0 minutes 0 hours 0 days 0 weeks 0}}]

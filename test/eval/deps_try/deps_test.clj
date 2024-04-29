@@ -1,11 +1,11 @@
 (ns eval.deps-try.deps-test
-  (:require [babashka.fs :as fs]
-           [babashka.process]
-           [clojure.java.io :as io]
-           [clojure.test :refer [deftest is testing are]]
-           [clojure.tools.gitlibs :as gitlib]
-           [eval.deps-try.deps :as sut]
-           [nl.zeekat.data.sub :refer [sub?]]))
+  (:require [babashka.process]
+            [clojure.java.io :as io]
+            [clojure.test :refer [deftest is testing are]]
+            [clojure.tools.gitlibs :as gitlib]
+            [eval.deps-try.deps :as sut]
+            [eval.deps-try.fs :as fs]
+            [nl.zeekat.data.sub :refer [sub?]]))
 
 (set! clojure.core/*print-namespace-maps* false)
 
