@@ -1,9 +1,9 @@
-(ns babashka.cli
+(ns deps-try.cli
   (:refer-clojure :exclude [parse-boolean parse-long parse-double])
   (:require
    #?(:clj [clojure.edn :as edn]
       :cljs [cljs.reader :as edn])
-   [babashka.cli.internal :as internal]
+   [deps-try.cli.internal :as internal]
    [clojure.string :as str])
   #?(:clj (:import (clojure.lang ExceptionInfo))))
 

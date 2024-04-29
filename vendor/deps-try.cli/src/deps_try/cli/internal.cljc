@@ -1,4 +1,4 @@
-(ns babashka.cli.internal
+(ns deps-try.cli.internal
   {:no-doc true})
 
 (defn- into-able? [x]
@@ -12,4 +12,3 @@
              (into-able? y))
         (into x y)
         :else y))
-

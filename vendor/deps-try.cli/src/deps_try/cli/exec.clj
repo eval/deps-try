@@ -1,6 +1,6 @@
-(ns babashka.cli.exec
+(ns deps-try.cli.exec
   (:require
-   [babashka.cli :as cli :refer [merge-opts parse-opts]]
+   [deps-try.cli :as cli :refer [merge-opts parse-opts]]
    [clojure.edn :as edn]
    [clojure.string :as str])
   (:import [java.util.concurrent Executors ThreadFactory]))

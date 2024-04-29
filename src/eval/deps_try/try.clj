@@ -1,8 +1,8 @@
 (ns eval.deps-try.try
-  (:require [babashka.cli :as cli]
-            [clojure.main]
+  (:require [clojure.main]
             [clojure.pprint :as pp]
             [clojure.repl :as clj-repl]
+            [deps-try.cli :as cli]
             [eval.deps-try.deps :as try-deps]
             [eval.deps-try.fs :as fs]
             [eval.deps-try.history :as history]

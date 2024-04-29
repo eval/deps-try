@@ -3,11 +3,11 @@
                                  eval.deps-try.util/pred-> clojure.core/->}}}
   (:require
    [babashka.classpath :as cp :refer [get-classpath]]
-   [babashka.cli :as cli]
    [babashka.process :as p]
    [clojure.edn :as edn]
    [clojure.java.io :as io]
    [clojure.string :as string]
+   [deps-try.cli :as cli]
    [deps-try.http-client]
    [eval.deps-try.deps :as try-deps]
    [eval.deps-try.errors :as errors]
