@@ -1,0 +1,11 @@
+.cache
+.cpcache
+.lsp
+.portal
+.nrepl-port
+target
+.lein-failures
+.lein-repl-history
+.clj-kondo/rewrite-clj
+.clj-kondo/funcool
+cljs-test-runner-out
