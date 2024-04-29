@@ -3,7 +3,7 @@
            com.bhauman/rebel-readline      {:local/root "./vendor/rebel-readline/rebel-readline"}
            org.clojure/tools.gitlibs       {:mvn/version "2.5.197"}
            cider/orchard                   {:mvn/version "0.22.0"}
-           org.babashka/http-client        {:mvn/version "0.4.15"}
+           org.babashka/http-client        {:mvn/version "0.4.19"}
            borkdude/edamame                {:mvn/version "1.4.24"}
            org.babashka/cli                {:mvn/version "0.7.53"}
            com.github.strojure/ansi-escape {:mvn/version "1.0.2-08"}
