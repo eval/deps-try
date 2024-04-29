@@ -9,8 +9,8 @@
            borkdude/edamame                {:mvn/version "1.4.24"}
            org.babashka/cli                {:mvn/version "0.7.53"}
            com.github.strojure/ansi-escape {:mvn/version "1.0.2-08"}
-           io.github.eval/compliment       {:git/sha "0ed280b8c3a06961d898e6fcb8a7a87080d6b2d7"}
-           org.clojure/clojure             {:mvn/version "1.12.0-alpha8"}}
+           io.github.eval/compliment       {:git/sha "9e15f01eead254f28b7c484c54dd19bfdd6be16d"}
+           org.clojure/clojure             {:mvn/version "1.12.0-alpha10"}}
  :aliases {:test {:extra-paths ["test"]
                   :extra-deps  {nl.zeekat/data.sub {:mvn/version "0.1.4"}
                                 io.github.cognitect-labs/test-runner

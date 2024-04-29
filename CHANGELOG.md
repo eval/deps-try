@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.12.0 (2024-04-29)
+
+- Clojure 1.12.0-alpha10
+- (vendored) compliment: suggest Class/.method
+- fix completions for current ns
+
 ## v0.11.0 (2024-03-02)
 
 - release docker image  
