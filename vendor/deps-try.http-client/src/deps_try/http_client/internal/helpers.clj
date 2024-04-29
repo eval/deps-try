@@ -1,4 +1,4 @@
-(ns babashka.http-client.internal.helpers
+(ns deps-try.http-client.internal.helpers
   {:no-doc true}
   (:require [clojure.string :as str]))
 

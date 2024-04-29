@@ -1,6 +1,6 @@
-(ns babashka.http-client
+(ns deps-try.http-client
   (:refer-clojure :exclude [send get])
-  (:require [babashka.http-client.internal :as i]))
+  (:require [deps-try.http-client.internal :as i]))
 
 (def default-client-opts
   "Options used to create the (implicit) default client."

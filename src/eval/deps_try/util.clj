@@ -1,6 +1,6 @@
 (ns eval.deps-try.util
-  (:require [babashka.http-client :as http] :reload
-            [clojure.string :as string]
+  (:require [clojure.string :as string]
+            [deps-try.http-client :as http]
             [eval.deps-try.fs :as fs]
             [eval.deps-try.process :as p]))
 

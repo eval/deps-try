@@ -1,4 +1,4 @@
-(ns babashka.http-client.internal.version
+(ns deps-try.http-client.internal.version
   {:no-doc true})
 
 (def version

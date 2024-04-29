@@ -1,8 +1,8 @@
-(ns babashka.http-client.interceptors
+(ns deps-try.http-client.interceptors
   (:refer-clojure :exclude [send get])
   (:require
-   [babashka.http-client.internal.multipart :as multipart]
-   [babashka.http-client.internal.helpers :as aux]
+   [deps-try.http-client.internal.multipart :as multipart]
+   [deps-try.http-client.internal.helpers :as aux]
    [clojure.java.io :as io]
    [clojure.string :as str])
   (:import

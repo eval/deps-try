@@ -1,8 +1,8 @@
-(ns babashka.http-client.internal.websocket
+(ns deps-try.http-client.internal.websocket
   "Code is very much based on hato's websocket code. Credits to @gnarroway!"
   {:no-doc true}
   (:require
-   [babashka.http-client.internal.helpers :as aux])
+   [deps-try.http-client.internal.helpers :as aux])
   (:import
    [java.net URI]
    [java.net.http

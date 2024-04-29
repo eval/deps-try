@@ -1,10 +1,10 @@
-(ns babashka.http-client.internal
+(ns deps-try.http-client.internal
   {:no-doc true}
   (:refer-clojure :exclude [send get])
   (:require
-   [babashka.http-client.interceptors :as interceptors]
-   [babashka.http-client.internal.helpers :as aux]
-   [babashka.http-client.internal.version :as iv]
+   [deps-try.http-client.interceptors :as interceptors]
+   [deps-try.http-client.internal.helpers :as aux]
+   [deps-try.http-client.internal.version :as iv]
    [clojure.java.io :as io]
    [clojure.string :as str])
   (:import

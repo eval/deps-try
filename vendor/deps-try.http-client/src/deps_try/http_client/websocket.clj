@@ -1,8 +1,8 @@
-(ns babashka.http-client.websocket
+(ns deps-try.http-client.websocket
   "Code is very much based on hato's websocket code. Credits to @gnarroway!"
   (:require
-   [babashka.http-client.internal :as i]
-   [babashka.http-client.internal.websocket :as w])
+   [deps-try.http-client.internal :as i]
+   [deps-try.http-client.internal.websocket :as w])
   (:import [java.util.concurrent CompletableFuture]))
 
 (set! *warn-on-reflection* true)
