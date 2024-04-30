@@ -287,9 +287,9 @@
 
   #_:end)
 
-(defmulti resolve-dep (fn [[type] _options] type))
+(defmulti resolve-dep (fn [[type]] type))
 
-(defmethod resolve-dep :dep/local [[_ arg _version] _options]
+(defmethod resolve-dep :dep/local [[_ arg _version]]
   (let [full (fs/canonicalize (fs/expand-home arg))]
     (cond
       (not (and (fs/exists? full)
@@ -301,7 +301,7 @@
                                          {:deps [[(symbol dep-name) {:local/root (str full)}]]}))))
 
 
-(defmethod resolve-dep :dep/git [[_ arg version] _options]
+(defmethod resolve-dep :dep/git [[_ arg version]]
   (let [[dep-name git-url]          (cond
                                       (re-find #"^https?" arg) [(symbol (git-url->dep-name arg)) arg]
                                       :else                    [(symbol arg) (dep-url->git-url arg)])
@@ -312,7 +312,7 @@
       {:error error})))
 
 
-(defmethod resolve-dep :dep/mvn [[_ arg version] _options]
+(defmethod resolve-dep :dep/mvn [[_ arg version]]
   (let [{version :mvn/version error :error} (resolve-version [:dep/mvn arg version])]
     (if-not error
       {:deps [[(symbol arg) version]]}
@@ -320,7 +320,7 @@
 
 (declare resolve-deps*)
 
-(defmethod resolve-dep :or [[_or & recipes] _options]
+(defmethod resolve-dep :or [[_or & recipes]]
   (let [results (atom [])
         store!  #(peek (swap! results conj %))]
     ;; TODO ensure order in recipes: :dep/mvn, :dep/git, :dep/local
@@ -343,7 +343,7 @@
         stop?  #(:error @result)]
     (doseq [step   recipe
             :while (not (stop?))]
-      (let [{:keys [error deps]} (resolve-dep step {:offline true})]
+      (let [{:keys [error deps]} (resolve-dep step)]
         (if error
           (swap! result assoc :error error)
           (swap! result update :deps into deps))))
