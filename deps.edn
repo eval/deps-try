@@ -1,14 +1,15 @@
 {:paths   ["src" "resources" "."]
- :deps    {org.slf4j/slf4j-nop             {:mvn/version "2.0.5"} ;; suppress logging
-           com.bhauman/rebel-readline      {:local/root "./vendor/rebel-readline/rebel-readline"}
-           org.clojure/tools.gitlibs       {:mvn/version "2.5.197"}
-           cider/orchard                   {:mvn/version "0.22.0"}
-           deps-try/cli                    {:local/root "./vendor/deps-try.cli"}
-           deps-try/http-client            {:local/root "./vendor/deps-try.http-client"}
-           borkdude/edamame                {:mvn/version "1.4.24"}
-           com.github.strojure/ansi-escape {:mvn/version "1.0.2-08"}
-           io.github.eval/compliment       {:git/sha "9e15f01eead254f28b7c484c54dd19bfdd6be16d"}
-           org.clojure/clojure             {:mvn/version "1.12.0-alpha10"}}
+ :deps    {borkdude/edamame           {:mvn/version "1.4.24"}
+           cider/orchard              {:mvn/version "0.22.0"}
+           com.bhauman/rebel-readline {:local/root "./vendor/rebel-readline/rebel-readline"}
+           deps-try/cli               {:local/root "./vendor/deps-try.cli"}
+           deps-try/http-client       {:local/root "./vendor/deps-try.http-client"}
+           io.github.eval/compliment  {:git/sha "9e15f01eead254f28b7c484c54dd19bfdd6be16d"}
+           org.clojure/clojure        {:mvn/version "1.12.0-alpha10"}
+           org.clojure/tools.gitlibs  {:mvn/version "2.5.197"}
+           ;; suppress logging
+           org.slf4j/slf4j-nop        {:mvn/version "2.0.5"}}
+
  :aliases {:test {:extra-paths ["test"]
                   :extra-deps  {nl.zeekat/data.sub {:mvn/version "0.1.4"}
                                 io.github.cognitect-labs/test-runner

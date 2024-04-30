@@ -9,12 +9,12 @@
    [clojure.string :as string]
    [deps-try.cli :as cli]
    [deps-try.http-client]
+   [eval.deps-try.ansi-escape :as ansi]
    [eval.deps-try.deps :as try-deps]
    [eval.deps-try.errors :as errors]
    [eval.deps-try.fs :as fs]
    [eval.deps-try.recipe :as recipe]
-   [eval.deps-try.util :as util]
-   [strojure.ansi-escape.core :as ansi]))
+   [eval.deps-try.util :as util]))
 
 (def init-cp (get-classpath))
 
