@@ -72,7 +72,7 @@
 
 (defmethod clj-reader/-complete ::service [_ word options]
   ;; lazy-load for faster startup
-  (when-let [completions (requiring-resolve 'compliment.core/completions)]
+  (when-let [completions (requiring-resolve 'deps-try.compliment.core/completions)]
     (if options
       (completions word options)
       (completions word))))
@@ -111,7 +111,7 @@
 
 (defmethod clj-reader/-doc ::service [self var-str]
     ;; lazy-load for faster startup
-  (when-let [doc ((requiring-resolve 'compliment.core/documentation) var-str)]
+  (when-let [doc ((requiring-resolve 'deps-try.compliment.core/documentation) var-str)]
     (let [{:keys [ns name private]
            :as   _meta} (if (special-symbol? (symbol var-str))
                           {:ns (find-ns 'clojure.core) :name (symbol var-str)}

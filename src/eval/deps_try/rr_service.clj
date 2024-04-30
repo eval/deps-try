@@ -2,8 +2,8 @@
   (:require
    [clojure.java.basis]
    [clojure.string :as str]
-   [compliment.core]
-   [compliment.utils]
+   [deps-try.compliment.core]
+   [deps-try.compliment.utils]
    [eval.deps-try.fs :as fs]
    [eval.deps-try.util :as util]
    [rebel-readline.clojure.line-reader :as clj-reader]
@@ -62,9 +62,9 @@
         options (if (:extra-metadata options)
                   options
                   (assoc options :extra-metadata #{:private :deprecated}))]
-    (with-redefs [compliment.utils/classpath classpath-for-completions]
+    (with-redefs [deps-try.compliment.utils/classpath classpath-for-completions]
       #_(prn ::-complete :word word :options options)
-      (doall (cond-> (compliment.core/completions word options)
+      (doall (cond-> (deps-try.compliment.core/completions word options)
                :namespace/other? (->> (map (fn [{:keys [ns] :as cand}]
                                              (if-not (seq ns)
                                                cand
