@@ -127,7 +127,7 @@
                       ns-only         :ns-only
                       recipe-location :location} :recipe :as _args}]
   #_(prn ::args _args)
-  (let [default-deps                 {'org.clojure/clojure {:mvn/version "1.12.0-alpha10"}}
+  (let [default-deps                 {'org.clojure/clojure {:mvn/version "1.12.0-alpha11"}}
         {:keys         [cp-file]
          default-cp    :cp
          tdeps-version :version
