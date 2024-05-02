@@ -3,7 +3,7 @@
 Quickly try out Clojure and libraries on [rebel-readline](https://github.com/bhauman/rebel-readline#rebel-readline):
 
 <p align="center">
-<img width="535" alt="Screenshot 2023-02-09 at 13 37 09" src="https://user-images.githubusercontent.com/290596/217814688-c72a6fa1-3378-47bf-ba3f-5e87eec22c8b.png">
+<img width="535" alt="Screenshot 2023-02-09 at 13 37 09" src="https://github.com/eval/deps-try/assets/290596/35594a1f-c3bb-4855-87f0-404fdc72e74e.png">
 </p>
 
 <p align="center">
@@ -31,11 +31,13 @@ users=> :deps/try another/library "https://github.com/seancorfield/next-jdbc" ".
 Again, no need to setup or adjust a project, or type out the full configuration at the command line.
 
 
+<details><summary><h2>Features</h2></summary>
 ## Features
 
 - always use the latest release of Clojure.
 - conveniently use dependencies from maven/clojars, various git-hostings or local projects.
 - add dependencies _without_ restarting the REPL.
+- see what versions are resolved
 - recipes
   - seed the REPL-history with steps from a file.
 - dependencies are resolved in isolation (as much as possible)
@@ -60,6 +62,8 @@ Again, no need to setup or adjust a project, or type out the full configuration 
   - `clojure.core/*print-meta*`
   - `clojure.core/*print-namespace-maps*` (default off)
 
+</details>
+
 ## Installation
 
 ### Docker
@@ -68,17 +72,18 @@ The easiest way to start.
 
 ```bash
 # latest stable
-$ docker run -it ghcr.io/eval/deps-try
+$ docker run -it --pull always ghcr.io/eval/deps-try
 
 # unstable (i.e. master branch)
-$ docker run -it ghcr.io/eval/deps-try:unstable
+$ docker run -it --pull always ghcr.io/eval/deps-try:unstable
 ```
 
 See `-h` or [Usage](#usage) for detailed options.
 
+
 ### Homebrew (Linux and macOS)
 
-#### Prerequisites
+<details><summary><h4>Prerequisites</h4></summary>
 
 Ensure you have a [Clojure compatible Java version](https://clojure.org/guides/install_clojure#java).
 
@@ -87,10 +92,12 @@ Verify that the following commands work:
 ``` bash
 $ java -version
 # example output
-openjdk version "17.0.2" 2022-01-18
-OpenJDK Runtime Environment Temurin-17.0.2+8 (build 17.0.2+8)
-OpenJDK 64-Bit Server VM Temurin-17.0.2+8 (build 17.0.2+8, mixed mode)
+openjdk version "21.0.2" 2024-01-16 LTS
+OpenJDK Runtime Environment Temurin-21.0.2+13 (build 21.0.2+13-LTS)
+OpenJDK 64-Bit Server VM Temurin-21.0.2+13 (build 21.0.2+13-LTS, mixed mode)
 ```
+
+</details>
 
 #### Install
 
@@ -113,7 +120,7 @@ $ brew update && brew reinstall deps-try
 
 It's currently the only way to install deps-try on Windows.
 
-#### Prerequisites
+<details><summary><h4>Prerequisites</h4></summary>
 
 Ensure you have a [Clojure compatible Java version](https://clojure.org/guides/install_clojure#java).
 
@@ -124,15 +131,16 @@ Verify that the following commands work:
 ``` bash
 $ java -version
 # example output
-openjdk version "17.0.2" 2022-01-18
-OpenJDK Runtime Environment Temurin-17.0.2+8 (build 17.0.2+8)
-OpenJDK 64-Bit Server VM Temurin-17.0.2+8 (build 17.0.2+8, mixed mode)
+openjdk version "21.0.2" 2024-01-16 LTS
+OpenJDK Runtime Environment Temurin-21.0.2+13 (build 21.0.2+13-LTS)
+OpenJDK 64-Bit Server VM Temurin-21.0.2+13 (build 21.0.2+13-LTS, mixed mode)
 $ bbin --version
 # example output
-bbin 0.1.12
+bbin 0.2.0
 ```
+</details>
 
-#### Installation
+#### Install
 
 
 ``` bash
@@ -148,7 +156,7 @@ $ deps-try -v
 
 ### manual (Windows, Linux and macOS)
 
-#### Prerequisites
+<details><summary><h4>Prerequisites</h4></summary>
 
 * Install [Clojure](https://clojure.org/guides/install_clojure)
 * Install [babashka](https://github.com/babashka/babashka#installation)
@@ -159,10 +167,12 @@ Verify that the following commands work:
 $ clj
 # REPL starts successfully, ergo Clojure and Java are correctly configured.
 $ bb --version
-babashka v1.3.176
+babashka v1.3.190
 ```
 
-#### Installation
+</details>
+
+#### Install
 
 * Download [the latest stable bb-jar](https://github.com/eval/deps-try/releases/tag/stable).
 * Put an executable wrapper-script on $PATH. For example (for Linux and macOS):
@@ -174,12 +184,12 @@ exec bb /absolute/path/to/deps-try-bb.jar "$@"
 
 ## Usage
 
-``` bash
+```bash
 $ deps-try -h
 A CLI to quickly try Clojure (libraries) on rebel-readline.
 
 VERSION
-  v0.10.0-35-gf52910b
+  v0.12.0
 
 USAGE
   $ deps-try [dep-name [dep-version] [dep2-name ...] ...] [--recipe[-ns] recipe]
@@ -203,10 +213,17 @@ OPTIONS
     Name of recipe (see recipes command) or a path or url to a Clojure file.
     The REPL-history will be seeded with the (ns-)steps from the recipe.
 
+EXAMPLES
+  ;; The latest version of malli from maven, and git-tag v1.3.894 of the next-jdbc repository
+  $ deps-try metosin/malli io.github.seancorfield/next-jdbc v1.3.894
+
 COMMANDS
   recipes    list built-in recipes (`recipes --refresh` to update)
+```
 
-Examples:
+<details><summary><h3>More examples</h3></summary>
+  
+```
 # A REPL using the latest Clojure version
 $ deps-try
 
@@ -245,6 +262,8 @@ user=> :deps/try dev.weavejester/medley "~/some/project"
 # see help for all options
 user=> :repl/help
 ```
+
+</details>
 
 ## Recipes
 
