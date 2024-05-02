@@ -51,3 +51,6 @@
 (def ^:const bg-white-b,, "Bright White BG color.",, "\033[107m")
 
 ;;••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+
+(defn wrap [escape s]
+  (str escape s reset))

@@ -18,17 +18,12 @@
 
 (def init-cp (get-classpath))
 
-(defn- run-clojure [opts & args]
+(defn- run-repl [opts & args]
   #_(prn ::run-clojure :opts opts :args args)
   (let [[opts args] (if (map? opts) [opts args] [nil (cons opts args)])]
     (fs/with-temp-dir [tmp {}]
-      (apply p/sh (merge {:dir (str tmp)} opts)
+      (apply p/exec (merge {:dir (str tmp)} opts)
              "clojure" args))))
-
-(defn- deps->cp [deps]
-  #_(prn ::deps->cp :deps deps)
-  (when (seq deps)
-    (string/trim (:out (run-clojure  "-Spath" "-Sdeps" (str {:paths [] :deps deps}))))))
 
 (def ^:private dev? (nil? (io/resource "VERSION")))
 
@@ -71,23 +66,12 @@
                nil]]
     (print (string/join \newline (interpose nil usage)))))
 
-(defn- print-version []
+(defn- full-version []
   (let [bin (if dev? "deps-try-dev" "deps-try")]
-    (println (str bin " " version))))
+    (str bin " " version)))
 
-(def ^:private clojure-cli-version-re #"^(\d+)\.(\d+)\.(\d+)\.(\d+)")
-
-(defn- parse-clojure-cli-version [s]
-  (map parse-long (rest (re-find clojure-cli-version-re s))))
-
-(defn- at-least-version? [version-or-above version]
-  (let [[major1 minor1 patch1 build1] (parse-clojure-cli-version version-or-above)
-        [major2 minor2 patch2 build2] (parse-clojure-cli-version version)]
-    (or (< major1 major2)
-        (and (= major1 major2) (< minor1 minor2))
-        (and (= major1 major2) (= minor1 minor2) (< patch1 patch2))
-        (and (= major1 major2) (= minor1 minor2) (= patch1 patch2) (or (= build1 build2)
-                                                                       (< build1 build2))))))
+(defn- print-version []
+  (println (full-version)))
 
 (defn- print-message [msg {:keys [msg-type]}]
   (let [no-color?        (or (System/getenv "NO_COLOR") (= "dumb" (System/getenv "TERM")))
@@ -105,56 +89,32 @@
 (defn- print-error [m]
   (print-message m {:msg-type :error}))
 
-(defn- warn-unless-minimum-clojure-cli-version [minimum version]
-  (when-not (at-least-version? minimum version)
-    (print-warning (str "Adding (additional) libraries to this REPL-session via ':deps/try some/lib' won't work as it requires Clojure CLI version >= " minimum " (current: " version ")."))))
-
 (defn- print-error-and-exit! [m]
   (print-error m)
   (System/exit 1))
-
-(defn- tdeps-verbose->map [s]
-  (let [[cp & pairs] (reverse (string/split-lines s))
-        keywordize   (comp keyword #(string/replace % \_ \-) name)] ;; `name` makes it also usable for keywords
-    (update-keys
-     (into {:cp cp}
-           (map #(string/split % #" += +") (filter seq pairs))) keywordize)))
-
 
 (defn- start-repl! [{requested-deps              :deps
                      prepare                     :prepare
                      {recipe-deps     :deps
                       ns-only         :ns-only
                       recipe-location :location} :recipe :as _args}]
-  #_(prn ::args _args)
-  (let [default-deps                 {'org.clojure/clojure {:mvn/version "1.12.0-alpha11"}}
-        {:keys         [cp-file]
-         default-cp    :cp
-         tdeps-version :version
-         :as           _tdeps-paths} (-> (run-clojure "-Sverbose" "-Spath"
-                                                      "-Sdeps" (str {:paths [] :deps default-deps}))
-                                         :out
-                                         string/trim
-                                         tdeps-verbose->map)
-
-        basis-file   (string/replace cp-file #".cp$" ".basis")
-        requested-cp (deps->cp requested-deps)
-        recipe-cp    (deps->cp recipe-deps)
-        classpath    (cond-> (str (fs/cwd) fs/path-separator
-                                  default-cp fs/path-separator
-                                  init-cp fs/path-separator
-                                  requested-cp)
-                       recipe-cp (str fs/path-separator recipe-cp))
-        jvm-opts     [(str "-Dclojure.basis=" basis-file)]]
-    (warn-unless-minimum-clojure-cli-version "1.11.1.1273" tdeps-version)
-    (let [cmd (cond-> ["java" "-classpath" classpath]
-                (seq jvm-opts)  (into jvm-opts)
-                :always         (into ["clojure.main" "-m" "eval.deps-try.try"])
-                prepare         (into ["-P"])
-                recipe-location (into (if ns-only
-                                        ["--recipe-ns" recipe-location]
-                                        ["--recipe" recipe-location])))]
-      (apply p/exec cmd))))
+  ;; TODO re-enable?
+  ;; see https://github.com/clojure/brew-install/blob/1.11.3/CHANGELOG.md
+  #_(warn-unless-minimum-clojure-cli-version "1.11.1.1273" tdeps-version)
+  (let [paths     (into ["."] ;; needed for clojure.java.io/resource
+                        (string/split init-cp #":"))
+        deps      (merge
+                   {'org.clojure/clojure {:mvn/version "1.12.0-alpha11"}}
+                   recipe-deps
+                   requested-deps)
+        main-args (cond-> ["--version" version]
+                    recipe-location (into (if ns-only
+                                            ["--recipe-ns" recipe-location]
+                                            ["--recipe" recipe-location]))
+                    prepare         (conj "-P"))]
+    (apply run-repl "-Sdeps" (str {:paths paths
+                                   :deps  deps})
+           "-M" "-m" "eval.deps-try.try" main-args)))
 
 (defn- recipe-manifest-contents [{:keys [refresh] :as _cli-opts}]
   (let [remote-manifest-file "https://raw.githubusercontent.com/eval/deps-try/master/recipes/manifest.edn"
@@ -284,5 +244,6 @@
                      :restrict  [:recipe :deps :help :version], :args->opts (repeat :deps)})
     (catch Exception e
       (ex-data e)))
+
 
   #_:end)

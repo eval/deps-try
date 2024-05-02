@@ -3,6 +3,7 @@
             [clojure.pprint :as pp]
             [clojure.repl :as clj-repl]
             [deps-try.cli :as cli]
+            [eval.deps-try.ansi-escape :as ansi]
             [eval.deps-try.deps :as try-deps]
             [eval.deps-try.fs :as fs]
             [eval.deps-try.history :as history]
@@ -28,9 +29,15 @@
 (defn- warm-up-completion-cache! []
   (clj-line-reader/-complete {:rebel-readline.service/type ::rebel-service/service} "nil" {}))
 
+
+(defmethod rebel-readline/command-doc :deps/ls [_]
+  (str "Show available deps"))
+
+(defmethod rebel-readline/command :deps/ls [_]
+  (println (try-deps/fmt-deps-available)))
+
 (defmethod rebel-readline/command-doc :deps/try [_]
   (str "Add dependencies (e.g. `:deps/try metosin/malli`)"))
-
 
 (defmethod rebel-readline/command :deps/try [[_ & args]]
   (if (seq args)
@@ -39,7 +46,8 @@
         (do ((requiring-resolve 'clojure.repl.deps/add-libs) deps)
             (warm-up-completion-cache!))
         (rebel-tools/display-error error)))
-    (rebel-tools/display-warning "Usage: :deps/try metosin/malli \"0.9.2\" https://github.com/user/project some-ref \"~/some/project\"")))
+    (rebel-tools/display-warning
+     "Usage: :deps/try metosin/malli \"0.9.2\" https://github.com/user/project some-ref \"~/some/project\"")))
 
 
 (defmethod rebel-readline/command-doc :recipe/help [_]
@@ -114,7 +122,18 @@
 ;;  line-reader
 ;;    service
 
-(defn repl [{:deps-try/keys [data-path recipe] :as opts}]
+(defn- repl-help-message [{:keys [version]}]
+  (str (ansi/wrap ansi/bold "🩴 Version: ") version \newline
+       (ansi/wrap ansi/bold "🏡 Home: ") "https://github.com/eval/deps-try" \newline
+       (ansi/wrap ansi/bold "🐻‍❄️ Perks / sponsor: ") "https://polar.sh/eval/deps-try" \newline
+       (ansi/wrap ansi/bold "🆘 Help: ")
+       "Type " (ansi/wrap ansi/fg-cyan-b ":repl/help") \newline
+
+       \newline
+       (ansi/wrap ansi/bold "🧺 Available libraries: ") \newline
+       (try-deps/fmt-deps-available)))
+
+(defn repl [{:deps-try/keys [data-path recipe version] :as opts}]
   (rebel-core/with-line-reader
     (let [history-file (doto (fs/path data-path "history")
                          (ensure-file-exists!))]
@@ -135,7 +154,7 @@
       (when recipe
         (swap! api/*line-reader* assoc :deps-try/recipe recipe)
         (rebel-tools/display-warning (recipe-instructions recipe)))
-      (println (rebel-core/help-message))
+      (println (repl-help-message {:version version}))
       (apply
        clojure.main/repl
        (-> {:print rebel-main/syntax-highlight-prn
@@ -157,8 +176,10 @@
   `(swap! api/*line-reader* dissoc :repl/just-caught))
 
 (defn -main [& args]
-  (let [opts      (cli/parse-opts args {:restrict [:recipe :recipe-ns :prepare]
-                                        :spec     {:recipe  {}
+  #_(prn ::args args)
+  (let [opts      (cli/parse-opts args {:restrict [:recipe :recipe-ns :prepare :version]
+                                        :spec     {:version {}
+                                                   :recipe  {}
                                                    :prepare {:alias :P}}})
         data-path (fs/xdg-data-home "deps-try")]
     (ensure-path-exists! data-path)
@@ -167,7 +188,8 @@
       (binding [*debug-log* false] ;; via --debug flag?
         (rebel-core/ensure-terminal
          (let [recipe-path ((some-fn :recipe :recipe-ns) opts)
-               repl-opts   (cond-> {:deps-try/data-path data-path
+               repl-opts   (cond-> {:deps-try/version (:version opts)
+                                    :deps-try/data-path data-path
                                     :caught             (fn [ex]
                                                           (persist-just-caught ex)
                                                           (clojure.main/repl-caught ex))

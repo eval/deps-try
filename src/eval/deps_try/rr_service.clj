@@ -57,7 +57,7 @@
                               (mapcat :paths))]
     (into java-cp-sans-cwd basis-cp)))
 
-(defmethod clj-reader/-complete ::service [self word options]
+(defmethod clj-reader/-complete ::service [_self word options]
   (let [options (merge {:ns *ns*} options)
         options (if (:extra-metadata options)
                   options

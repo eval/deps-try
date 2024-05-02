@@ -1,10 +1,13 @@
 (ns eval.deps-try.deps
   {:clj-kondo/config '{:lint-as {eval.deps-try.util/pred-> clojure.core/->}}}
-  (:require [clojure.string :as str]
-            [clojure.tools.gitlibs :as gitlib]
-            [eval.deps-try.fs :as fs]
-            [eval.deps-try.process :refer [process]]
-            [eval.deps-try.util :as util]))
+  (:require
+   #?@(:bb [] :clj [clojure.java.basis])
+   [clojure.string :as str]
+   [clojure.tools.gitlibs :as gitlib]
+   [eval.deps-try.ansi-escape :as ansi]
+   [eval.deps-try.fs :as fs]
+   [eval.deps-try.process :refer [process]]
+   [eval.deps-try.util :as util]))
 
 (def ^:private git-services
   [[:github    {:dep-url-re    #"^(?:io|com)\.github\.([^/]+)\/(.+)"
@@ -361,6 +364,23 @@
                (parse-args)
                #_(-> (doto prn))
                (resolve-deps)))
+
+#?(:bb nil
+   :clj
+   (defn deps-available []
+     (->> (clojure.java.basis/current-basis)
+          :libs
+          (filter (comp #(every? empty? %) :parents val)))))
+
+#?(:bb nil
+   :clj
+   (defn fmt-deps-available []
+     (let [fmt-dep (fn [[dname {sha :git/sha version :mvn/version}]]
+                     (str " ⚡️ " (ansi/wrap ansi/bold dname)
+                          " " (ansi/wrap ansi/fg-cyan
+                                         (or (some-> sha (subs 0 7))
+                                             version))))]
+       (str/join \newline (map fmt-dep (deps-available))))))
 
 (comment
   (set! clojure.core/*print-namespace-maps* false)

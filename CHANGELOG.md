@@ -1,9 +1,11 @@
 # Changelog
 
-## v0.12.0 (2024-04-29)
+## v0.12.0 (2024-05-02)
 
-- Clojure 1.12.0-alpha10
+- Clojure 1.12.0-alpha11
 - (vendored) compliment: suggest Class/.method
+- show available libraries and versions on start (also :deps/ls)
+- prevent dep-clashes by vendoring&renaming some deps
 - fix completions for current ns
 
 ## v0.11.0 (2024-03-02)
