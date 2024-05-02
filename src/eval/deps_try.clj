@@ -18,12 +18,11 @@
 
 (def init-cp (get-classpath))
 
-(defn- run-repl [opts & args]
+(defn- run-repl [& args]
   #_(prn ::run-clojure :opts opts :args args)
-  (let [[opts args] (if (map? opts) [opts args] [nil (cons opts args)])]
-    (fs/with-temp-dir [tmp {}]
-      (apply p/exec (merge {:err :string :dir (str tmp)} opts)
-             "clojure" args))))
+  (fs/with-temp-dir [tmp {}]
+    (apply p/exec {:dir (str tmp)}
+           "clojure" args)))
 
 (def ^:private dev? (nil? (io/resource "VERSION")))
 
