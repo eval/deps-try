@@ -6,13 +6,13 @@ Quickly try out Clojure and libraries on [rebel-readline](https://github.com/bha
 <img width="535" alt="Screenshot 2023-02-09 at 13 37 09" src="https://github.com/eval/deps-try/assets/290596/35594a1f-c3bb-4855-87f0-404fdc72e74e.png">
 </p>
 
-<p align="center">
+<!-- <p align="center">
   <a href="https://polar.sh/eval"><picture><source media="(prefers-color-scheme: dark)" srcset="https://polar.sh/embed/subscribe.svg?org=eval&label=Subscribe&darkmode"><img alt="Subscribe on Polar" src="https://polar.sh/embed/subscribe.svg?org=eval&label=Subscribe"></picture></a>
-</p>
+</p> -->
 
 > This README is aimed at people starting their Clojure journey as well as Clojure experts. If anything is not clear, or you learned something that might help other starters, please open an issue or start a new discussion 🌸
 
-[![discuss at Clojurians-Zulip](https://img.shields.io/badge/clojurians%20zulip-clojure-brightgreen.svg)](https://clojurians.zulipchat.com/#narrow/stream/151168-clojure)
+[![chat - #clojure](https://img.shields.io/badge/chat-%23clojure-blue?style=for-the-badge&logo=zulip)](https://clojurians.zulipchat.com/#narrow/channel/151168)
 
 ## Rationale
 
