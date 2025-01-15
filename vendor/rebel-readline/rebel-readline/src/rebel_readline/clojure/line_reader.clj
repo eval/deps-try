@@ -906,7 +906,7 @@
     (key-binding (str (KeyMap/ctrl \X) (KeyMap/ctrl \A)) "clojure-apropos-at-point")
     (key-binding (str (KeyMap/ctrl \X) (KeyMap/ctrl \E)) "clojure-eval-at-point")
     (key-binding (str (KeyMap/ctrl \X) (KeyMap/ctrl \T)) "clojure-eval&tap-at-point")
-    (key-binding (str (KeyMap/ctrl \X) (KeyMap/ctrl \M)) "clojure-force-accept-line")))
+    (key-binding (str (KeyMap/ctrl \X) (KeyMap/ctrl \F)) "clojure-force-accept-line")))
 
 (defn bind-clojure-widgets-vi-cmd [km-name]
   (doto km-name
