@@ -103,7 +103,7 @@
   (let [paths     (into ["."] ;; needed for clojure.java.io/resource
                         (string/split init-cp #":"))
         deps      (merge
-                   {'org.clojure/clojure {:mvn/version "1.12.0-alpha11"}}
+                   {'org.clojure/clojure {:mvn/version "1.12.0"}}
                    recipe-deps
                    requested-deps)
         main-args (cond-> ["--version" version]
