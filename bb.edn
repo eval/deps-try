@@ -1,7 +1,11 @@
 {:deps     {io.github.eval/deps-try {:local/root "."}}
  :bbin/bin {deps-try {:main-opts ["-m" "eval.deps-try"]}}
  :tasks
- {gen-manifest {:doc      "Generate recipe-manifest and print to stdout"
+ {java:compile {:doc  "Compile files under java/"
+                :task (shell {:dir "java"} "javac --release 11 dt/JvmtiAgent.java")}
+  bb:uberjar   {:doc  "Create the app's uberjar"
+                :task (shell "bb uberjar deps-try-bb.jar -m eval.deps-try")}
+  gen-manifest {:doc      "Generate recipe-manifest and print to stdout"
                 :requires ([babashka.fs :as fs])
                 :task     (exec 'eval.deps-try.recipe/generate&print-manifest
                                 {:exec-args

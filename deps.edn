@@ -1,11 +1,11 @@
-{:paths   ["src" "resources" "."]
+{:paths   ["src" "resources" "." "java" "libdt/build"]
  :deps    {borkdude/edamame           {:mvn/version "1.4.24"}
-           cider/orchard              {:mvn/version "0.22.0"}
+           cider/orchard              {:mvn/version "0.30.0"}
            com.bhauman/rebel-readline {:local/root "./vendor/rebel-readline/rebel-readline"}
            deps-try/cli               {:local/root "./vendor/deps-try.cli"}
            deps-try/http-client       {:local/root "./vendor/deps-try.http-client"}
            io.github.eval/compliment  {:git/sha "cd9706db27d456e8940dcd1118174c94effa9358"}
-           org.clojure/clojure        {:mvn/version "1.12.0-alpha11"}
+           org.clojure/clojure        {:mvn/version "1.12.0"}
            org.clojure/tools.gitlibs  {:mvn/version "2.5.197"}
            ;; suppress logging
            org.slf4j/slf4j-nop        {:mvn/version "2.0.5"}}

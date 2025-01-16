@@ -4,6 +4,19 @@
             [eval.deps-try.fs :as fs]
             [eval.deps-try.process :as p]))
 
+(defn parse-java-version
+  "Parse Java version string according to JEP 223 and return version as a number."
+  []
+  (try (let [s               (System/getProperty "java.specification.version")
+             [major minor _] (string/split s #"\.")
+             major           (Integer/parseInt major)]
+         (if (> major 1)
+           major
+           (Integer/parseInt minor)))
+       (catch Exception _ 8)))
+
+(def java-version "Current Java version number." (parse-java-version))
+
 (defn duration->millis [{:keys [seconds minutes hours days weeks]
                           :or   {seconds 0 minutes 0 hours 0 days 0 weeks 0}}]
   (let [days    (+ days (* weeks 7))

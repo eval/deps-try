@@ -111,8 +111,11 @@
                                             ["--recipe-ns" recipe-location]
                                             ["--recipe" recipe-location]))
                     prepare         (conj "-P"))]
-    (apply run-repl "-Sdeps" (str {:paths paths
-                                   :deps  deps})
+    (apply run-repl
+           "-J-Djdk.attach.allowAttachSelf"
+           "-J-XX:+EnableDynamicAgentLoading"
+           "-Sdeps" (str {:paths paths
+                          :deps  deps})
            "-M" "-m" "eval.deps-try.try" main-args)))
 
 (defn- recipe-manifest-contents [{:keys [refresh] :as _cli-opts}]
