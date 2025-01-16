@@ -9,6 +9,7 @@
             [eval.deps-try.history :as history]
             [eval.deps-try.recipe :as recipe]
             [eval.deps-try.rr-service :as rebel-service]
+            [eval.deps-try.util :as util]
             [rebel-readline.clojure.line-reader :as clj-line-reader]
             [rebel-readline.clojure.main :as rebel-main]
             [rebel-readline.commands :as rebel-readline]
@@ -112,7 +113,11 @@
 (defn- handle-sigint-form
   []
   `(let [thread# (Thread/currentThread)]
-     (clj-repl/set-break-handler! (fn [_signal#] (.stop thread#)))))
+     (clj-repl/set-break-handler!
+      (fn [_signal#]
+        (if (<= util/java-version 19)
+          (.stop thread#)
+          ((requiring-resolve 'eval.deps-try.util.jvmti/stop-thread) thread#))))))
 
 (defn- recipe-instructions [{:keys [ns-only]}]
   (str "Recipe" (when ns-only " namespace") " successfully loaded in the REPL-history. Press arrow-up to start with the first step."))
@@ -191,8 +196,12 @@
                repl-opts   (cond-> {:deps-try/version (:version opts)
                                     :deps-try/data-path data-path
                                     :caught             (fn [ex]
-                                                          (persist-just-caught ex)
-                                                          (clojure.main/repl-caught ex))
+                                                          (let [break-handled?
+                                                                (= 'java.lang.ThreadDeath
+                                                                   (get-in (Throwable->map ex) [:via 1 :type]))]
+                                                            (when-not break-handled?
+                                                              (persist-just-caught ex)
+                                                              (clojure.main/repl-caught ex))))
                                     :init               (fn []
                                                           (load-slow-deps!)
                                                           (apply require clojure.main/repl-requires)
@@ -210,6 +219,6 @@
 
 (comment
 
-  (recipe/parse "/Users/gert/projects/deps-try/deps-try-recipes/recipes/next-jdbc/postgresql.clj")
+  (recipe/parse "/Users/gert/projects/deps-try/deps-try/recipes/next_jdbc/postgresql.clj")
 
   #_:end)
