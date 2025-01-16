@@ -70,7 +70,9 @@ jobs:
       - name: Zip it
         run: zip -r deps-try.zip . -x ".git/*"
       - name: Build uberjar
-        run: bb uberjar deps-try-bb.jar -m eval.deps-try
+        run: |
+          bb uberjar deps-try-bb.jar -m eval.deps-try
+          jar -tf deps-try-bb.jar
       - name: Testrun uberjar
         run: bb deps-try-bb.jar -h
       - name: Release stable
