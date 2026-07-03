@@ -370,6 +370,9 @@
    (defn deps-available []
      (->> (clojure.java.basis/current-basis)
           :libs
+          ;; synthetic deps used to put the packaged uberjar on the classpath
+          ;; (see eval.deps-try/start-repl!) shouldn't show as user libraries
+          (remove (comp #{"deps-try.self"} namespace key))
           (filter (comp #(every? empty? %) :parents val)))))
 
 #?(:bb nil

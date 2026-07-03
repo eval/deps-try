@@ -100,10 +100,23 @@
   ;; TODO re-enable?
   ;; see https://github.com/clojure/brew-install/blob/1.11.3/CHANGELOG.md
   #_(warn-unless-minimum-clojure-cli-version "1.11.1.1273" tdeps-version)
-  (let [paths     (into ["."] ;; needed for clojure.java.io/resource
-                        (string/split init-cp #":"))
+  (let [cp-parts  (string/split init-cp #":")
+        ;; When running from the packaged uberjar, its path is external to the
+        ;; project and tools.deps deprecates such :paths entries, so it's added as
+        ;; a :local/root dep instead. In dev the classpath is the project's own
+        ;; source dirs and resolved deps, which belong in :paths as before.
+        ;; "." is kept for clojure.java.io/resource.
+        {jars true, dirs false} (if dev?
+                                  {false cp-parts}
+                                  (group-by #(string/ends-with? % ".jar") cp-parts))
+        paths     (into ["."] dirs)
+        self-deps (into {} (map-indexed (fn [i jar]
+                                          [(symbol "deps-try.self" (str "cp" i))
+                                           {:local/root jar}])
+                                        jars))
         deps      (merge
                    {'org.clojure/clojure {:mvn/version "1.12.0"}}
+                   self-deps
                    recipe-deps
                    requested-deps)
         main-args (cond-> ["--version" version]
