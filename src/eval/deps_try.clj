@@ -26,6 +26,22 @@
 
 (def ^:private dev? (nil? (io/resource "VERSION")))
 
+(defn- repl-java-version
+  "Major version of the JVM that the `clojure` CLI will start (found via
+  JAVA_CMD, JAVA_HOME or PATH, mirroring the CLI's lookup), nil when it can't
+  be determined."
+  []
+  (let [java-cmd     (or (System/getenv "JAVA_CMD")
+                         (some-> (System/getenv "JAVA_HOME") (fs/path "bin" "java") str)
+                         "java")
+        ;; `java -version` prints to stderr, e.g. `openjdk version "21.0.2" ...`
+        version-line (try (:err (p/sh {:err :string} java-cmd "-version"))
+                          (catch Exception _ nil))
+        [_ major minor] (some->> version-line (re-find #"version \"(\d+)(?:\.(\d+))?"))
+        major        (some-> major parse-long)]
+    (when major
+      (if (> major 1) major (some-> minor parse-long)))))
+
 (def ^:private version
   (string/trim
    (if dev?
@@ -123,13 +139,21 @@
                     recipe-location (into (if ns-only
                                             ["--recipe-ns" recipe-location]
                                             ["--recipe" recipe-location]))
-                    prepare         (conj "-P"))]
+                    prepare         (conj "-P"))
+        ;; Flags allowing the JVMTI agent to be loaded (needed for breaks on
+        ;; Java 20+, see eval.deps-try.util.jvmti). The -XX flag (which also
+        ;; suppresses the JEP 451 warning) only exists on Java 9+; Java 8
+        ;; refuses to boot on unrecognized -XX options, so skip it there.
+        java-major (repl-java-version)
+        jvm-flags  (cond-> ["-J-Djdk.attach.allowAttachSelf"]
+                     (or (nil? java-major) (>= java-major 9))
+                     (conj "-J-XX:+EnableDynamicAgentLoading"))]
     (apply run-repl
-           "-J-Djdk.attach.allowAttachSelf"
-           "-J-XX:+EnableDynamicAgentLoading"
-           "-Sdeps" (str {:paths paths
-                          :deps  deps})
-           "-M" "-m" "eval.deps-try.try" main-args)))
+           (concat jvm-flags
+                   ["-Sdeps" (str {:paths paths
+                                   :deps  deps})
+                    "-M" "-m" "eval.deps-try.try"]
+                   main-args))))
 
 (defn- recipe-manifest-contents [{:keys [refresh] :as _cli-opts}]
   (let [remote-manifest-file "https://raw.githubusercontent.com/eval/deps-try/master/recipes/manifest.edn"

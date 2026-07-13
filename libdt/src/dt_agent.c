@@ -1,5 +1,6 @@
-// Native agent that nREPL uses for deeply buried JDK functionality.
+// Native agent that deps-try uses for deeply buried JDK functionality.
 // Currently it is used to bring back Thread.stop() that was lost in JDK20+.
+// Adapted from nREPL's libnrepl agent (https://github.com/nrepl/nrepl/pull/318).
 
 #include <jvmti.h>
 #include <stdio.h>
@@ -28,7 +29,7 @@ JNIEXPORT void JNICALL Java_dt_JvmtiAgent_stopThread
 }
 
 JNIEXPORT jint JNICALL Agent_OnAttach(JavaVM* vm, char* options, void* _) {
-  //printf("nREPL native agent loaded\n");
+  //printf("libdt native agent loaded\n");
 
   // Initialize JVMTI environment.
   jint res = (*vm)->GetEnv(vm, (void**)&jvmti_env, JVMTI_VERSION_1_2);

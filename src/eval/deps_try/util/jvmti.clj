@@ -13,26 +13,37 @@
 ;;; Agent unpacking
 
 (defonce ^:private temp-directory
-  (.toFile (Files/createTempDirectory "deps_try" (into-array FileAttribute []))))
+  ;; deleteOnExit runs in reverse order of registration: the unpacked lib
+  ;; (registered later) is deleted first, leaving the directory empty.
+  (doto (.toFile (Files/createTempDirectory "deps_try" (into-array FileAttribute [])))
+    (.deleteOnExit)))
 
 (defn- unpack-from-jar [resource-name]
   (let [path (io/file temp-directory resource-name)]
     (if-let [resource (io/resource resource-name)]
-      (io/copy (io/input-stream resource) path)
+      (with-open [in (io/input-stream resource)]
+        (io/copy in path))
       (throw (ex-info (str "Could not find " resource-name " in resources.") {})))
+    (.deleteOnExit path)
     (.getAbsolutePath path)))
 
 (defn- macos? []
   (re-find #"(?i)mac" (System/getProperty "os.name")))
+
+(defn- linux? []
+  (re-find #"(?i)linux" (System/getProperty "os.name")))
 
 (defn- aarch64? []
   (re-find #"(?i)aarch64" (System/getProperty "os.arch")))
 
 (def ^:private libdt-path
   (delay
-    (let [lib (cond (macos?)   "libdt-macos-universal.so"
-                    (aarch64?) "libdt-linux-arm64.so"
-                    :else      "libdt-linux-x64.so")]
+    (let [os  (System/getProperty "os.name")
+          lib (cond (macos?)                  "libdt-macos-universal.so"
+                    (and (linux?) (aarch64?)) "libdt-linux-arm64.so"
+                    (linux?)                  "libdt-linux-x64.so"
+                    :else                     (throw (ex-info (str "no native agent bundled for " os
+                                                                   " (only Linux and macOS)") {:os os})))]
       (unpack-from-jar lib))))
 
 ;;; Agent loading
@@ -41,7 +52,9 @@
   (VirtualMachine/attach (str (.pid (ProcessHandle/current)))))
 
 (defn- load-libdt-agent []
-  (.loadAgentPath (attach-self) @libdt-path))
+  (doto (attach-self)
+    (.loadAgentPath @libdt-path)
+    (.detach)))
 
 (def ^:private agent-loaded (delay (load-libdt-agent)))
 
