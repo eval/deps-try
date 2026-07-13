@@ -4,3 +4,6 @@
 /.clj-kondo
 .lsp
 /VERSION
+*.class
+/tmp/*
+!/tmp/.keep

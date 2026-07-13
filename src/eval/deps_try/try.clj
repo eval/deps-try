@@ -9,6 +9,7 @@
             [eval.deps-try.history :as history]
             [eval.deps-try.recipe :as recipe]
             [eval.deps-try.rr-service :as rebel-service]
+            [eval.deps-try.util :as util]
             [rebel-readline.clojure.line-reader :as clj-line-reader]
             [rebel-readline.clojure.main :as rebel-main]
             [rebel-readline.commands :as rebel-readline]
@@ -108,11 +109,30 @@
         (pp/pprint x)))))
 
 
+(def ^:private jvmti-stop-thread
+  ;; Resolved eagerly (see `:init` in `-main`): `requiring-resolve` takes
+  ;; Clojure's require-lock, which the eval being interrupted may itself hold
+  ;; (e.g. Ctrl-C during a hung require), deadlocking the break handler.
+  (delay (requiring-resolve 'eval.deps-try.util.jvmti/stop-thread)))
+
+(defn break-thread!
+  "Forcibly stop `thread`. Called from the SIGINT-handler thread; public as
+  it's referenced from an eval'ed form (see `handle-sigint-form`)."
+  [^Thread thread]
+  (try
+    (if (<= util/java-version 19)
+      (.stop thread)
+      (@jvmti-stop-thread thread))
+    (catch Throwable e
+      (println (str "Break failed: " (ex-message e))))))
+
 ;; SOURCE https://github.com/bhauman/rebel-readline/pull/199
 (defn- handle-sigint-form
   []
   `(let [thread# (Thread/currentThread)]
-     (clj-repl/set-break-handler! (fn [_signal#] (.stop thread#)))))
+     (clj-repl/set-break-handler!
+      (fn [_signal#]
+        (break-thread! thread#)))))
 
 (defn- recipe-instructions [{:keys [ns-only]}]
   (str "Recipe" (when ns-only " namespace") " successfully loaded in the REPL-history. Press arrow-up to start with the first step."))
@@ -172,6 +192,18 @@
   [ex]
   (swap! api/*line-reader* assoc :repl/just-caught ex))
 
+(defn- interrupted?
+  "Returns true if the given throwable was ultimately caused by the break
+  handler stopping the thread (see `break-thread!`).
+  The ThreadDeath arrives bare when the eval was interrupted at runtime, or
+  wrapped in a CompilerException (where `clojure.main/root-cause` stops
+  unwrapping) when interrupted during compilation.
+  SOURCE `nrepl.middleware.interruptible-eval/interrupted?`"
+  [^Throwable ex]
+  (or (instance? ThreadDeath (clojure.main/root-cause ex))
+      (and (instance? clojure.lang.Compiler$CompilerException ex)
+           (instance? ThreadDeath (.getCause ex)))))
+
 (defn- reset-just-caught []
   `(swap! api/*line-reader* dissoc :repl/just-caught))
 
@@ -191,10 +223,14 @@
                repl-opts   (cond-> {:deps-try/version (:version opts)
                                     :deps-try/data-path data-path
                                     :caught             (fn [ex]
-                                                          (persist-just-caught ex)
-                                                          (clojure.main/repl-caught ex))
+                                                          (when-not (interrupted? ex)
+                                                            (persist-just-caught ex)
+                                                            (clojure.main/repl-caught ex)))
                                     :init               (fn []
                                                           (load-slow-deps!)
+                                                          (when (>= util/java-version 20)
+                                                            ;; see comment at jvmti-stop-thread
+                                                            (try @jvmti-stop-thread (catch Throwable _)))
                                                           (apply require clojure.main/repl-requires)
                                                           (set! clojure.core/*print-namespace-maps* false))
                                     :eval               (fn [form]
@@ -210,6 +246,6 @@
 
 (comment
 
-  (recipe/parse "/Users/gert/projects/deps-try/deps-try-recipes/recipes/next-jdbc/postgresql.clj")
+  (recipe/parse "/Users/gert/projects/deps-try/deps-try/recipes/next_jdbc/postgresql.clj")
 
   #_:end)

@@ -26,10 +26,29 @@
 
 (def ^:private dev? (nil? (io/resource "VERSION")))
 
+(defn- repl-java-version
+  "Major version of the JVM that the `clojure` CLI will start (found via
+  JAVA_CMD, JAVA_HOME or PATH, mirroring the CLI's lookup), nil when it can't
+  be determined."
+  []
+  (let [java-cmd     (or (System/getenv "JAVA_CMD")
+                         (some-> (System/getenv "JAVA_HOME") (fs/path "bin" "java") str)
+                         "java")
+        ;; `java -version` prints to stderr, e.g. `openjdk version "21.0.2" ...`
+        version-line (try (:err (p/sh {:err :string} java-cmd "-version"))
+                          (catch Exception _ nil))
+        [_ major minor] (some->> version-line (re-find #"version \"(\d+)(?:\.(\d+))?"))
+        major        (some-> major parse-long)]
+    (when major
+      (if (> major 1) major (some-> minor parse-long)))))
+
 (def ^:private version
   (string/trim
    (if dev?
-     (let [git-dir (fs/file (io/resource ".git"))]
+     ;; the repo-root isn't on the classpath (see NOTE in deps.edn), so derive
+     ;; it from a source file that is
+     (let [src-file (fs/file (io/resource "eval/deps_try.clj"))
+           git-dir  (fs/path (-> src-file fs/parent fs/parent fs/parent) ".git")]
        (:out (p/sh {} "git" "--git-dir" (str git-dir) "describe" "--tags")))
      (slurp (io/resource "VERSION")))))
 
@@ -100,20 +119,44 @@
   ;; TODO re-enable?
   ;; see https://github.com/clojure/brew-install/blob/1.11.3/CHANGELOG.md
   #_(warn-unless-minimum-clojure-cli-version "1.11.1.1273" tdeps-version)
-  (let [paths     (into ["."] ;; needed for clojure.java.io/resource
-                        (string/split init-cp #":"))
+  (let [cp-parts  (string/split init-cp #":")
+        ;; When running from the packaged uberjar, its path is external to the
+        ;; project and tools.deps deprecates such :paths entries, so it's added as
+        ;; a :local/root dep instead. In dev the classpath is the project's own
+        ;; source dirs and resolved deps, which belong in :paths as before.
+        ;; "." is kept for clojure.java.io/resource.
+        {jars true, dirs false} (if dev?
+                                  {false cp-parts}
+                                  (group-by #(string/ends-with? % ".jar") cp-parts))
+        paths     (into ["."] dirs)
+        self-deps (into {} (map-indexed (fn [i jar]
+                                          [(symbol "deps-try.self" (str "cp" i))
+                                           {:local/root jar}])
+                                        jars))
         deps      (merge
-                   {'org.clojure/clojure {:mvn/version "1.12.0-alpha11"}}
+                   {'org.clojure/clojure {:mvn/version "1.12.5"}}
+                   self-deps
                    recipe-deps
                    requested-deps)
         main-args (cond-> ["--version" version]
                     recipe-location (into (if ns-only
                                             ["--recipe-ns" recipe-location]
                                             ["--recipe" recipe-location]))
-                    prepare         (conj "-P"))]
-    (apply run-repl "-Sdeps" (str {:paths paths
+                    prepare         (conj "-P"))
+        ;; Flags allowing the JVMTI agent to be loaded (needed for breaks on
+        ;; Java 20+, see eval.deps-try.util.jvmti). The -XX flag (which also
+        ;; suppresses the JEP 451 warning) only exists on Java 9+; Java 8
+        ;; refuses to boot on unrecognized -XX options, so skip it there.
+        java-major (repl-java-version)
+        jvm-flags  (cond-> ["-J-Djdk.attach.allowAttachSelf"]
+                     (or (nil? java-major) (>= java-major 9))
+                     (conj "-J-XX:+EnableDynamicAgentLoading"))]
+    (apply run-repl
+           (concat jvm-flags
+                   ["-Sdeps" (str {:paths paths
                                    :deps  deps})
-           "-M" "-m" "eval.deps-try.try" main-args)))
+                    "-M" "-m" "eval.deps-try.try"]
+                   main-args))))
 
 (defn- recipe-manifest-contents [{:keys [refresh] :as _cli-opts}]
   (let [remote-manifest-file "https://raw.githubusercontent.com/eval/deps-try/master/recipes/manifest.edn"

@@ -10,7 +10,7 @@ on:
   push:
     branches:
       - master
-      - feature/dockerfile
+      - fix/break-handling
 
 jobs:
   Config:
@@ -67,14 +67,20 @@ jobs:
           bb: latest
       - name: Update VERSION
         run: echo "${{ needs.Config.outputs.version }}" > resources/VERSION
+      - name: Compile Java
+        run: bb java:compile
       - name: Zip it
         run: zip -r deps-try.zip . -x ".git/*"
       - name: Build uberjar
         run: |
-          rm -rf .git
+          # remove stuff not wanted in JAR
+          rm -rf .git .github
           mv deps-try.zip ..
-          bb uberjar deps-try-bb.jar -m eval.deps-try
+
+          bb bb:uberjar
+          ls -lah deps-try-bb.jar
           jar -tf deps-try-bb.jar
+
           mv ../deps-try.zip .
       - name: Testrun uberjar
         run: bb deps-try-bb.jar -h
