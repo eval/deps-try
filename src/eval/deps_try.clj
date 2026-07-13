@@ -115,7 +115,7 @@
                                            {:local/root jar}])
                                         jars))
         deps      (merge
-                   {'org.clojure/clojure {:mvn/version "1.12.0"}}
+                   {'org.clojure/clojure {:mvn/version "1.12.5"}}
                    self-deps
                    recipe-deps
                    requested-deps)
