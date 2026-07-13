@@ -1,0 +1,73 @@
+# Rebuilds the libdt native JVMTI agent binaries (libdt/build/*.so).
+# Manually triggered; download the artifacts and commit them to libdt/build/.
+# Adapted from nREPL's libnrepl workflow (https://github.com/nrepl/nrepl).
+name: Build libdt native library
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '21'
+
+    - name: Compile native library
+      run: cd libdt/ && make all
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: libdt-linux-x64
+        path: libdt/build
+
+  build-linux-arm64:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+      with:
+        platforms: arm64
+
+    - name: Run the build process with Docker
+      uses: addnab/docker-run-action@v3
+      with:
+        image: eclipse-temurin:21
+        options: |
+          --platform linux/arm64
+          --volume ${{ github.workspace }}:/build
+        run: |
+          apt-get update && apt-get install -y make gcc
+          cd /build/libdt/ && make all
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: libdt-linux-arm64
+        path: libdt/build
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '21'
+
+    - name: Compile native library
+      run: cd libdt/ && make all
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: libdt-macos-universal
+        path: libdt/build

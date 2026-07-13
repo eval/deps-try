@@ -5,7 +5,7 @@ LIBS=-ldl
 SOURCES := $(wildcard src/*.c)
 
 ifeq ($(JAVA_HOME),)
-  export JAVA_HOME:=$(shell java -cp . JavaHome)
+  $(error JAVA_HOME is not set (e.g. on macOS: JAVA_HOME=$$(/usr/libexec/java_home) make))
 endif
 
 ARCH:=$(shell uname -m)

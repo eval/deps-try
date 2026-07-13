@@ -15,7 +15,7 @@ JNIEXPORT void JNICALL Java_dt_JvmtiAgent_stopThread
 
   err = (*jvmti_env)->GetThreadInfo(jvmti_env, thread, &threadInfo);
   if (err != JVMTI_ERROR_NONE) {
-    printf("Error getting thread info: %d\n", err);
+    fprintf(stderr, "Error getting thread info: %d\n", err);
     return;
   }
 
@@ -23,7 +23,7 @@ JNIEXPORT void JNICALL Java_dt_JvmtiAgent_stopThread
 
   err = (*jvmti_env)->StopThread(jvmti_env, thread, throwable);
   if (err != JVMTI_ERROR_NONE) {
-    printf("Error stopping thread: %d\n", err);
+    fprintf(stderr, "Error stopping thread: %d\n", err);
     return;
   }
 }
@@ -41,7 +41,11 @@ JNIEXPORT jint JNICALL Agent_OnAttach(JavaVM* vm, char* options, void* _) {
   // Request capabilities for StopThread
   jvmtiCapabilities capabilities = {0};
   capabilities.can_signal_thread = 1;
-  (*jvmti_env)->AddCapabilities(jvmti_env, &capabilities);
+  jvmtiError err = (*jvmti_env)->AddCapabilities(jvmti_env, &capabilities);
+  if (err != JVMTI_ERROR_NONE) {
+    fprintf(stderr, "Failed to add JVMTI capabilities: %d\n", err);
+    return JNI_ERR;
+  }
 
   return JNI_OK;
 }
