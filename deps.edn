@@ -1,4 +1,7 @@
-{:paths   ["src" "resources" "." "java" "libdt/build"]
+;; NOTE keep "." out of :paths: `bb uberjar` jars every classpath folder
+;; wholesale, so "." would put the entire repo in the released jar (and the
+;; libdt binaries in twice).
+{:paths   ["src" "resources" "java" "libdt/build"]
  :deps    {borkdude/edamame           {:mvn/version "1.4.24"}
            cider/orchard              {:mvn/version "0.30.0"}
            com.bhauman/rebel-readline {:local/root "./vendor/rebel-readline/rebel-readline"}

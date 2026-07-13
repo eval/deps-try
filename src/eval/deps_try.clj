@@ -45,7 +45,10 @@
 (def ^:private version
   (string/trim
    (if dev?
-     (let [git-dir (fs/file (io/resource ".git"))]
+     ;; the repo-root isn't on the classpath (see NOTE in deps.edn), so derive
+     ;; it from a source file that is
+     (let [src-file (fs/file (io/resource "eval/deps_try.clj"))
+           git-dir  (fs/path (-> src-file fs/parent fs/parent fs/parent) ".git")]
        (:out (p/sh {} "git" "--git-dir" (str git-dir) "describe" "--tags")))
      (slurp (io/resource "VERSION")))))
 
