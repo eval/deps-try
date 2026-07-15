@@ -75,10 +75,17 @@
                     \newline
                     "  --recipe, --recipe-ns" \newline
                     "    Name of recipe (see recipes command) or a path or url to a Clojure file." \newline
-                    "    The REPL-history will be seeded with the (ns-)steps from the recipe.")
+                    "    The REPL-history will be seeded with the (ns-)steps from the recipe." \newline
+                    \newline
+                    "  --clojure" \newline
+                    "    Clojure version for the REPL, e.g. `1.13.0-alpha4`, `latest`." \newline
+                    "    Shorthand for `deps-try org.clojure/clojure <version>`.")
                (str ansi/bold "EXAMPLES" ansi/reset \newline
                     "  ;; The latest version of malli from maven, and git-tag v1.3.894 of the next-jdbc repository" \newline
-                    "  $ deps-try metosin/malli io.github.seancorfield/next-jdbc v1.3.894")
+                    "  $ deps-try metosin/malli io.github.seancorfield/next-jdbc v1.3.894" \newline
+                    \newline
+                    "  ;; Try an upcoming Clojure version" \newline
+                    "  $ deps-try --clojure 1.13.0-alpha4")
                (str ansi/bold "COMMANDS" ansi/reset \newline
                     "  recipes    list built-in recipes (`recipes --refresh` to update)")
                nil]]
@@ -203,7 +210,13 @@
 
 
 (defn- handle-repl-start [{{:keys [recipe recipe-ns] :as parsed-opts} :opts}]
-  (let [recipes-by-name       #(update-vals (group-by :deps-try.recipe/name (recipes {})) first)
+  (let [;; --clojure VERSION is sugar for the positional dep-pair, so the
+        ;; version gets validated/resolved (incl. `latest`) like any dep.
+        ;; An explicit positional org.clojure/clojure dep still wins.
+        parsed-opts           (cond-> parsed-opts
+                                (:clojure parsed-opts)
+                                (update :deps #(into ["org.clojure/clojure" (:clojure parsed-opts)] %)))
+        recipes-by-name       #(update-vals (group-by :deps-try.recipe/name (recipes {})) first)
         known-recipe-url      (some->> (or recipe recipe-ns)
                                        (get (recipes-by-name))
                                        :deps-try.recipe/url)
@@ -251,8 +264,8 @@
     :restrict [:refresh :help :plain :color]}
    {:cmds      []
     :fn        #'handle-fallback-cmd
-    :restrict  [:version :deps :help :recipe :recipe-ns :print-deps :prepare]
-    :coerce    {:deps [:string] :prepare boolean}
+    :restrict  [:version :deps :help :recipe :recipe-ns :print-deps :prepare :clojure]
+    :coerce    {:deps [:string] :prepare boolean :clojure :string}
     :alias     {:h :help
                 :v :version
                 :P :prepare}
