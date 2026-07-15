@@ -4,5 +4,5 @@
         org.jline/jline-terminal-jansi {:mvn/version "3.23.0"}
         dev.weavejester/cljfmt         {:mvn/version "0.11.2"
                                         :exclusions  [org.clojure/tools.cli]} ;; depends on tools reader
-        io.github.eval/compliment      {:git/sha "cd9706db27d456e8940dcd1118174c94effa9358"}
+        deps-try/compliment            {:local/root "../../deps-try.compliment"}
         io.github.borkdude/deflet      {:mvn/version "0.1.0"}}}

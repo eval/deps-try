@@ -6,8 +6,8 @@
            cider/orchard              {:mvn/version "0.30.0"}
            com.bhauman/rebel-readline {:local/root "./vendor/rebel-readline/rebel-readline"}
            deps-try/cli               {:local/root "./vendor/deps-try.cli"}
+           deps-try/compliment        {:local/root "./vendor/deps-try.compliment"}
            deps-try/http-client       {:local/root "./vendor/deps-try.http-client"}
-           io.github.eval/compliment  {:git/sha "cd9706db27d456e8940dcd1118174c94effa9358"}
            org.clojure/clojure        {:mvn/version "1.12.5"}
            org.clojure/tools.gitlibs  {:mvn/version "2.5.197"}
            ;; suppress logging

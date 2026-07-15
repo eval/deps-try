@@ -46,11 +46,13 @@
         ((requiring-resolve 'orchard.clojuredocs/resolve-and-find-doc) wns wname)))))
 
 (defn- classpath-for-completions
-  "This 'fixes' two things with compliment.utils/classpath:
+  "This 'fixes' two things with compliment.utils' classpath detection:
   - it removes cwd from the classpath which can simply yield too many options (e.g. ~)
   - it picksup added libraries"
   []
-  (let [java-cp-sans-cwd (rest (str/split (System/getProperty "java.class.path") #":"))
+  (let [path-sep         (System/getProperty "path.separator")
+        java-cp-sans-cwd (rest (str/split (System/getProperty "java.class.path")
+                                          (re-pattern (java.util.regex.Pattern/quote path-sep))))
         basis-cp         (->> (clojure.java.basis/current-basis)
                               :libs
                               vals
@@ -62,7 +64,12 @@
         options (if (:extra-metadata options)
                   options
                   (assoc options :extra-metadata #{:private :deprecated}))]
-    (with-redefs [deps-try.compliment.utils/classpath classpath-for-completions]
+    ;; redef classpath-strings (not classpath): compliment's cache is keyed on
+    ;; it, so completions of added libraries appear the moment the basis grows.
+    (with-redefs [deps-try.compliment.utils/classpath-strings
+                  (fn []
+                    [(str/join (System/getProperty "path.separator")
+                               (classpath-for-completions))])]
       #_(prn ::-complete :word word :options options)
       (doall (cond-> (deps-try.compliment.core/completions word options)
                :namespace/other? (->> (map (fn [{:keys [ns] :as cand}]
