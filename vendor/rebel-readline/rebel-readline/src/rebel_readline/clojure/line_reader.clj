@@ -567,6 +567,18 @@
         (and (= (+ start word-end) curs)
              word)))))
 
+(defn funcall-word-at-point
+  "Like `one-space-after-funcall-word?` but returns the funcall word of the
+  enclosing sexp regardless of where the cursor is inside the call."
+  []
+  (let [s (buffer-as-string)
+        curs (cursor)
+        tagged-parses (sexp/resolve-alias-delim-keys (tokenize/tag-sexp-traversal s))
+        [_ start _ _] (sexp/find-open-sexp-start tagged-parses curs)]
+    (when (and start (= (.charAt s start) \())
+      (when-let [[word _ _ _] (sexp/funcall-word s start)]
+        word))))
+
 (defn name-arglist-display [meta-data]
   (let [{:keys [ns arglists name]} meta-data]
     (when (and ns name (not= ns name))
@@ -584,29 +596,62 @@
       (when (:arglists fun-meta)
         (name-arglist-display fun-meta)))))
 
-;; TODO this ttd (time to delete) atom doesn't work really
-;; need a global state and countdown solution
-;; and a callback on hook on any key presses
-(let [ttd-atom (atom -1)]
-  (defn eldoc-self-insert-hook
-    "This hooks SELF_INSERT to capture most keypresses that get echoed
-  out to the terminal. We are using it here to display interactive
-  behavior based on the state of the buffer at the time of a keypress."
-    []
-    (when (zero? @ttd-atom)
-      (display-message " "))
-    (when-not (neg? @ttd-atom)
-      (swap! ttd-atom dec))
-    ;; hook here
-    ;; if prev-char is a space and the char before that is part
-    ;; of a word, and that word is a fn call
-    (when (:eldoc @*line-reader*)
-      (when-let [message (display-argument-help-message)]
-        (reset! ttd-atom 1)
-        (display-message message)))))
+(def ^:private eldoc-shown-for
+  "The funcall word the signature hint currently displays, nil when no hint
+  is shown. Shared between the self-insert hook and the signature widget so
+  both follow the same lifecycle."
+  (atom nil))
+
+(defn- funcall-signature-message
+  "`[word message]` for the call enclosing the cursor, nil when there is
+  none (or its arglists are unknown)."
+  []
+  (when-let [wrd (funcall-word-at-point)]
+    (when-let [fun-meta (resolve-meta wrd)]
+      (when (:arglists fun-meta)
+        [wrd (name-arglist-display fun-meta)]))))
+
+(defn eldoc-self-insert-hook
+  "This hooks SELF_INSERT to capture most keypresses that get echoed
+  out to the terminal. Displays the signature of the call enclosing the
+  cursor while typing inside it (following nested calls), and clears it
+  once the cursor leaves the call."
+  []
+  (when (or (:eldoc @*line-reader*)
+            ;; a hint summoned via the signature widget follows the same
+            ;; lifecycle, even with :eldoc disabled
+            @eldoc-shown-for)
+    (if-let [[wrd message] (funcall-signature-message)]
+      (when (not= wrd @eldoc-shown-for)
+        (reset! eldoc-shown-for wrd)
+        (display-message message))
+      (when @eldoc-shown-for
+        (reset! eldoc-shown-for nil)
+        (display-message " ")))))
 
 (defn word-at-cursor []
   (sexp/word-at-position (buffer-as-string) (cursor)))
+
+;; -------------------------------------
+;; Signature widget
+;; -------------------------------------
+
+(def signature-at-point-widget
+  "Redisplay the eldoc-style signature hint on demand: the enclosing
+  funcall's signature from anywhere inside the call, or that of the symbol
+  under the cursor."
+  (create-widget
+   (when-let [[wrd message]
+              (or (funcall-signature-message)
+                  (when-let [wrd (first (word-at-cursor))]
+                    (when-let [fun-meta (resolve-meta wrd)]
+                      (when (:arglists fun-meta)
+                        [wrd (name-arglist-display fun-meta)]))))]
+     ;; record it so the self-insert hook clears/updates the hint when the
+     ;; cursor leaves this call
+     (reset! eldoc-shown-for wrd)
+     (display-message message))
+   true))
 
 ;; -------------------------------------
 ;; Documentation widget
@@ -880,6 +925,7 @@
     (register-widget "clojure-indent-line"        indent-line-widget)
     (register-widget "clojure-indent-or-complete" indent-or-complete-widget)
 
+    (register-widget "clojure-signature-at-point" signature-at-point-widget)
     (register-widget "clojure-doc-at-point"       document-at-point-widget)
     (register-widget "clojure-source-at-point"    source-at-point-widget)
     (register-widget "clojure-examples-at-point"  examples-at-point-widget)
@@ -900,6 +946,7 @@
 
 (defn bind-clojure-widgets [km-name]
   (doto km-name
+    (key-binding (str (KeyMap/ctrl \X) (KeyMap/ctrl \G)) "clojure-signature-at-point")
     (key-binding (str (KeyMap/ctrl \X) (KeyMap/ctrl \D)) "clojure-doc-at-point")
     (key-binding (str (KeyMap/ctrl \X) (KeyMap/ctrl \S)) "clojure-source-at-point")
     (key-binding (str (KeyMap/ctrl \X) (KeyMap/ctrl \X)) "clojure-examples-at-point")
@@ -910,6 +957,7 @@
 
 (defn bind-clojure-widgets-vi-cmd [km-name]
   (doto km-name
+    (key-binding (str \\ \g) "clojure-signature-at-point")
     (key-binding (str \\ \d) "clojure-doc-at-point")
     (key-binding (str \\ \s) "clojure-source-at-point")
     (key-binding (str \\ \a) "clojure-apropos-at-point")
