@@ -74,7 +74,15 @@
 (defn- mvn-version? [v]
   (let [mvn-version-re #"^\d+\.\d+\.\d+"]
     (or (re-find mvn-version-re v)
+        ;; maven-native tokens, passed through as-is (escape hatch)
         (#{"RELEASE" "LATEST"} v))))
+
+(defn- version-token
+  "Recognize deps-try's version tokens (case-insensitive):
+  `latest` — newest stable version, `head` — newest incl. pre-releases."
+  [s]
+  (when (string? s)
+    ({"latest" :latest "head" :head} (str/lower-case s))))
 
 (defn- git-version? [s]
   ;; exclude anything that
@@ -112,9 +120,13 @@
       (if dep
         (if-let [dep-type-candidates (arg->dep-types dep)]
           (let [latest?                     #(= % :latest)
-                maybe-version-is-dep?       (and (not (latest? maybe-version))
+                ;; explicit `latest`/`head` argument (:latest/:head or nil)
+                explicit-token              (version-token maybe-version)
+                maybe-version-is-dep?       (and (not explicit-token)
+                                                 (not (latest? maybe-version))
                                                  (arg->dep-types maybe-version))
-                maybe-version-version-types (and (not (latest? maybe-version))
+                maybe-version-version-types (and (not explicit-token)
+                                                 (not (latest? maybe-version))
                                                  (arg->version-types maybe-version))
                 ;; do maybe-version-version-types and dep-type-candidates overlap?
                 dep-version-type-overlap    (when maybe-version-version-types
@@ -122,6 +134,7 @@
                                                       (map version-key->dep-key maybe-version-version-types)))
 
                 version (cond
+                          explicit-token                 explicit-token
                           (seq dep-version-type-overlap) maybe-version
                           maybe-version-is-dep?          :latest
                           (latest? maybe-version)        :latest
@@ -129,9 +142,10 @@
 
                 ;;  all dep-type-candidates that match the maybe-version-types
                 version-matching-dep-types (cond
-                                             (latest? version)  dep-type-candidates
-                                             (= version :wrong) '()
-                                             :else              dep-version-type-overlap)
+                                             (= version :wrong)  '()
+                                             ;; :latest (explicit or implied) or :head
+                                             (keyword? version)  dep-type-candidates
+                                             :else               dep-version-type-overlap)
                 resolve-steps              (into [:or] (map (fn [dt]
                                                               [[dt dep version]])
                                                             version-matching-dep-types))
@@ -140,7 +154,9 @@
                                              (= 2 (count resolve-steps)) ((comp first last)))
                 remaining-args             (cond
                                              (= version :wrong) nil
-                                                 ;; NOT consume version
+                                                 ;; consume explicitly passed token
+                                             explicit-token     (rest (rest rem-args))
+                                                 ;; NOT consume version (implied :latest)
                                              (latest? version)  (rest rem-args)
                                                  ;; consume version
                                              :else              (rest (rest rem-args)))]
@@ -234,7 +250,8 @@
       :else                              version)))
 
 (defmethod resolve-version :dep/git [[_type git-url version]]
-  (let [{err :error :as version} (if (= :latest version)
+  ;; TODO :latest could mean 'newest version tag' for git deps
+  (let [{err :error :as version} (if (#{:latest :head} version)
                                    "HEAD"
                                    (expand-caret-version git-url version))]
     (if-not err
@@ -244,45 +261,93 @@
 (defn ^:private local-repo-path []
   (fs/path (fs/home) ".m2" "repository"))
 
+(defn- version-sort-key
+  "Sortable key such that the newest version sorts last. Version-ordered (not
+  release-date-ordered like maven's LATEST/RELEASE): pre-releases sort before
+  the stable release of the same base version (1.2.0-rc1 < 1.2.0), qualifiers
+  compare alphabetically, then numerically (alpha2 < alpha11 < beta1)."
+  [v]
+  (let [[_ nums qual] (re-matches #"(\d+(?:\.\d+)*)[.\-]?(.*)" (str v))
+        nums          (if nums
+                        (vec (take 6 (concat (map parse-long (str/split nums #"\."))
+                                             (repeat 0))))
+                        [-1 -1 -1 -1 -1 -1])
+        stable?       (str/blank? qual)
+        qual-alpha    (str/lower-case (or (some->> qual (re-find #"[a-zA-Z]+")) ""))
+        qual-num      (or (some->> qual (re-find #"\d+") parse-long) -1)]
+    [nums (if stable? 1 0) qual-alpha qual-num]))
+
+(defn- stable-version? [v]
+  (re-matches #"\d+(\.\d+)*" (str v)))
+
+(defn- pick-version
+  "Newest of `versions` given `token`: :latest yields the newest stable
+  (falling back to newest overall when a library has no stable release),
+  :head the newest incl. pre-releases. Nil when `versions` is empty."
+  [token versions]
+  (let [newest #(last (sort-by version-sort-key %))]
+    (case token
+      :head   (newest versions)
+      :latest (or (newest (filter stable-version? versions))
+                  (newest versions)))))
+
 (defn resolve-mvn-local [lib version]
-  (let [latest?      (= :latest version)
-        version      (if latest? "RELEASE" version)
+  (let [token        (#{:latest :head} version)
         lib-path     (let [[group artifact] (str/split lib #"/")]
                        (str (apply str (replace {\. \/} group)) "/" artifact))
-        lib-fullpath (fs/path (local-repo-path) lib-path)
-        check-path   (cond-> lib-fullpath
-                       (not latest?) (fs/path version))]
-    (cond
-      (seq (fs/glob check-path "**.jar"))
-      {:mvn/version {:mvn/version version}}
+        lib-fullpath (fs/path (local-repo-path) lib-path)]
+    (if token
+      (let [local-versions (when (fs/exists? lib-fullpath)
+                             ;; NB fs/glob wouldn't yield the version-dirs
+                             (->> (fs/match lib-fullpath "glob:*" {:max-depth 1})
+                                  (filter fs/directory?)
+                                  (filter #(seq (fs/glob % "*.jar")))
+                                  (map fs/file-name)))]
+        (if-let [picked (pick-version token local-versions)]
+          {:mvn/version {:mvn/version picked}}
+          {:error {:error/id :resolve.mvn/library-not-found-offline :lib lib :version version}}))
+      (cond
+        (seq (fs/glob (fs/path lib-fullpath version) "**.jar"))
+        {:mvn/version {:mvn/version version}}
 
-      (and (not latest?)
-           (seq (fs/glob lib-fullpath "**.jar")))
-      {:error {:error/id :resolve.mvn/version-not-found-offline :lib lib :version version}}
+        (seq (fs/glob lib-fullpath "**.jar"))
+        {:error {:error/id :resolve.mvn/version-not-found-offline :lib lib :version version}}
 
-      :else {:error {:error/id :resolve.mvn/library-not-found-offline :lib lib :version version}})))
+        :else {:error {:error/id :resolve.mvn/library-not-found-offline :lib lib :version version}}))))
 
 (def standard-repos
   {"central" {:url "https://repo1.maven.org/maven2/"}
    "clojars" {:url "https://repo.clojars.org/"}})
 
+(defn- metadata-versions [metadata-body]
+  (map second (re-seq #"<version>([^<]+)</version>" metadata-body)))
+
 (defmethod resolve-version :dep/mvn [[_type lib version]]
-  (let [check-version?        (not= :latest version)
+  (let [token                 (#{:latest :head} version)
         check-version         #(re-find (re-pattern (str ">" %2 "<")) %1)
         lib-path              (let [[group artifact] (str/split lib #"/")]
                                 (str (apply str (replace {\. \/} group)) "/" artifact))
         libify                #(str % lib-path "/maven-metadata.xml")
         urls                  (map (comp libify :url) (vals standard-repos))
-        {:keys [status body]} (util/multi-url-test urls {:include-body true})
-        result                {:mvn/version {:mvn/version (if (= :latest version) "RELEASE" version)}}]
+        {:keys [status body]} (util/multi-url-test urls {:include-body true})]
     (cond
       (= status :not-found) {:error {:error/id :resolve.mvn/library-not-found :lib lib :version version}}
       (empty? body)         (resolve-mvn-local lib version)
-      (= status :found)     (if-not check-version?
-                              result
-                              (if (check-version body version)
-                                result
-                                {:error {:error/id :resolve.mvn/version-not-found :lib lib :version version}})))))
+      (= status :found)
+      (cond
+        token
+        (if-let [picked (pick-version token (metadata-versions body))]
+          {:mvn/version {:mvn/version picked}}
+          {:error {:error/id :resolve.mvn/version-not-found :lib lib :version version}})
+
+        ;; maven-native tokens: resolved by maven itself, no validation
+        (#{"RELEASE" "LATEST"} version)
+        {:mvn/version {:mvn/version version}}
+
+        (check-version body version)
+        {:mvn/version {:mvn/version version}}
+
+        :else {:error {:error/id :resolve.mvn/version-not-found :lib lib :version version}}))))
 
 (comment
   (resolve-version [:dep/mvn "org.clojure/clojure" "1.12.0-alpha3"])

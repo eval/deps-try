@@ -57,7 +57,7 @@
                (str ansi/bold "VERSION" ansi/reset \newline
                     "  " version)
                (str ansi/bold "USAGE" ansi/reset \newline
-                    "  $ deps-try [dep-name [dep-version] [dep2-name ...] ...] [--recipe[-ns] recipe]")
+                    "  $ deps-try [dep-name [dep-version] [dep2-name ...] ...] [--recipe[-ns] recipe] [--clojure version]")
                (str ansi/bold "OPTIONS" ansi/reset \newline
                     "  dep-name\n"
                     "    dependency from maven (e.g. `metosin/malli`, `org.clojure/cache`),\n"
@@ -67,10 +67,11 @@
                     "    `~/projects/my-project`, `./path/to/project`)." \newline
                     \newline
                     "  dep-version (optional)\n"
-                    "    A maven version (e.g. `1.2.3`, `LATEST`) or git ref (e.g. `some-branch`,"  \newline
-                    "    `v1.2.3`)." \newline
+                    "    A maven version (e.g. `1.2.3`), a git ref (e.g. `some-branch`, `v1.2.3`)," \newline
+                    "    or one of `latest` (newest stable version) and `head` (newest version," \newline
+                    "    pre-releases included)." \newline
                     "    The id of a PR or MR is also an acceptable version for git deps (e.g. `^123`)." \newline
-                    "    When not provided, `LATEST` is implied for maven deps and the latest SHA" \newline
+                    "    When not provided, `latest` is implied for maven deps and the latest SHA" \newline
                     "    of the default-branch for git deps." \newline
                     \newline
                     "  --recipe, --recipe-ns" \newline
@@ -78,14 +79,18 @@
                     "    The REPL-history will be seeded with the (ns-)steps from the recipe." \newline
                     \newline
                     "  --clojure" \newline
-                    "    Clojure version for the REPL, e.g. `1.13.0-alpha4`, `latest`." \newline
+                    "    Clojure version for the REPL, e.g. `1.12.0`, `head` (newest," \newline
+                    "    pre-releases included). Default: `latest` (newest stable version)." \newline
                     "    Shorthand for `deps-try org.clojure/clojure <version>`.")
                (str ansi/bold "EXAMPLES" ansi/reset \newline
                     "  ;; The latest version of malli from maven, and git-tag v1.3.894 of the next-jdbc repository" \newline
                     "  $ deps-try metosin/malli io.github.seancorfield/next-jdbc v1.3.894" \newline
                     \newline
-                    "  ;; Try an upcoming Clojure version" \newline
-                    "  $ deps-try --clojure 1.13.0-alpha4")
+                    "  ;; Try the upcoming Clojure version" \newline
+                    "  $ deps-try --clojure head" \newline
+                    \newline
+                    "  ;; ...or an older one" \newline
+                    "  $ deps-try --clojure 1.12.4")
                (str ansi/bold "COMMANDS" ansi/reset \newline
                     "  recipes    list built-in recipes (`recipes --refresh` to update)")
                nil]]
@@ -140,8 +145,18 @@
                                           [(symbol "deps-try.self" (str "cp" i))
                                            {:local/root jar}])
                                         jars))
+        ;; default to the newest stable Clojure (resolved at startup; from
+        ;; ~/.m2 when offline), unless a version was requested
+        clojure-requested? (some #(contains? % 'org.clojure/clojure)
+                                 [recipe-deps requested-deps])
+        default-clojure    (when-not clojure-requested?
+                             {'org.clojure/clojure
+                              (or (:mvn/version (try-deps/resolve-version
+                                                 [:dep/mvn "org.clojure/clojure" :latest]))
+                                  ;; last resort: pinned known-stable
+                                  {:mvn/version "1.12.5"})})
         deps      (merge
-                   {'org.clojure/clojure {:mvn/version "1.12.5"}}
+                   default-clojure
                    self-deps
                    recipe-deps
                    requested-deps)
@@ -211,8 +226,8 @@
 
 (defn- handle-repl-start [{{:keys [recipe recipe-ns] :as parsed-opts} :opts}]
   (let [;; --clojure VERSION is sugar for the positional dep-pair, so the
-        ;; version gets validated/resolved (incl. `latest`) like any dep.
-        ;; An explicit positional org.clojure/clojure dep still wins.
+        ;; version gets validated/resolved (incl. `latest`/`head`) like any
+        ;; dep. An explicit positional org.clojure/clojure dep still wins.
         parsed-opts           (cond-> parsed-opts
                                 (:clojure parsed-opts)
                                 (update :deps #(into ["org.clojure/clojure" (:clojure parsed-opts)] %)))

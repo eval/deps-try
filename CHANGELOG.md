@@ -20,8 +20,19 @@
   short prefixes (e.g. `Str` -> `java.lang.String`). In an `(import ...)`
   context only classes are suggested.
 - JLine 3.23.0 -> 3.30.15 (~2.5 years of terminal fixes)
+- new version tokens `latest` and `head`, usable wherever a dep-version goes:
+  `latest` = newest stable version, `head` = newest version including
+  pre-releases. Both are version-ordered, not release-date-ordered like
+  maven's `RELEASE`/`LATEST` (which the help promised but which had been
+  broken since v0.5.0; a backported `1.2.9` released after `1.3.0` no longer
+  counts as newest)
+- an omitted dep-version now means `latest` (newest stable) — previously
+  maven's `RELEASE`, which includes pre-releases
+- the REPL's default Clojure version is now resolved to the newest stable
+  version at startup (was: a pinned version; resolved from `~/.m2` when
+  offline)
 - new flag `--clojure <version>`: pick the REPL's Clojure version, e.g.
-  `deps-try --clojure 1.13.0-alpha4` (also accepts `latest`); shorthand for
+  `deps-try --clojure 1.13.0-alpha4` or `--clojure head`; shorthand for
   passing `org.clojure/clojure <version>` as a dependency
 - the while-typing signature hint is now "live": it stays visible while the
   cursor is inside the call, follows nested calls (and back), and clears
