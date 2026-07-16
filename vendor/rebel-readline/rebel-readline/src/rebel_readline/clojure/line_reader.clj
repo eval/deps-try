@@ -1080,11 +1080,17 @@
         (parse [^String line cursor ^Parser$ParseContext context]
           (cond
             (= context Parser$ParseContext/ACCEPT_LINE)
-            (when-not (or (and *accept-fn*
-                               (*accept-fn* line cursor))
-                          (accept-line line cursor))
-              (indent *line-reader* line cursor)
-              (throw (EOFError. -1 -1 "Unbalanced Expression" (str *ns*))))
+            ;; NB JLine's buffer-cursor counts codepoints while `line` is a
+            ;; (UTF-16) String; translate, or chars beyond the BMP (e.g.
+            ;; emoji) make the line come up short (i.e. 'unbalanced').
+            (let [cursor (.offsetByCodePoints line 0
+                                              (min (int cursor)
+                                                   (.codePointCount line 0 (.length line))))]
+              (when-not (or (and *accept-fn*
+                                 (*accept-fn* line cursor))
+                            (accept-line line cursor))
+                (indent *line-reader* line cursor)
+                (throw (EOFError. -1 -1 "Unbalanced Expression" (str *ns*)))))
             (= context Parser$ParseContext/COMPLETE)
             (parsed-line (parse-line line cursor))
             :else (proxy-super parse line cursor context))))

@@ -55,6 +55,11 @@
   release exists. Checked in the background of REPL sessions (informing the
   *next* startup) — booting never waits on the network. Opt out via env
   `DEPS_TRY_NO_UPDATE_CHECK`
+- fix: expressions containing emoji (or any character beyond unicode's BMP)
+  could not be submitted — `Return` would insert a newline as the expression
+  seemed unbalanced (JLine counts codepoints where the parser counted chars).
+  Cursor-dependent features (the signature hint, doc/source/examples
+  shortcuts) now also handle emoji correctly
 - boot message: removed the perks/sponsor line
 
 ## v0.12.0 (2024-05-02)

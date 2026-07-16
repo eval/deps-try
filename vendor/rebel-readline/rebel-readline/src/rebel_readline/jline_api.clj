@@ -193,8 +193,12 @@ If you are using `lein` you may need to use `lein trampoline`."
 ;; --------------------------------------
 
 (defn cursor
-  ([] (.cursor *buffer*))
-  ([i] (.cursor *buffer* i)))
+  "The cursor position as a char-index (consumers pair it with the buffer as
+  String). NB the underlying buffer counts codepoints; these differ when the
+  buffer contains chars beyond the BMP (e.g. emoji)."
+  ([] (.offsetByCodePoints (str *buffer*) 0 (.cursor *buffer*)))
+  ([i] (let [s (str *buffer*)]
+         (.cursor *buffer* (.codePointCount s 0 (min (int i) (.length s)))))))
 
 (defn move-cursor [offset]
   (.move *buffer* offset))
