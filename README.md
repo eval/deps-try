@@ -189,10 +189,10 @@ $ deps-try -h
 A CLI to quickly try Clojure (libraries) on rebel-readline.
 
 VERSION
-  v0.12.0
+  v0.13.0
 
 USAGE
-  $ deps-try [dep-name [dep-version] [dep2-name ...] ...] [--recipe[-ns] recipe]
+  $ deps-try [dep-name [dep-version] [dep2-name ...] ...] [--recipe[-ns] recipe] [--clojure version]
 
 OPTIONS
   dep-name
@@ -203,19 +203,31 @@ OPTIONS
     `~/projects/my-project`, `./path/to/project`).
 
   dep-version (optional)
-    A maven version (e.g. `1.2.3`, `LATEST`) or git ref (e.g. `some-branch`,
-    `v1.2.3`).
+    A maven version (e.g. `1.2.3`), a git ref (e.g. `some-branch`, `v1.2.3`),
+    or one of `latest` (newest stable version) and `head` (newest version,
+    pre-releases included).
     The id of a PR or MR is also an acceptable version for git deps (e.g. `^123`).
-    When not provided, `LATEST` is implied for maven deps and the latest SHA
+    When not provided, `latest` is implied for maven deps and the latest SHA
     of the default-branch for git deps.
 
   --recipe, --recipe-ns
     Name of recipe (see recipes command) or a path or url to a Clojure file.
     The REPL-history will be seeded with the (ns-)steps from the recipe.
 
+  --clojure
+    Clojure version for the REPL, e.g. `1.12.0`, `head` (newest,
+    pre-releases included). Default: `latest` (newest stable version).
+    Shorthand for `deps-try org.clojure/clojure <version>`.
+
 EXAMPLES
   ;; The latest version of malli from maven, and git-tag v1.3.894 of the next-jdbc repository
   $ deps-try metosin/malli io.github.seancorfield/next-jdbc v1.3.894
+
+  ;; Try the upcoming Clojure version
+  $ deps-try --clojure head
+
+  ;; ...or an older one
+  $ deps-try --clojure 1.12.4
 
 COMMANDS
   recipes    list built-in recipes (`recipes --refresh` to update)
