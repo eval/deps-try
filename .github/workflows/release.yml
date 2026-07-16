@@ -61,7 +61,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install clojure tools
-        uses: DeLaGuardo/setup-clojure@13.6
+        uses: DeLaGuardo/setup-clojure@13.6.1
         with:
           bb: latest
       - name: Update VERSION
