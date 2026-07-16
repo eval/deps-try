@@ -567,6 +567,18 @@
         (and (= (+ start word-end) curs)
              word)))))
 
+(defn funcall-word-at-point
+  "Like `one-space-after-funcall-word?` but returns the funcall word of the
+  enclosing sexp regardless of where the cursor is inside the call."
+  []
+  (let [s (buffer-as-string)
+        curs (cursor)
+        tagged-parses (sexp/resolve-alias-delim-keys (tokenize/tag-sexp-traversal s))
+        [_ start _ _] (sexp/find-open-sexp-start tagged-parses curs)]
+    (when (and start (= (.charAt s start) \())
+      (when-let [[word _ _ _] (sexp/funcall-word s start)]
+        word))))
+
 (defn name-arglist-display [meta-data]
   (let [{:keys [ns arglists name]} meta-data]
     (when (and ns name (not= ns name))
@@ -584,29 +596,69 @@
       (when (:arglists fun-meta)
         (name-arglist-display fun-meta)))))
 
-;; TODO this ttd (time to delete) atom doesn't work really
-;; need a global state and countdown solution
-;; and a callback on hook on any key presses
-(let [ttd-atom (atom -1)]
-  (defn eldoc-self-insert-hook
-    "This hooks SELF_INSERT to capture most keypresses that get echoed
-  out to the terminal. We are using it here to display interactive
-  behavior based on the state of the buffer at the time of a keypress."
-    []
-    (when (zero? @ttd-atom)
-      (display-message " "))
-    (when-not (neg? @ttd-atom)
-      (swap! ttd-atom dec))
-    ;; hook here
-    ;; if prev-char is a space and the char before that is part
-    ;; of a word, and that word is a fn call
-    (when (:eldoc @*line-reader*)
-      (when-let [message (display-argument-help-message)]
-        (reset! ttd-atom 1)
-        (display-message message)))))
+(def ^:private eldoc-shown-for
+  "The funcall word the signature hint currently displays, nil when no hint
+  is shown. Shared between the self-insert hook and the signature widget so
+  both follow the same lifecycle."
+  (atom nil))
+
+(defn- funcall-signature-message
+  "`[word message]` for the call enclosing the cursor, nil when there is
+  none (or its arglists are unknown)."
+  []
+  (when-let [wrd (funcall-word-at-point)]
+    (when-let [fun-meta (resolve-meta wrd)]
+      (when (:arglists fun-meta)
+        [wrd (name-arglist-display fun-meta)]))))
+
+(defn eldoc-self-insert-hook
+  "This hooks SELF_INSERT to capture most keypresses that get echoed
+  out to the terminal. Displays the signature of the call enclosing the
+  cursor while typing inside it (following nested calls), and clears it
+  once the cursor leaves the call."
+  []
+  (when (or (:eldoc @*line-reader*)
+            ;; a hint summoned via the signature widget follows the same
+            ;; lifecycle, even with :eldoc disabled
+            @eldoc-shown-for)
+    (if-let [[wrd message] (funcall-signature-message)]
+      (when (not= wrd @eldoc-shown-for)
+        (reset! eldoc-shown-for wrd)
+        (display-message message))
+      (when @eldoc-shown-for
+        (reset! eldoc-shown-for nil)
+        (display-message " ")))))
 
 (defn word-at-cursor []
   (sexp/word-at-position (buffer-as-string) (cursor)))
+
+(defn word-or-enclosing-funcall-at-cursor
+  "The word at the cursor, else (e.g. when the cursor is on whitespace
+  between arguments) the funcall word of the enclosing sexp. So both
+  `(map in|c)` and `(map inc |)` yield a word (resp. \"inc\" and \"map\")."
+  []
+  (or (first (word-at-cursor)) (funcall-word-at-point)))
+
+;; -------------------------------------
+;; Signature widget
+;; -------------------------------------
+
+(def signature-at-point-widget
+  "Redisplay the eldoc-style signature hint on demand: the enclosing
+  funcall's signature from anywhere inside the call, or that of the symbol
+  under the cursor."
+  (create-widget
+   (when-let [[wrd message]
+              (or (funcall-signature-message)
+                  (when-let [wrd (first (word-at-cursor))]
+                    (when-let [fun-meta (resolve-meta wrd)]
+                      (when (:arglists fun-meta)
+                        [wrd (name-arglist-display fun-meta)]))))]
+     ;; record it so the self-insert hook clears/updates the hint when the
+     ;; cursor leaves this call
+     (reset! eldoc-shown-for wrd)
+     (display-message message))
+   true))
 
 ;; -------------------------------------
 ;; Documentation widget
@@ -614,7 +666,7 @@
 
 (def document-at-point-widget
   (create-widget
-   (when-let [[wrd] (word-at-cursor)]
+   (when-let [wrd (word-or-enclosing-funcall-at-cursor)]
      (when-let [doc-options (doc wrd)]
        (display-less (AttributedString. (string/trim (:doc doc-options))
                                         (color :widget/doc))
@@ -627,7 +679,7 @@
 ;; -------------------------------------
 
 (defn source-at-point []
-  (when-let [[wrd] (word-at-cursor)]
+  (when-let [wrd (word-or-enclosing-funcall-at-cursor)]
     (when-let [var-meta-data (resolve-meta wrd)]
       (when-let [{:keys [source]} (source wrd)]
         (when-let [name-line (name-arglist-display var-meta-data)]
@@ -647,7 +699,7 @@
 ;; -------------------------------------
 
 (defn examples-at-point []
-  (when-let [[word] (word-at-cursor)]
+  (when-let [word (word-or-enclosing-funcall-at-cursor)]
     (when-let [{:keys [examples see-alsos] :as doc} (examples word)]
       (let [alsos-rendered  (some->> see-alsos
                                      not-empty
@@ -880,6 +932,7 @@
     (register-widget "clojure-indent-line"        indent-line-widget)
     (register-widget "clojure-indent-or-complete" indent-or-complete-widget)
 
+    (register-widget "clojure-signature-at-point" signature-at-point-widget)
     (register-widget "clojure-doc-at-point"       document-at-point-widget)
     (register-widget "clojure-source-at-point"    source-at-point-widget)
     (register-widget "clojure-examples-at-point"  examples-at-point-widget)
@@ -900,6 +953,7 @@
 
 (defn bind-clojure-widgets [km-name]
   (doto km-name
+    (key-binding (str (KeyMap/ctrl \X) (KeyMap/ctrl \G)) "clojure-signature-at-point")
     (key-binding (str (KeyMap/ctrl \X) (KeyMap/ctrl \D)) "clojure-doc-at-point")
     (key-binding (str (KeyMap/ctrl \X) (KeyMap/ctrl \S)) "clojure-source-at-point")
     (key-binding (str (KeyMap/ctrl \X) (KeyMap/ctrl \X)) "clojure-examples-at-point")
@@ -910,6 +964,7 @@
 
 (defn bind-clojure-widgets-vi-cmd [km-name]
   (doto km-name
+    (key-binding (str \\ \g) "clojure-signature-at-point")
     (key-binding (str \\ \d) "clojure-doc-at-point")
     (key-binding (str \\ \s) "clojure-source-at-point")
     (key-binding (str \\ \a) "clojure-apropos-at-point")
@@ -1025,11 +1080,17 @@
         (parse [^String line cursor ^Parser$ParseContext context]
           (cond
             (= context Parser$ParseContext/ACCEPT_LINE)
-            (when-not (or (and *accept-fn*
-                               (*accept-fn* line cursor))
-                          (accept-line line cursor))
-              (indent *line-reader* line cursor)
-              (throw (EOFError. -1 -1 "Unbalanced Expression" (str *ns*))))
+            ;; NB JLine's buffer-cursor counts codepoints while `line` is a
+            ;; (UTF-16) String; translate, or chars beyond the BMP (e.g.
+            ;; emoji) make the line come up short (i.e. 'unbalanced').
+            (let [cursor (.offsetByCodePoints line 0
+                                              (min (int cursor)
+                                                   (.codePointCount line 0 (.length line))))]
+              (when-not (or (and *accept-fn*
+                                 (*accept-fn* line cursor))
+                            (accept-line line cursor))
+                (indent *line-reader* line cursor)
+                (throw (EOFError. -1 -1 "Unbalanced Expression" (str *ns*)))))
             (= context Parser$ParseContext/COMPLETE)
             (parsed-line (parse-line line cursor))
             :else (proxy-super parse line cursor context))))
@@ -1124,18 +1185,10 @@
 
 ;; TODO abstract completion service here
 (defn clojure-completer []
-  ;; TODO move ns suggestions before class suggestions, e.g. ""
   ;; TODO clojure.java doesn't show up when completing "clojure."
   (proxy [Completer] []
     (complete [^LineReader reader ^ParsedLine line ^java.util.List candidates]
-      (let [word                     (.word line)
-            calc-depth               #(count (string/split (str %) #"\."))
-            word-depth               (calc-depth word)
-            type-order               (->> [:namespace :class :var :function]
-                                          (map-indexed (comp vec reverse list))
-                                          (into {}))
-            completion-of-type       #(comp (fn [t] (= t %)) :type)
-            candidate-with-depth-lte #(comp (fn [d] (< d (inc %))) calc-depth :candidate)]
+      (let [word (.word line)]
         (when (and
                (:completion @*line-reader*)
                (not (string/blank? word))
@@ -1145,29 +1198,19 @@
                                                 (cond-> {}
                                                   ns'     (assoc :ns ns')
                                                   context (assoc :context context)))
-                context-is                    #(constantly (= % (some-> context first)))]
+                import-context?               (= 'import (some-> context first))]
             (->>
              (or
               (repl-command-complete (meta line))
               (cljs-quit-complete (meta line))
-              (->> (completions (.word line) options)
-                   #_(sort-by > :candidate)
-                   #_(sort-by (juxt #(-> % :candidate calc-depth) :candidate))
-                   (sort-by (juxt (completion-of-type :class) ;; always have classes at end
-                                  #_(comp type-order :type)
-                                  #(-> % :candidate calc-depth) :candidate))
-                   (filter (some-fn (every-pred (context-is 'import) (completion-of-type :class))
-                                    (candidate-with-depth-lte (inc word-depth))))
-                   #_(remove #(-> % :candidate calc-depth (> (inc word-depth))))))
-             #_not-empty
-             #_(#(doto % prn))
+              ;; NOTE candidates arrive ranked by compliment (source priority,
+              ;; then length, then name) — no extra sorting needed.
+              (cond->> (completions (.word line) options)
+                import-context? (filter (comp #{:class} :type))))
+             ;; JLine sorts alphabetically unless Candidate's sort-field pins
+             ;; an explicit order; this preserves compliment's ranking.
              (map-indexed (fn [ix cand] (assoc cand :sort ix)))
-             #_(take 15)
-             #_(#(doto % prn))
-             #_(take 12)
              (map candidate)
-             #_(take 15)
-             #_(#(doto % prn))
              (.addAll candidates))))))))
 
 ;; ----------------------------------------

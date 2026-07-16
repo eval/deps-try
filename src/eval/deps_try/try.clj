@@ -9,6 +9,7 @@
             [eval.deps-try.history :as history]
             [eval.deps-try.recipe :as recipe]
             [eval.deps-try.rr-service :as rebel-service]
+            [eval.deps-try.update-check :as update-check]
             [eval.deps-try.util :as util]
             [rebel-readline.clojure.line-reader :as clj-line-reader]
             [rebel-readline.clojure.main :as rebel-main]
@@ -142,10 +143,13 @@
 ;;  line-reader
 ;;    service
 
-(defn- repl-help-message [{:keys [version]}]
-  (str (ansi/wrap ansi/bold "🩴 Version: ") version \newline
+(defn- repl-help-message [{:keys [version latest-version]}]
+  (str (ansi/wrap ansi/bold "🩴 Version: ") version
+       (when latest-version
+         (str " (" (ansi/wrap ansi/fg-cyan-b latest-version) " available — "
+              "https://github.com/eval/deps-try/releases)"))
+       \newline
        (ansi/wrap ansi/bold "🏡 Home: ") "https://github.com/eval/deps-try" \newline
-       (ansi/wrap ansi/bold "🐻‍❄️ Perks / sponsor: ") "https://polar.sh/eval/deps-try" \newline
        (ansi/wrap ansi/bold "🆘 Help: ")
        "Type " (ansi/wrap ansi/fg-cyan-b ":repl/help") \newline
 
@@ -153,7 +157,7 @@
        (ansi/wrap ansi/bold "🧺 Available libraries: ") \newline
        (try-deps/fmt-deps-available)))
 
-(defn repl [{:deps-try/keys [data-path recipe version] :as opts}]
+(defn repl [{:deps-try/keys [data-path recipe version latest-version] :as opts}]
   (rebel-core/with-line-reader
     (let [history-file (doto (fs/path data-path "history")
                          (ensure-file-exists!))]
@@ -174,7 +178,7 @@
       (when recipe
         (swap! api/*line-reader* assoc :deps-try/recipe recipe)
         (rebel-tools/display-warning (recipe-instructions recipe)))
-      (println (repl-help-message {:version version}))
+      (println (repl-help-message {:version version :latest-version latest-version}))
       (apply
        clojure.main/repl
        (-> {:print rebel-main/syntax-highlight-prn
@@ -209,18 +213,24 @@
 
 (defn -main [& args]
   #_(prn ::args args)
-  (let [opts      (cli/parse-opts args {:restrict [:recipe :recipe-ns :prepare :version]
-                                        :spec     {:version {}
-                                                   :recipe  {}
-                                                   :prepare {:alias :P}}})
+  (let [opts      (cli/parse-opts args {:restrict [:recipe :recipe-ns :prepare :version :latest-version]
+                                        :spec     {:version        {}
+                                                   :latest-version {}
+                                                   :recipe         {}
+                                                   :prepare        {:alias :P}}})
         data-path (fs/xdg-data-home "deps-try")]
     (ensure-path-exists! data-path)
     (if (:prepare opts)
       (System/exit 0)
-      (binding [*debug-log* false] ;; via --debug flag?
+      (do
+        ;; keep the version caches fresh for the *next* boot — boot itself
+        ;; never waits on the network
+        (future (update-check/refresh!))
+        (binding [*debug-log* false] ;; via --debug flag?
         (rebel-core/ensure-terminal
          (let [recipe-path ((some-fn :recipe :recipe-ns) opts)
                repl-opts   (cond-> {:deps-try/version (:version opts)
+                                    :deps-try/latest-version (:latest-version opts)
                                     :deps-try/data-path data-path
                                     :caught             (fn [ex]
                                                           (when-not (interrupted? ex)
@@ -242,7 +252,7 @@
                                                 (let [recipe (recipe/parse recipe-path)]
                                                   (assoc recipe :ns-only (:recipe-ns opts)))))]
            (repl repl-opts)))
-        (System/exit 0)))))
+          (System/exit 0))))))
 
 (comment
 

@@ -117,7 +117,10 @@
                           {:ns (find-ns 'clojure.core) :name (symbol var-str)}
                           (clj-reader/-resolve-meta self var-str))
           url           (when (and (not private) ns) (clj-utils/url-for (str ns) (str name)))
-          url           (or url (javadoc-url (first (string/split-lines doc))))]
+          ;; NB only assume java when var-str did not resolve to a var (e.g.
+          ;; `Breakfast` might be a user's var, not a class)
+          url           (or url (when-not ns
+                                  (javadoc-url (first (string/split-lines doc)))))]
       (cond-> {:doc doc}
         url (assoc :url url)))))
 

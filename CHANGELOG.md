@@ -1,5 +1,69 @@
 # Changelog
 
+## v0.13.0 (2026-07-17)
+
+- BREAKING: the force-accept shortcut (submit a multiline expression with the
+  cursor mid-form) moved from `Ctrl-X Ctrl-M` to `Ctrl-X Ctrl-F`.
+  `Ctrl-M` is indistinguishable from `Return` in some terminals (e.g. ghostty).
+- Ctrl-C now interrupts long-running evaluations on Java 20+ (previously
+  Java <= 19 only). Uses a bundled JVMTI agent (Linux x64/arm64, macOS),
+  adapted from [nREPL](https://github.com/nrepl/nrepl/pull/318).
+- Clojure 1.12.5
+- orchard is no longer a dependency: the few namespaces powering the
+  clojuredocs-examples (`Ctrl-X Ctrl-X`) are vendored (from orchard 0.44.0).
+  So no more version clashes when using orchard (or tooling depending on it)
+  in the REPL. Also slims the uberjar considerably: orchard's bundled 1.7MB
+  clojuredocs-fallback is no longer needed (deps-try downloads a fresh export
+  on first use)
+- (vendored) compliment 0.8.1 (was: fork of a 0.5.3-era snapshot) — brings
+  candidate-priority sorting, babashka compatibility, data-readers source;
+  the `Class/.method` completions now come from upstream
+- completions: candidates are now ordered by compliment's ranking (vars
+  before namespaces before classes; same-ns and clojure/java first; shorter
+  first) instead of a custom alphabetical sort. Fixes `java.<TAB>`
+  completing nothing, and restores fully-qualified class suggestions for
+  short prefixes (e.g. `Str` -> `java.lang.String`). In an `(import ...)`
+  context only classes are suggested.
+- JLine 3.23.0 -> 3.30.15 (~2.5 years of terminal fixes)
+- new version tokens `latest` and `head`, usable wherever a dep-version goes:
+  `latest` = newest stable version, `head` = newest version including
+  pre-releases. Both are version-ordered, not release-date-ordered like
+  maven's `RELEASE`/`LATEST` (which the help promised but which had been
+  broken since v0.5.0; a backported `1.2.9` released after `1.3.0` no longer
+  counts as newest)
+- an omitted dep-version now means `latest` (newest stable) — previously
+  maven's `RELEASE`, which includes pre-releases
+- the REPL's default Clojure version is now the newest stable version
+  (was: a pinned version). Kept fresh in the background of REPL sessions —
+  startup never waits on the network; resolved from `~/.m2` on first-ever
+  (or offline) use
+- new flag `--clojure <version>`: pick the REPL's Clojure version, e.g.
+  `deps-try --clojure 1.13.0-alpha4` or `--clojure head`; shorthand for
+  passing `org.clojure/clojure <version>` as a dependency
+- the while-typing signature hint is now "live": it stays visible while the
+  cursor is inside the call, follows nested calls (and back), and clears
+  the moment the cursor leaves the call — previously it vanished after two
+  keystrokes
+- new shortcut `Ctrl-X Ctrl-G`: (re)show the signature of the enclosing
+  function call on demand (e.g. after cursor movement, or with eldoc
+  toggled off)
+- the doc, source and examples shortcuts now also work from anywhere inside
+  a call: with the cursor on whitespace (e.g. `(map inc |`) they act on the
+  enclosing function (`map`)
+- slimmer uberjar (repo files no longer bundled, native libs included once)
+- update notification: the startup message shows a hint when a newer stable
+  release exists. Checked in the background of REPL sessions (informing the
+  *next* startup) — booting never waits on the network. Opt out via env
+  `DEPS_TRY_NO_UPDATE_CHECK`
+- fix: expressions containing emoji (or any character beyond unicode's BMP)
+  could not be submitted — `Return` would insert a newline as the expression
+  seemed unbalanced (JLine counts codepoints where the parser counted chars).
+  Cursor-dependent features (the signature hint, doc/source/examples
+  shortcuts) now also handle emoji correctly
+- fix: `Ctrl-X Ctrl-D` on your own (capitalized) vars no longer links to
+  Oracle's javadoc search
+- boot message: removed the perks/sponsor line
+
 ## v0.12.0 (2024-05-02)
 
 - Clojure 1.12.0-alpha11
