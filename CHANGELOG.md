@@ -60,6 +60,8 @@
   seemed unbalanced (JLine counts codepoints where the parser counted chars).
   Cursor-dependent features (the signature hint, doc/source/examples
   shortcuts) now also handle emoji correctly
+- fix: `Ctrl-X Ctrl-D` on your own (capitalized) vars no longer links to
+  Oracle's javadoc search
 - boot message: removed the perks/sponsor line
 
 ## v0.12.0 (2024-05-02)
