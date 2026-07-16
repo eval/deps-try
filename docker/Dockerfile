@@ -1,4 +1,4 @@
-FROM clojure:temurin-21-tools-deps-bullseye-slim
+FROM clojure:temurin-26-tools-deps-bullseye-slim
 
 ARG TAG=unstable
 
