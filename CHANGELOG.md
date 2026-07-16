@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.13.0 (2026-07-15)
+## v0.13.0 (2026-07-17)
 
 - BREAKING: the force-accept shortcut (submit a multiline expression with the
   cursor mid-form) moved from `Ctrl-X Ctrl-M` to `Ctrl-X Ctrl-F`.
