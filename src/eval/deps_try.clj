@@ -14,6 +14,7 @@
    [eval.deps-try.errors :as errors]
    [eval.deps-try.fs :as fs]
    [eval.deps-try.recipe :as recipe]
+   [eval.deps-try.update-check :as update-check]
    [eval.deps-try.util :as util]))
 
 (def init-cp (get-classpath))
@@ -51,6 +52,17 @@
            git-dir  (fs/path (-> src-file fs/parent fs/parent fs/parent) ".git")]
        (:out (p/sh {} "git" "--git-dir" (str git-dir) "describe" "--tags")))
      (slurp (io/resource "VERSION")))))
+
+(defn- default-clojure-version
+  "Newest stable Clojure version as of the last update-check (kept fresh in
+  the background of REPL sessions — boot never waits on the network). Falls
+  back to the newest stable in `~/.m2` (first run/offline), lastly to a
+  pinned version."
+  []
+  (or (update-check/cached-latest-clojure-version)
+      (get-in (try-deps/resolve-mvn-local "org.clojure/clojure" :latest)
+              [:mvn/version :mvn/version])
+      "1.12.5"))
 
 (defn- print-usage []
   (let [usage [(str "A CLI to quickly try Clojure (libraries) on rebel-readline.")
@@ -145,22 +157,25 @@
                                           [(symbol "deps-try.self" (str "cp" i))
                                            {:local/root jar}])
                                         jars))
-        ;; default to the newest stable Clojure (resolved at startup; from
-        ;; ~/.m2 when offline), unless a version was requested
+        ;; default to the newest stable Clojure, unless a version was requested
         clojure-requested? (some #(contains? % 'org.clojure/clojure)
                                  [recipe-deps requested-deps])
         default-clojure    (when-not clojure-requested?
-                             {'org.clojure/clojure
-                              (or (:mvn/version (try-deps/resolve-version
-                                                 [:dep/mvn "org.clojure/clojure" :latest]))
-                                  ;; last resort: pinned known-stable
-                                  {:mvn/version "1.12.5"})})
+                             {'org.clojure/clojure {:mvn/version (default-clojure-version)}})
         deps      (merge
                    default-clojure
                    self-deps
                    recipe-deps
                    requested-deps)
+        ;; is a newer version available (per the last update-check)?
+        ;; (dev-versions always compare older than the release they build
+        ;; on, hence the dev? guard)
+        newer-version (when-not (or dev? prepare (System/getenv "DEPS_TRY_NO_UPDATE_CHECK"))
+                        (when-let [latest (update-check/cached-latest-released-version)]
+                          (when (try-deps/version< version latest)
+                            latest)))
         main-args (cond-> ["--version" version]
+                    newer-version   (into ["--latest-version" newer-version])
                     recipe-location (into (if ns-only
                                             ["--recipe-ns" recipe-location]
                                             ["--recipe" recipe-location]))

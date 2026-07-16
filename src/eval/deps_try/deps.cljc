@@ -280,6 +280,13 @@
 (defn- stable-version? [v]
   (re-matches #"\d+(\.\d+)*" (str v)))
 
+(defn version<
+  "Whether version `a` is older than `b` (a leading 'v' is ignored)."
+  [a b]
+  (let [strip-v #(str/replace (str %) #"^v" "")]
+    (neg? (compare (version-sort-key (strip-v a))
+                   (version-sort-key (strip-v b))))))
+
 (defn- pick-version
   "Newest of `versions` given `token`: :latest yields the newest stable
   (falling back to newest overall when a library has no stable release),

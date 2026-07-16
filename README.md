@@ -306,6 +306,10 @@ Read all about [recipes here](https://github.com/eval/deps-try/tree/master/recip
 
 ## FAQ
 
+### How do I know there's a new version?
+
+While a REPL session is running, deps-try checks GitHub in the background for a newer stable release; the *next* startup then shows a hint. Startup itself never waits on the network (nothing is checked when working offline). Opt out by setting the environment variable `DEPS_TRY_NO_UPDATE_CHECK`.
+
 <a name="use_rebel_readline"></a>
 ### How to use the vendored rebel-readline in isolation?
 

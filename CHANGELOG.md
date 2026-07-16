@@ -28,9 +28,10 @@
   counts as newest)
 - an omitted dep-version now means `latest` (newest stable) — previously
   maven's `RELEASE`, which includes pre-releases
-- the REPL's default Clojure version is now resolved to the newest stable
-  version at startup (was: a pinned version; resolved from `~/.m2` when
-  offline)
+- the REPL's default Clojure version is now the newest stable version
+  (was: a pinned version). Kept fresh in the background of REPL sessions —
+  startup never waits on the network; resolved from `~/.m2` on first-ever
+  (or offline) use
 - new flag `--clojure <version>`: pick the REPL's Clojure version, e.g.
   `deps-try --clojure 1.13.0-alpha4` or `--clojure head`; shorthand for
   passing `org.clojure/clojure <version>` as a dependency
@@ -42,6 +43,10 @@
   function call on demand (e.g. after cursor movement, or with eldoc
   toggled off)
 - slimmer uberjar (repo files no longer bundled, native libs included once)
+- update notification: the startup message shows a hint when a newer stable
+  release exists. Checked in the background of REPL sessions (informing the
+  *next* startup) — booting never waits on the network. Opt out via env
+  `DEPS_TRY_NO_UPDATE_CHECK`
 - boot message: removed the perks/sponsor line
 
 ## v0.12.0 (2024-05-02)
