@@ -632,6 +632,13 @@
 (defn word-at-cursor []
   (sexp/word-at-position (buffer-as-string) (cursor)))
 
+(defn word-or-enclosing-funcall-at-cursor
+  "The word at the cursor, else (e.g. when the cursor is on whitespace
+  between arguments) the funcall word of the enclosing sexp. So both
+  `(map in|c)` and `(map inc |)` yield a word (resp. \"inc\" and \"map\")."
+  []
+  (or (first (word-at-cursor)) (funcall-word-at-point)))
+
 ;; -------------------------------------
 ;; Signature widget
 ;; -------------------------------------
@@ -659,7 +666,7 @@
 
 (def document-at-point-widget
   (create-widget
-   (when-let [[wrd] (word-at-cursor)]
+   (when-let [wrd (word-or-enclosing-funcall-at-cursor)]
      (when-let [doc-options (doc wrd)]
        (display-less (AttributedString. (string/trim (:doc doc-options))
                                         (color :widget/doc))
@@ -672,7 +679,7 @@
 ;; -------------------------------------
 
 (defn source-at-point []
-  (when-let [[wrd] (word-at-cursor)]
+  (when-let [wrd (word-or-enclosing-funcall-at-cursor)]
     (when-let [var-meta-data (resolve-meta wrd)]
       (when-let [{:keys [source]} (source wrd)]
         (when-let [name-line (name-arglist-display var-meta-data)]
@@ -692,7 +699,7 @@
 ;; -------------------------------------
 
 (defn examples-at-point []
-  (when-let [[word] (word-at-cursor)]
+  (when-let [word (word-or-enclosing-funcall-at-cursor)]
     (when-let [{:keys [examples see-alsos] :as doc} (examples word)]
       (let [alsos-rendered  (some->> see-alsos
                                      not-empty

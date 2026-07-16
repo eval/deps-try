@@ -42,6 +42,9 @@
 - new shortcut `Ctrl-X Ctrl-G`: (re)show the signature of the enclosing
   function call on demand (e.g. after cursor movement, or with eldoc
   toggled off)
+- the doc, source and examples shortcuts now also work from anywhere inside
+  a call: with the cursor on whitespace (e.g. `(map inc |`) they act on the
+  enclosing function (`map`)
 - slimmer uberjar (repo files no longer bundled, native libs included once)
 - update notification: the startup message shows a hint when a newer stable
   release exists. Checked in the background of REPL sessions (informing the
