@@ -65,6 +65,7 @@
       "1.12.5"))
 
 (defn- print-usage []
+
   (let [usage [(str "A CLI to quickly try Clojure (libraries) on rebel-readline.")
                (str ansi/bold "VERSION" ansi/reset \newline
                     "  " version)

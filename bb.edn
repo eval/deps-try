@@ -7,6 +7,8 @@
                      :task (shell "bb uberjar deps-try-bb.jar -m eval.deps-try")}
   vendor:compliment {:doc  "(Re)vendor compliment into vendor/deps-try.compliment (args: [git-rev])"
                      :task (load-file "script/vendor_compliment.clj")}
+  vendor:orchard    {:doc  "(Re)vendor orchard(-parts) into vendor/deps-try.orchard (args: [git-rev])"
+                     :task (load-file "script/vendor_orchard.clj")}
   gen-manifest      {:doc      "Generate recipe-manifest and print to stdout"
                      :requires ([babashka.fs :as fs])
                      :task     (exec 'eval.deps-try.recipe/generate&print-manifest

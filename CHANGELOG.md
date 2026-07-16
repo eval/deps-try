@@ -9,7 +9,12 @@
   Java <= 19 only). Uses a bundled JVMTI agent (Linux x64/arm64, macOS),
   adapted from [nREPL](https://github.com/nrepl/nrepl/pull/318).
 - Clojure 1.12.5
-- (vendored) orchard 0.22.0 -> 0.30.0
+- orchard is no longer a dependency: the few namespaces powering the
+  clojuredocs-examples (`Ctrl-X Ctrl-X`) are vendored (from orchard 0.44.0).
+  So no more version clashes when using orchard (or tooling depending on it)
+  in the REPL. Also slims the uberjar considerably: orchard's bundled 1.7MB
+  clojuredocs-fallback is no longer needed (deps-try downloads a fresh export
+  on first use)
 - (vendored) compliment 0.8.1 (was: fork of a 0.5.3-era snapshot) — brings
   candidate-priority sorting, babashka compatibility, data-readers source;
   the `Class/.method` completions now come from upstream

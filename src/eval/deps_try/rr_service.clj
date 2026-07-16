@@ -25,7 +25,10 @@
                 var->ns&name)))))
 
 (defn- set-examples-file-name! [path]
-  (alter-var-root (requiring-resolve 'orchard.clojuredocs/cache-file-name) (constantly (str path))))
+  ;; NB deps-try.orchard.clojuredocs/cache-file is a java.io.File (pre-0.31:
+  ;; a string var named cache-file-name)
+  (alter-var-root (requiring-resolve 'deps-try.orchard.clojuredocs/cache-file)
+                  (constantly (fs/file path))))
 
 (defn- ensure-fresh-examples-cache!
   "Best effort to refresh clojuredocs example cache when it does not exist or is older than `max-age`.
@@ -34,7 +37,7 @@
   (let [needs-refresh?  (or (not (fs/exists? path))
                             (util/file-last-modified-before? path (- (util/duration->millis max-age))))]
     (when needs-refresh?
-      (try ((requiring-resolve 'orchard.clojuredocs/update-cache!)) (catch Exception _e)))))
+      (try ((requiring-resolve 'deps-try.orchard.clojuredocs/update-cache!)) (catch Exception _e)))))
 
 (defmethod clj-reader/-examples ::service [self word]
   (let [data-path (:data-path self)]
@@ -42,8 +45,10 @@
       (let [examples-file-name (fs/file data-path "clojuredocs-export.edn")]
         (set-examples-file-name! examples-file-name)
         (ensure-fresh-examples-cache! examples-file-name {:max-age {:weeks 2}})
-        ;; NOTE in case no local cache, orchard uses (old) export
-        ((requiring-resolve 'orchard.clojuredocs/resolve-and-find-doc) wns wname)))))
+        ;; NB no cache here (i.e. never been online) yields nil: the bundled
+        ;; fallback-export that orchard would use is not vendored (1.7MB)
+        (try ((requiring-resolve 'deps-try.orchard.clojuredocs/resolve-and-find-doc) wns wname)
+             (catch Exception _e nil))))))
 
 (defn- classpath-for-completions
   "This 'fixes' two things with compliment.utils' classpath detection:

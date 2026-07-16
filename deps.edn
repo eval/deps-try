@@ -3,10 +3,10 @@
 ;; libdt binaries in twice).
 {:paths   ["src" "resources" "java" "libdt/build"]
  :deps    {borkdude/edamame           {:mvn/version "1.4.24"}
-           cider/orchard              {:mvn/version "0.30.0"}
            com.bhauman/rebel-readline {:local/root "./vendor/rebel-readline/rebel-readline"}
            deps-try/cli               {:local/root "./vendor/deps-try.cli"}
            deps-try/compliment        {:local/root "./vendor/deps-try.compliment"}
+           deps-try/orchard           {:local/root "./vendor/deps-try.orchard"}
            deps-try/http-client       {:local/root "./vendor/deps-try.http-client"}
            org.clojure/clojure        {:mvn/version "1.12.5"}
            org.clojure/tools.gitlibs  {:mvn/version "2.5.197"}
