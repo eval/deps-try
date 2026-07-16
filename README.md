@@ -49,7 +49,7 @@ Again, no need to setup or adjust a project, or type out the full configuration 
 - deps-try extends rebel-readline with:
   - show examples of a function from clojuredocs.org
   - pprint results with syntax highlighting
-  - interrupt operations without quiting the REPL
+  - interrupt operations without quitting the REPL (works on any recent Java version, no JVM flags needed)
   - easier copy/paste of multiline code
   - improved support for eval-at-point (e.g. set and list literals, var quote, deref)
   - eval&tap-at-point
@@ -280,13 +280,16 @@ Read all about [recipes here](https://github.com/eval/deps-try/tree/master/recip
 |<kbd>Ctrl</kbd> + <kbd>X</kbd> <kbd>Ctrl</kbd> + <kbd>D</kbd>| Show doc of function (or namespace) using word before cursor. |<img width="624" alt="Screenshot 2023-04-04 at 15 38 12" src="https://user-images.githubusercontent.com/290596/229811188-cd9775e0-6f06-4300-a457-90b8d891e808.png">|
 | <kbd>Ctrl</kbd> + <kbd>X</kbd> <kbd>Ctrl</kbd> + <kbd>E</kbd> | Eval expression before cursor. |  ![deps-try-eval](https://user-images.githubusercontent.com/290596/229825665-b1a40a81-6185-419c-bac2-4ce029890765.gif)|
 | <kbd>Ctrl</kbd> + <kbd>X</kbd> <kbd>Ctrl</kbd> + <kbd>T</kbd> | Eval expression before cursor *and* `tap>` the result (taps the last result/exception on empty line). | |
-| <kbd>Ctrl</kbd> + <kbd>X</kbd> <kbd>Ctrl</kbd> + <kbd>M</kbd> | Force accept line (when cursor is in a position where <kbd>Return</kbd> would insert a newline). | ![deps-try-force-accept](https://user-images.githubusercontent.com/290596/229837792-bf1b19e6-33e2-4c3c-8cf9-e8adf3d887fc.gif) |
+| <kbd>Ctrl</kbd> + <kbd>X</kbd> <kbd>Ctrl</kbd> + <kbd>F</kbd> | Force accept line (when cursor is in a position where <kbd>Return</kbd> would insert a newline). | ![deps-try-force-accept](https://user-images.githubusercontent.com/290596/229837792-bf1b19e6-33e2-4c3c-8cf9-e8adf3d887fc.gif) |
 | <kbd>Ctrl</kbd> + <kbd>X</kbd> <kbd>Ctrl</kbd> + <kbd>S</kbd> | Show source of function using word before cursor. | <img width="623" alt="Screenshot 2023-04-04 at 17 26 47" src="https://user-images.githubusercontent.com/290596/229841609-293435c2-0d4e-4720-84c0-507448568a45.png"> |
 |<kbd>Ctrl</kbd> + <kbd>X</kbd> <kbd>Ctrl</kbd> + <kbd>X</kbd>| Searches [clojuredocs](https://clojuredocs.org/core-library) for examples using word before cursor. |<img width="623" alt="Screenshot 2023-04-04 at 15 32 26" src="https://user-images.githubusercontent.com/290596/229809276-26bb6fa2-e780-40f6-94d3-80a0662af1ec.png">|
 | <kbd>Ctrl</kbd> + <kbd>R</kbd> <kbd>Search term</kbd> <kbd>Ctrl</kbd> + <kbd>R</kbd> (backward) / <kbd>Ctrl</kbd> + <kbd>S</kbd> (forward) | Searches history for commands containing <kbd>Search term</kbd> | ![deps-try-search-history](https://user-images.githubusercontent.com/290596/229847045-d0ec6d88-4ecd-4114-bf17-e1f09b4a64e6.gif)|
-| <kbd>Esc</kbd>/<kbd>Alt</kbd> + <kbd>Return</kbd> | Insert newline (where <kbd>Return</kbd> would otherwise submit line). | ![deps-try-insert-newline](https://user-images.githubusercontent.com/290596/229849928-c9532a81-4eda-4334-bbde-ca6acbf7a4ab.gif)|
+| <kbd>Esc</kbd> <kbd>Return</kbd> | Insert newline (where <kbd>Return</kbd> would otherwise submit line). | ![deps-try-insert-newline](https://user-images.githubusercontent.com/290596/229849928-c9532a81-4eda-4334-bbde-ca6acbf7a4ab.gif)|
 | <kbd>Code</kbd> + <kbd>↑</kbd> | Searches history for lines starting with <kbd>Code</kbd> (e.g. find all requires, defs etc). | ![deps-try-arrow-up](https://user-images.githubusercontent.com/290596/229852412-12539ee4-0d17-4de9-937d-19060306908d.gif) |
-| <kbd>Alt</kbd> + <kbd>p</kbd> / <kbd>Alt</kbd> + <kbd>n</kbd> | Step back-/forward through history _without_ stepping through every line of a history item (as <kbd>↑</kbd>/<kbd>↓</kbd> do).| |
+| <kbd>Esc</kbd> <kbd>p</kbd> / <kbd>Esc</kbd> <kbd>n</kbd> | Step back-/forward through history _without_ stepping through every line of a history item (as <kbd>↑</kbd>/<kbd>↓</kbd> do).| |
+
+> [!NOTE]
+> <kbd>Esc</kbd> <kbd>p</kbd> means: tap <kbd>Esc</kbd>, then <kbd>p</kbd>. <kbd>Alt</kbd> + <kbd>p</kbd> does the same — provided your terminal sends Option/Alt as Meta. On macOS that's off by default in some terminals: ghostty needs `macos-option-as-alt = true` in its config, Terminal.app the "Use Option as Meta key" setting, iTerm2 "Option key: Esc+" (Profiles → Keys).
 
 
 ## FAQ
@@ -309,7 +312,7 @@ Big thanks to [Avery Quinn](https://github.com/avescodes) for coming up with [le
 
 ## LICENSE
 
-Copyright (c) 2024 Gert Goet, ThinkCreate.
+Copyright (c) 2026 Gert Goet, ThinkCreate.
 Distributed under the MIT license. See LICENSE.
 
 Code in vendor/rebel-readline originates from [rebel-readline](https://github.com/bhauman/rebel-readline) which is covered by the Eclipse Public License either version 1.0 or (at your option) any later version.

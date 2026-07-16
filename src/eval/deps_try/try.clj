@@ -145,7 +145,6 @@
 (defn- repl-help-message [{:keys [version]}]
   (str (ansi/wrap ansi/bold "🩴 Version: ") version \newline
        (ansi/wrap ansi/bold "🏡 Home: ") "https://github.com/eval/deps-try" \newline
-       (ansi/wrap ansi/bold "🐻‍❄️ Perks / sponsor: ") "https://polar.sh/eval/deps-try" \newline
        (ansi/wrap ansi/bold "🆘 Help: ")
        "Type " (ansi/wrap ansi/fg-cyan-b ":repl/help") \newline
 

@@ -1,5 +1,38 @@
 # Changelog
 
+## v0.13.0 (2026-07-15)
+
+- BREAKING: the force-accept shortcut (submit a multiline expression with the
+  cursor mid-form) moved from `Ctrl-X Ctrl-M` to `Ctrl-X Ctrl-F`.
+  `Ctrl-M` is indistinguishable from `Return` in some terminals (e.g. ghostty).
+- Ctrl-C now interrupts long-running evaluations on Java 20+ (previously
+  Java <= 19 only). Uses a bundled JVMTI agent (Linux x64/arm64, macOS),
+  adapted from [nREPL](https://github.com/nrepl/nrepl/pull/318).
+- Clojure 1.12.5
+- (vendored) orchard 0.22.0 -> 0.30.0
+- (vendored) compliment 0.8.1 (was: fork of a 0.5.3-era snapshot) — brings
+  candidate-priority sorting, babashka compatibility, data-readers source;
+  the `Class/.method` completions now come from upstream
+- completions: candidates are now ordered by compliment's ranking (vars
+  before namespaces before classes; same-ns and clojure/java first; shorter
+  first) instead of a custom alphabetical sort. Fixes `java.<TAB>`
+  completing nothing, and restores fully-qualified class suggestions for
+  short prefixes (e.g. `Str` -> `java.lang.String`). In an `(import ...)`
+  context only classes are suggested.
+- JLine 3.23.0 -> 3.30.15 (~2.5 years of terminal fixes)
+- new flag `--clojure <version>`: pick the REPL's Clojure version, e.g.
+  `deps-try --clojure 1.13.0-alpha4` (also accepts `latest`); shorthand for
+  passing `org.clojure/clojure <version>` as a dependency
+- the while-typing signature hint is now "live": it stays visible while the
+  cursor is inside the call, follows nested calls (and back), and clears
+  the moment the cursor leaves the call — previously it vanished after two
+  keystrokes
+- new shortcut `Ctrl-X Ctrl-G`: (re)show the signature of the enclosing
+  function call on demand (e.g. after cursor movement, or with eldoc
+  toggled off)
+- slimmer uberjar (repo files no longer bundled, native libs included once)
+- boot message: removed the perks/sponsor line
+
 ## v0.12.0 (2024-05-02)
 
 - Clojure 1.12.0-alpha11
