@@ -72,11 +72,17 @@ The easiest way to start.
 
 ```bash
 # latest stable
-$ docker run -it --pull always ghcr.io/eval/deps-try
+$ docker run -it --rm -v deps-try:/home/deps-try-user ghcr.io/eval/deps-try
 
 # unstable (i.e. master branch)
-$ docker run -it --pull always ghcr.io/eval/deps-try:unstable
+$ docker run -it --rm -v deps-try:/home/deps-try-user ghcr.io/eval/deps-try:unstable
 ```
+
+The (automatically created) `deps-try`-volume makes REPL-history, downloaded
+libraries and update-notifications survive between runs — you'll see a hint
+at startup when a newer version exists, at which point
+`docker pull ghcr.io/eval/deps-try` gets you current (no need for
+`--pull always` on every run).
 
 See `-h` or [Usage](#usage) for detailed options.
 
