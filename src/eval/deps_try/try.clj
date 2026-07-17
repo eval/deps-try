@@ -24,9 +24,14 @@
 (defn- ensure-path-exists! [path]
   (fs/create-dirs path))
 
-(defn- ensure-file-exists! [path]
+(defn- ensure-private-file-exists! [path]
   (when-not (fs/exists? path)
-    (fs/create-file path)))
+    (fs/create-file path))
+  ;; also 'repairs' existing files (e.g. created via the docker volume).
+  ;; NB keep the history-file private: it may contain sensitive data (JLine
+  ;; even warns mid-session when it's readable by others)
+  (try (fs/set-posix-file-permissions path "rw-------")
+       (catch Exception _))) ;; e.g. non-posix filesystems
 
 (defn- warm-up-completion-cache! []
   (clj-line-reader/-complete {:rebel-readline.service/type ::rebel-service/service} "nil" {}))
@@ -160,7 +165,7 @@
 (defn repl [{:deps-try/keys [data-path recipe version latest-version] :as opts}]
   (rebel-core/with-line-reader
     (let [history-file (doto (fs/path data-path "history")
-                         (ensure-file-exists!))]
+                         (ensure-private-file-exists!))]
       (doto (clj-line-reader/create
              (rebel-service/create {:data-path data-path}))
         (.setVariable LineReader/SECONDARY_PROMPT_PATTERN "%P ")
