@@ -169,8 +169,7 @@
                    recipe-deps
                    requested-deps)
         ;; is a newer version available (per the last update-check)?
-        ;; (dev-versions always compare older than the release they build
-        ;; on, hence the dev? guard)
+        ;; (dev? guard: a dev checkout tracks git, not releases — don't nag)
         newer-version (when-not (or dev? prepare (System/getenv "DEPS_TRY_NO_UPDATE_CHECK"))
                         (when-let [latest (update-check/cached-latest-released-version)]
                           (when (try-deps/version< version latest)

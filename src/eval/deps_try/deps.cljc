@@ -273,9 +273,15 @@
                                              (repeat 0))))
                         [-1 -1 -1 -1 -1 -1])
         stable?       (str/blank? qual)
-        qual-alpha    (str/lower-case (or (some->> qual (re-find #"[a-zA-Z]+")) ""))
+        ;; a git-describe qualifier ("4-g8b1908e") means N commits *past* the
+        ;; version, i.e. newer than its stable release (unlike e.g. "-pre.1")
+        post?         (some->> qual (re-matches #"\d+-g[0-9a-f]+(-dirty)?"))
+        ;; NB for post? versions the commit-hash must not partake in sorting
+        qual-alpha    (if post?
+                        ""
+                        (str/lower-case (or (some->> qual (re-find #"[a-zA-Z]+")) "")))
         qual-num      (or (some->> qual (re-find #"\d+") parse-long) -1)]
-    [nums (if stable? 1 0) qual-alpha qual-num]))
+    [nums (cond post? 2, stable? 1, :else 0) qual-alpha qual-num]))
 
 (defn- stable-version? [v]
   (re-matches #"\d+(\.\d+)*" (str v)))
