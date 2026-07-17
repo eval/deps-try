@@ -3,7 +3,7 @@
 Quickly try out Clojure and libraries on [rebel-readline](https://github.com/bhauman/rebel-readline#rebel-readline):
 
 <p align="center">
-<img width="535" alt="Screenshot 2023-02-09 at 13 37 09" src="https://github.com/eval/deps-try/assets/290596/35594a1f-c3bb-4855-87f0-404fdc72e74e.png">
+  <img width="547" height="239" alt="Screenshot 2026-07-17 at 13 36 17" src="https://github.com/user-attachments/assets/25847729-954a-4120-9970-383d25b0cfdb" />
 </p>
 
 <!-- <p align="center">
