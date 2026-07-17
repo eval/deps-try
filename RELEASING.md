@@ -8,6 +8,10 @@
    - **pre-release**: `vX.Y.Z-pre.N` (e.g. `v0.13.0-pre.4`)
    Anything else is rejected. The workflow creates the git tag for you (at
    the dispatched commit) — no need to tag manually.
+   NB only cut a (pre-)release when there are new commits: dispatching twice
+   from the same commit stacks multiple version-tags on it, making
+   `git describe` (the source of unstable version strings) pick an arbitrary
+   one.
 3. Afterwards: spot-check the install channels (see below).
 
 Every push to master *additionally* triggers the same workflow in

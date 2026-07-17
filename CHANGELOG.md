@@ -62,6 +62,9 @@
   shortcuts) now also handle emoji correctly
 - fix: `Ctrl-X Ctrl-D` on your own (capitalized) vars no longer links to
   Oracle's javadoc search
+- the REPL-history file is created — and kept — readable by its owner only:
+  history can contain sensitive data. Incidentally silences JLine's
+  mid-session `consider 'chmod 600'` warning
 - boot message: removed the perks/sponsor line
 
 ## v0.12.0 (2024-05-02)
