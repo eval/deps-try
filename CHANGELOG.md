@@ -62,6 +62,10 @@
   shortcuts) now also handle emoji correctly
 - fix: `Ctrl-X Ctrl-D` on your own (capitalized) vars no longer links to
   Oracle's javadoc search
+- docker: the README now recommends a volume over the container-home, making
+  REPL-history, downloaded libraries and update-notifications survive between
+  runs (the application-jar itself lives outside the home-dir, so pulled
+  image-updates always take effect)
 - the REPL-history file is created — and kept — readable by its owner only:
   history can contain sensitive data. Incidentally silences JLine's
   mid-session `consider 'chmod 600'` warning

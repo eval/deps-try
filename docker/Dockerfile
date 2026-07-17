@@ -28,10 +28,13 @@ RUN groupadd deps-try-user && \
     echo 'deps-try-user:secret' | chpasswd
 ENV HOME=/home/deps-try-user
 
+# NB the jar lives OUTSIDE the home-dir: a volume over /home/deps-try-user
+# (see README) must only persist data — not pin the application version
+RUN curl -sLo /opt/deps-try-bb.jar https://github.com/eval/deps-try/releases/download/${TAG}/deps-try-bb.jar
+
 USER deps-try-user
 WORKDIR /home/deps-try-user
 
-RUN curl -sLO https://github.com/eval/deps-try/releases/download/${TAG}/deps-try-bb.jar && \
-  bb deps-try-bb.jar -P && bb deps-try-bb.jar recipes
+RUN bb /opt/deps-try-bb.jar -P && bb /opt/deps-try-bb.jar recipes
 
-ENTRYPOINT ["/usr/local/bin/bb", "deps-try-bb.jar"]
+ENTRYPOINT ["/usr/local/bin/bb", "/opt/deps-try-bb.jar"]
