@@ -2,6 +2,12 @@ FROM clojure:temurin-26-tools-deps-bullseye-slim
 
 ARG TAG=unstable
 
+# a UTF-8 locale, or emoji and other non-ASCII output shows as '?'
+# (recent JDKs and JLine versions respect the declared charset, and the
+# image's default locale is POSIX i.e. ASCII)
+ENV LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8
+
 RUN apt-get -yqq update && \
     apt-get -yqq upgrade && \
     apt-get -yqq install sudo && \
